@@ -17,7 +17,7 @@ Padrón público de matriculados de una Distribuidora, tal como la Distribuidora
 _Avoid_: Organismo, API, padrón (como sinónimo suelto)
 
 **Consulta**:
-Lectura de una Fuente en un momento dado, para una o más Matrículas. Termina `EXITOSA`, `FALLIDA` (motivo `FUENTE_NO_DISPONIBLE` o `EXTRACCION_FALLIDA`) o `NO_REALIZADA` (la Fuente no es consultable automáticamente).
+Lectura de una Fuente en un momento dado, para una o más Matrículas. Termina `EXITOSA`, `FALLIDA` (motivo `FUENTE_NO_DISPONIBLE`, `EXTRACCION_FALLIDA` o `INTERRUMPIDA`) o `NO_REALIZADA` (motivo `FUENTE_NO_AUTOMATIZABLE`). `INTERRUMPIDA` es una falla del propio MatriculAR, no de la Fuente.
 _Avoid_: Scraping, sincronización
 
 **Intento**:
@@ -35,7 +35,7 @@ _Avoid_: "no aparece en ningún padrón", válida/inválida
 ## Evidencia
 
 **Matrícula**:
-Número que una Distribuidora asigna a un gasista habilitado para ejecutar instalaciones de gas.
+Número que una Distribuidora asigna a un instalador de gas al inscribirlo en su registro.
 
 **Categoría**:
 Alcance técnico de una Matrícula según la NAG-200 (1ª, 2ª o 3ª). Es un alcance, no un nivel: la 1ª es la más amplia, y no se comparan numéricamente.
@@ -101,7 +101,8 @@ _Avoid_: Calificación (como entidad), review
 
 ## Relaciones
 
-- Una **Verificación** genera una **Consulta**; una **Consulta** lee una **Fuente** y produce un **Resultado de verificación** por cada Matrícula buscada (una en una Verificación; varias en una revalidación).
+- Una **Verificación** se apoya en una **Consulta**: propia en una consulta directa, compartida con las demás Verificaciones de la misma Fuente en una búsqueda. Una revalidación hace Consultas sin Verificaciones.
+- Una **Consulta** lee una **Fuente** y produce un **Resultado de verificación** por cada Matrícula buscada.
 - Un Resultado `ENCONTRADA` produce una **Credencial**, y solo entonces se hace una **Evaluación**. `NO_ENCONTRADA` y `NO_VERIFICABLE` son respuestas distintas y ninguna produce Evaluación.
 - Una **Evaluación** aplica un **Tipo de trabajo** a una **Credencial**; nunca modifica la Credencial.
 - Una **Contratación** con Evaluación `NO_COMPATIBLE` no puede crearse; cualquier otro resultado sin `COMPATIBLE` se muestra como advertencia al Cliente.

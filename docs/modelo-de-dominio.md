@@ -44,13 +44,13 @@ Cada parte de esa frase corresponde a un elemento del modelo:
 |  | **Credencial** | **Evaluación** |
 |---|---|---|
 | Qué es | Evidencia sobre una matrícula. | Resultado de aplicar las reglas de un trabajo a esa evidencia. |
-| Qué responde | "La matrícula 91 figura en el padrón de Ecogas con categoría 2ª y provincia informada Córdoba, según la Consulta del 26/09/2026 a las 15:40." | "Esa Credencial es `COMPATIBLE` con el trabajo 'Artefacto en vivienda unifamiliar' en San Luis, porque la 2ª está admitida (NAG-200 8.3.1) y San Luis está en el Área de concesión de Ecogas." |
+| Qué responde | "La matrícula 99001 figura en el padrón de Ecogas con categoría 2ª y provincia informada Córdoba, según la Consulta del 26/09/2026 a las 15:40." | "Esa Credencial es `COMPATIBLE` con el trabajo 'Artefacto en vivienda unifamiliar' en San Luis, porque la 2ª está admitida (NAG-200 8.3.1) y San Luis está en el Área de concesión de Ecogas." |
 | ¿De qué depende? | Solo de la Fuente y del momento de la Consulta. | De la Credencial, **del Tipo de trabajo** y de la provincia del trabajo. |
 | ¿Tiene estado de aptitud? | **No.** No existen "credencial vencida", "credencial fuera de jurisdicción" ni "credencial con categoría insuficiente". | Sí: `COMPATIBLE`, `NO_COMPATIBLE` o `INDETERMINADA`, más un resultado por Criterio. |
 | ¿Cambia? | **Nunca.** Es inmutable. Una Consulta posterior crea una Credencial nueva y la anterior queda en el historial. | Nunca se recalcula. Guarda una copia de la regla que aplicó. |
 | Multiplicidad | Una por cada Consulta exitosa que encuentra la matrícula. | Una por cada Verificación que tiene Credencial. **La misma Credencial puede ser compatible con un trabajo y no con otro.** |
 
-Ejemplo de por qué la separación importa: la Credencial "matrícula 99002, categoría 3ª" es `COMPATIBLE` con A1 (vivienda unifamiliar) y `NO_COMPATIBLE` con A2 (departamento). Si "categoría insuficiente" fuera un estado de la Credencial, habría que elegir uno de los dos, y los dos serían falsos para alguno de los trabajos.
+Ejemplo de por qué la separación importa: la Credencial "matrícula 99003, categoría 3ª" es `COMPATIBLE` con A1 (vivienda unifamiliar) y `NO_COMPATIBLE` con A2 (departamento). Si "categoría insuficiente" fuera un estado de la Credencial, habría que elegir uno de los dos, y los dos serían falsos para alguno de los trabajos.
 
 ---
 
@@ -121,7 +121,7 @@ classDiagram
     Consulta "1" *-- "1..*" Intento : tiene
     Consulta "1" *-- "1..*" ResultadoVerificacion : produce
     ResultadoVerificacion "1" --> "0..1" Credencial : si ENCONTRADA
-    Verificacion "1" --> "1" Consulta : genera
+    Verificacion "*" --> "1" Consulta : se apoya en
     Verificacion "*" --> "1" TipoTrabajo : para
     Verificacion "1" --> "0..1" Evaluacion : solo si hay Credencial
     Evaluacion "*" --> "1" Credencial : evalúa
@@ -170,7 +170,7 @@ Este es el recorrido vertical que pidió el tutor: *adaptador → obtención/ext
 ```mermaid
 flowchart TD
     A([Cliente pide: matrícula + Fuente + Tipo de trabajo + provincia]) --> B{¿Datos válidos?<br/>Fuente activa, Tipo activo,<br/>provincia conocida}
-    B -- no --> B1([400: error de validación<br/>no se crea Verificación])
+    B -- no --> B1([400 o 404: pedido inválido<br/>no se crea Verificación])
     B -- sí --> C[Registrar Consulta EN_CURSO]
     C --> D{Modo de acceso<br/>de la Fuente}
     D -- NO_AUTOMATIZABLE --> E[Consulta NO_REALIZADA<br/>sin pedidos a la Fuente]
@@ -207,7 +207,7 @@ Detalle técnico de cada paso: [`fuentes-y-adaptadores.md`](fuentes-y-adaptadore
 | ¿Genera Credencial? | No. | No. |
 | ¿Genera Evaluación? | No. | No. |
 | ¿Muestra evidencia previa? | No hace falta: la evidencia de hoy es negativa. | Sí: si existe una Credencial anterior, se muestra **con su fecha** como contexto, pero **no se usa para concluir**. |
-| Mensaje al Cliente | "La matrícula 99004 **no figura** en el padrón de Ecogas según la consulta exitosa del 26/09/2026 a las 15:40. Esto no dice nada sobre otras distribuidoras." | "**No pudimos consultar** el padrón de Ecogas (26/09/2026 15:40): el formato del recurso cambió. No podemos afirmar nada con evidencia de hoy. Última evidencia disponible: figuraba con categoría 2ª según la consulta del 20/09/2026." |
+| Mensaje al Cliente | "La matrícula 99004 **no figura** en el padrón de Ecogas según la consulta exitosa del 26/09/2026 a las 15:45. Esto no dice nada sobre otras distribuidoras." | "**No pudimos consultar** el padrón de Ecogas (26/09/2026 15:30): el formato del recurso cambió. No podemos afirmar nada con evidencia de hoy. Última evidencia disponible: figuraba con categoría 2ª según la consulta del 20/09/2026." |
 | Qué nunca dice | "No está matriculado" / "no aparece en ningún padrón". | "No encontrado" / "0 matriculados". |
 
 Para MetroGAS, el mensaje es: *"MetroGAS no permite consultas automáticas: su buscador exige un captcha. Podés verificar la matrícula manualmente en el buscador oficial: https://www.metrogas.com.ar/colaboradores/listado-de-gasistas-con-matricula/."*
@@ -273,7 +273,8 @@ stateDiagram-v2
 ```
 
 - `FALLIDA` siempre lleva un **motivo**: `FUENTE_NO_DISPONIBLE` (red, tiempo agotado, HTTP 5xx, 429 o 403) o `EXTRACCION_FALLIDA` (recurso no encontrado, marcador ausente, parseo fallido, registros vacíos o inválidos, caída brusca de la cantidad de registros).
-- Una Consulta que queda en `EN_CURSO` después de su plazo máximo (por ejemplo, porque la función se cortó) se lee como `FALLIDA` con motivo `FUENTE_NO_DISPONIBLE`. **El intento queda registrado igual.**
+- Una Consulta que queda en `EN_CURSO` después de su plazo máximo (por ejemplo, porque la función se cortó o no se pudo escribir en la base) se lee como `FALLIDA` con motivo **`INTERRUMPIDA`**. Es una falla de MatriculAR, no de la Fuente, así que **no cuenta en la salud de la Fuente**. El intento queda registrado igual.
+- `NO_REALIZADA` lleva el motivo `FUENTE_NO_AUTOMATIZABLE`.
 - Los estados finales no cambian nunca.
 
 ### 7.2 Resultado de verificación
@@ -298,7 +299,7 @@ stateDiagram-v2
 ```
 
 - El email de la Fuente **se usa en el momento y no se guarda**. Si la Fuente no publica un email para esa matrícula, el Vínculo queda `NO_VERIFICADO` y se muestra así.
-- Una matrícula solo puede tener **un** Vínculo `VERIFICADO` a la vez.
+- Una matrícula solo puede tener **un** Vínculo `VERIFICADO` a la vez. Se garantiza con una escritura condicional en la tabla `TitularesMatricula`, dentro de la misma transacción que confirma el código.
 
 ### 7.4 Contratación (P2)
 
@@ -339,7 +340,7 @@ Regla de creación (ver [módulos](modulos.md)): si la Verificación da `NO_COMP
 
 ## 9. Escenarios
 
-Todos los datos de estos escenarios son **ficticios** (matrículas de la serie 99001–99005, nombres inventados). Reemplazan a la matriz de casos de la investigación, que tenía los errores E1, E2, E5 y E7.
+Todos los datos de estos escenarios son **ficticios** (matrículas de la serie 99001–99006, nombres inventados). Reemplazan a la matriz de casos de la investigación, que tenía los errores E1, E2, E5 y E7.
 
 | # | Pedido | Resultado de la Consulta | Resultado de verificación | Evaluación | Qué muestra el sistema |
 |---|---|---|---|---|---|
@@ -352,7 +353,7 @@ Todos los datos de estos escenarios son **ficticios** (matrículas de la serie 9
 | S7 | Ecogas, matrícula 99001, A1, Córdoba, **con el recurso cambiado** | `FALLIDA` · `EXTRACCION_FALLIDA` (1 Intento, sin reintento) | **`NO_VERIFICABLE`** | — | "No pudimos consultar Ecogas." Se muestra la Credencial del 20/09 como contexto, sin concluir nada. |
 | S8 | Ecogas, **sin conexión** durante los 3 Intentos | `FALLIDA` · `FUENTE_NO_DISPONIBLE` (3 Intentos registrados) | **`NO_VERIFICABLE`** | — | Igual que S7, con motivo "la fuente no respondió". |
 | S9 | **MetroGAS**, matrícula 99005, A1, CABA | `NO_REALIZADA` (0 Intentos) | **`NO_VERIFICABLE`** | — | Link al buscador oficial de MetroGAS. |
-| S10 | Ecogas, matrícula 99001, **A1**, San Juan, con categoría informada **vacía** | `EXITOSA` | `ENCONTRADA` (categoría "") | **`INDETERMINADA`**: categoría `INDETERMINADO` | "La Fuente no informa una categoría reconocible para esta matrícula." |
+| S10 | Ecogas, matrícula 99006, **A1**, San Juan, con categoría informada **vacía** | `EXITOSA` | `ENCONTRADA` (categoría "") | **`INDETERMINADA`**: categoría `INDETERMINADO` | "La Fuente no informa una categoría reconocible para esta matrícula." |
 
 Los ejemplos concretos de estos ítems, en el formato en que se guardan, están en [`database/seed/ejemplos-ficticios/`](../database/seed/ejemplos-ficticios/).
 

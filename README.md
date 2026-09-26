@@ -34,7 +34,7 @@ Plataforma que responde, **con evidencia fechada y citable**, si la matrícula d
 | [Modelo de dominio](docs/modelo-de-dominio.md) | Credencial frente a Evaluación, recorrido de una Verificación, estados, invariantes y escenarios. |
 | [Reglas de categoría y de zona](docs/reglas-de-categoria.md) | Qué habilita cada categoría según la NAG-200, Tipos de trabajo, criterio de zona y vigencia, con citas. |
 | [Fuentes y adaptadores](docs/fuentes-y-adaptadores.md) | Cómo se lee el padrón de Ecogas, las cinco validaciones, fallas, reintentos y MetroGAS. |
-| [**Esquema de base de datos**](database/README.md) | 14 tablas de DynamoDB: campos, tipos, claves, relaciones, índices y patrones de acceso. |
+| [**Esquema de base de datos**](database/README.md) | 15 tablas de DynamoDB: campos, tipos, claves, relaciones, índices y patrones de acceso. |
 | [**Módulos**](docs/modulos.md) | 15 módulos con prioridad, dependencias y plan tentativo. |
 | [**Arquitectura**](docs/arquitectura.md) | Estilo, capas, tecnologías definitivas y justificación, entornos, seguridad y riesgos. |
 | [API](docs/api.md) | Contrato de endpoints, ejemplos por resultado y diagramas de secuencia. |

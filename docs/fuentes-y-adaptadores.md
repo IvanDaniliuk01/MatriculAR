@@ -188,7 +188,7 @@ Mecanismo acordado con el tutor: **registrar el intento → detectar el error �
 | Falla V3, V4 o V5 | `EXTRACCION_FALLIDA` | **No** | Ídem. |
 | Se agota el tiempo total de la Consulta (24 s) | `FUENTE_NO_DISPONIBLE` | **No quedan Intentos** | Se respeta el límite de 29 s de API Gateway. |
 
-Política de Intentos: **hasta 3**, con esperas de **1 s** antes del segundo y **2 s** antes del tercero. Antes de cada Intento se verifica que el tiempo restante alcance para completarlo.
+Política de Intentos: **hasta 3**, con esperas de **1 s** antes del segundo y **2 s** antes del tercero. Un Intento solo arranca si queda en el presupuesto **al menos el tiempo máximo de un pedido** (`timeout_pedido_ms`, 6 s), y cada pedido usa como límite el menor entre 6 s y el tiempo que quede. En el peor caso (3 tiempos agotados): 6 s + 1 s + 6 s + 2 s = 15 s, quedan 9 s y el tercer Intento arranca.
 
 ### 4.6 Qué se registra
 
@@ -203,7 +203,7 @@ Todo queda en la **Consulta** (ver [`database/README.md`](../database/README.md#
 
 La **huella del recurso** (el hash SHA-256 del archivo descargado) permite decir exactamente *qué versión* del padrón se leyó sin guardar el padrón. Dos Consultas con la misma huella leyeron el mismo contenido.
 
-**La Consulta se registra en estado `EN_CURSO` antes del primer pedido**, así el intento queda asentado aunque la función se interrumpa. Una Consulta que sigue `EN_CURSO` después de su plazo máximo se interpreta como `FALLIDA` (`FUENTE_NO_DISPONIBLE`, "interrumpida").
+**La Consulta se registra en estado `EN_CURSO` antes del primer pedido**, así el intento queda asentado aunque la función se interrumpa. Una Consulta que sigue `EN_CURSO` después de su plazo máximo se interpreta como `FALLIDA` con motivo `INTERRUMPIDA`: es una falla de MatriculAR (por ejemplo, la base no respondió), no de la Fuente, y no cuenta en la salud de la Fuente.
 
 ### 4.7 Qué pasa con la evidencia anterior cuando falla una lectura
 

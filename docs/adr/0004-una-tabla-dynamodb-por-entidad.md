@@ -6,7 +6,7 @@ complementa: D5 de la primera entrega (DynamoDB como almacenamiento)
 
 # Una tabla de DynamoDB por entidad, no single-table design
 
-La práctica recomendada por AWS para DynamoDB es el *single-table design*: todas las entidades en una sola tabla, con claves compuestas sobrecargadas (`PK = FUENTE#ecogas`, `SK = CONSULTA#…`) para resolver varios patrones de acceso con una sola lectura. Decidimos, en cambio, **una tabla por entidad** (14 tablas: 8 del núcleo y 6 de P1 y P2), con índices secundarios globales para los patrones de acceso que lo necesitan.
+La práctica recomendada por AWS para DynamoDB es el *single-table design*: todas las entidades en una sola tabla, con claves compuestas sobrecargadas (`PK = FUENTE#ecogas`, `SK = CONSULTA#…`) para resolver varios patrones de acceso con una sola lectura. Decidimos, en cambio, **una tabla por entidad** (15 tablas: 8 del núcleo y 7 de P1 y P2), con índices secundarios globales para los patrones de acceso que lo necesitan.
 
 ## Por qué
 

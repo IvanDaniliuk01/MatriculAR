@@ -18,7 +18,7 @@ La primera entrega planteaba un pipeline asíncrono: evento de S3 → SQS → La
 
 - La respuesta tarda lo que tarda leer la Fuente (unos 2 s en el caso normal y hasta 24 s en el peor). Es aceptable para una consulta puntual.
 - Una `EXTRACCION_FALLIDA` **no se reintenta**: es un cambio estructural de la Fuente y fallaría igual.
-- La revalidación programada (P3) invoca **el mismo caso de uso** desde EventBridge Scheduler, sin cola: se conserva la idea de la D3 (un solo camino, dos disparadores) pero sin el pipeline asíncrono.
+- La revalidación programada (P3) usa **los mismos componentes del núcleo** (lectura de la Fuente, registro de la Consulta y de los Resultados) a través del caso de uso *Revalidar*, disparado por EventBridge Scheduler y sin cola: se conserva la idea de la D3 (un solo camino, dos disparadores) pero sin el pipeline asíncrono.
 - **Criterios que justificarían incorporar colas** (se revisan en cada entrega):
   - una revalidación que no entra en los 15 minutos de una invocación de Lambda;
   - más de una Fuente automatizable, con límites de uso distintos que haya que espaciar;

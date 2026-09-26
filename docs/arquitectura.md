@@ -57,7 +57,7 @@ flowchart LR
 
     ecogas[(Ecogas<br/>padrón público web)]
     metrogas[(MetroGAS<br/>buscador con captcha)]
-    cognito[Amazon Cognito · P2<br/>cuentas de usuario]
+    cognito[Amazon Cognito · P1 y P2<br/>cuentas de usuario]
     ses[Amazon SES · P1<br/>emails de código]
 
     cliente -->|verifica matrículas,<br/>contrata · P2| sistema
@@ -96,15 +96,15 @@ flowchart TB
             lv[λ verificacion · P0<br/>Verificaciones, Fuentes, reglas]
             lp[λ profesionales · P1<br/>perfil, Vínculos, búsqueda]
             lc[λ contrataciones · P2<br/>solicitudes, estados, Reseñas]
-            lr[λ revalidacion · P3<br/>mismo caso de uso que Verificar]
+            lr[λ revalidacion · P3<br/>mismos componentes que Verificar]
             ln[λ notificaciones · P3]
         end
 
-        ddb[(DynamoDB<br/>14 tablas)]
+        ddb[(DynamoDB<br/>15 tablas)]
         s3[S3 · etapa 4<br/>hosting del frontend]
         sched[EventBridge Scheduler · P3<br/>diario]
         sns[SNS · P3]
-        cognito[Cognito · P2]
+        cognito[Cognito · P1 y P2]
         logs[CloudWatch Logs]
     end
 
@@ -115,7 +115,7 @@ flowchart TB
     apigw --> lv
     apigw --> lp
     apigw --> lc
-    apigw -.->|autoriza · P2| cognito
+    apigw -.->|autoriza · P1 y P2| cognito
     lv --> ddb
     lp --> ddb
     lc --> ddb
@@ -135,13 +135,13 @@ flowchart TB
 | Contenedor | Responsabilidad | Módulo | Detalle |
 |---|---|---|---|
 | **Frontend** | Pantalla de verificación (P0), perfil del Profesional y búsqueda (P1), contratación (P2). | P0 a P2 | [`frontend/README.md`](../frontend/README.md) |
-| **API Gateway (REST)** | Único punto de entrada. Enruta por prefijo a cada función, aplica límites de uso y, en P2, autoriza con Cognito. Se usa REST (v1) porque está disponible en todos los planes de LocalStack y permite ampliar el timeout de 29 s. | P0 | [`api.md`](api.md) |
+| **API Gateway (REST)** | Único punto de entrada. Enruta por prefijo a cada función, aplica límites de uso y, desde P1, autoriza con Cognito. Se usa REST (v1) porque está disponible en todos los planes de LocalStack y permite ampliar el timeout de 29 s. | P0 | [`api.md`](api.md) |
 | **λ verificacion** | Casos de uso *Verificar*, *Consultar historial*, *Listar Fuentes, Tipos de trabajo y Categorías*. Contiene los adaptadores de Fuentes. | P0 | [`backend/verificacion/`](../backend/verificacion/) |
 | **λ profesionales** | Perfil, Vínculos (código por email), zonas de trabajo y búsqueda. | P1 | [`backend/profesionales/`](../backend/profesionales/) |
 | **λ contrataciones** | Contrataciones, transiciones de estado y Reseñas. | P2 | [`backend/contrataciones/`](../backend/contrataciones/) |
-| **λ revalidacion** | Todos los días, una Consulta por Fuente para todas las matrículas vinculadas. **Reutiliza el caso de uso de verificación** (el espíritu de la D3). | P3 | [`backend/revalidacion/`](../backend/revalidacion/) |
+| **λ revalidacion** | Todos los días, una Consulta por Fuente para todas las matrículas vinculadas. Caso de uso *Revalidar*, armado con **los mismos componentes del núcleo** que *Verificar* (el espíritu de la D3). | P3 | [`backend/revalidacion/`](../backend/revalidacion/) |
 | **λ notificaciones** | Avisa cuando una revalidación cambia el Resultado de verificación de un Profesional. | P3 | [`backend/notificaciones/`](../backend/notificaciones/) |
-| **DynamoDB** | 14 tablas. | P0 a P2 | [`database/README.md`](../database/README.md) |
+| **DynamoDB** | 15 tablas. | P0 a P2 | [`database/README.md`](../database/README.md) |
 
 **Cómo se comunican las funciones entre sí.** Las funciones de P1 y P2 **no llaman por HTTP** a la de verificación: el caso de uso *Verificar* vive en un paquete compartido del backend ([`backend/compartido/`](../backend/compartido/)) y cada función lo incluye al empaquetarse. Así hay una sola implementación de las reglas, sin llamadas de red internas. Las flechas del diagrama muestran la dependencia lógica.
 
@@ -245,7 +245,7 @@ La lectura U1-A2 de la cátedra propone justificar el stack respondiendo cinco p
 |---|---|---|---|
 | **D1** | Entorno local con LocalStack, "sin cuenta de AWS, sin tarjeta y sin riesgo de facturación". | **Revisada** | Desde el 23/03/2026, LocalStack exige **cuenta y token** (se terminó la Community edition). Nueva formulación: *LocalStack con cuenta gratuita (plan Student u Hobby), sin tarjeta y sin riesgo de facturación durante el desarrollo; despliegue en AWS real en la etapa 4, con el mismo Terraform.* El diseño funciona también con el plan Hobby: usa API Gateway REST, no depende de la persistencia de LocalStack y recrea los datos con Terraform y el seed. |
 | **D2** | Serverless puro, con Lambdas por contexto. | **Vigente** | Los contextos son verificación, profesionales y contrataciones, más revalidación y notificaciones en P3. |
-| **D3** | Un único pipeline de verificación (SQS + DLQ) con dos disparadores (evento de S3 y scheduler). | **Revisada** → [ADR-0001](adr/0001-sin-colas-reintentos-sincronicos.md) | Se mantiene la idea de **un solo camino con dos disparadores**: el pedido HTTP y el scheduler de P3 invocan el mismo caso de uso. Se eliminan SQS, la DLQ y el evento de S3. |
+| **D3** | Un único pipeline de verificación (SQS + DLQ) con dos disparadores (evento de S3 y scheduler). | **Revisada** → [ADR-0001](adr/0001-sin-colas-reintentos-sincronicos.md) | Se mantiene la idea de **un solo camino con dos disparadores**: el pedido HTTP y el scheduler de P3 usan los mismos componentes del núcleo (lectura de la Fuente, registro de la Consulta y de los Resultados). Se eliminan SQS, la DLQ y el evento de S3. |
 | **D4** | Padrones simulados detrás de una interfaz, con un mock configurable. | **Revisada** | Se mantiene el **puerto de Fuentes**, pero los adaptadores son **reales**: Ecogas (automatizable) y MetroGAS (no automatizable). Las simulaciones quedan solo en los tests (INV-12). |
 | **D5** | DynamoDB como almacenamiento. | **Vigente**, con [ADR-0004](adr/0004-una-tabla-dynamodb-por-entidad.md) | Una tabla por entidad. |
 | **D6** | Infraestructura 100 % como código con Terraform. | **Vigente** | En local se usa `lstk terraform` en lugar de `tflocal`, que está deprecado. |
@@ -273,16 +273,16 @@ Cosas a tener en cuenta sobre la cuenta de AWS:
 
 | Tema | Medida |
 |---|---|
-| **Permisos (IAM)** | Mínimo privilegio **por función**. Ninguna función tiene permiso de `DeleteItem` sobre las tablas de evidencia, ni de `UpdateItem` sobre `Credenciales`, `Evaluaciones` y `Verificaciones`. **La inmutabilidad de la evidencia (INV-1) también se garantiza a nivel de permisos**, no solo en el código. |
+| **Permisos (IAM)** | Mínimo privilegio **por función**. Ninguna función tiene `DeleteItem` sobre las tablas de evidencia (`Consultas`, `ResultadosVerificacion`, `Credenciales`, `Evaluaciones`, `Verificaciones`), ni `UpdateItem` sobre ninguna de ellas **salvo `Consultas`**, que se actualiza una sola vez para finalizarla. Esto **refuerza** la inmutabilidad (INV-1) impidiendo actualizaciones y borrados. La garantía principal la dan las escrituras condicionales `attribute_not_exists`, porque IAM no puede exigir la condición de un `PutItem`. |
 | **Validación de entradas** | Todo pedido se valida con Zod en el handler antes de llegar al caso de uso. Las matrículas se normalizan y se limita su largo. |
 | **Límite de uso** | Throttling de API Gateway en `POST /verificaciones` (valor inicial: 2 pedidos por segundo con ráfagas de 5, configurable). Protege tanto a MatriculAR como a la Fuente: cada Verificación implica una descarga. |
 | **CORS** | Solo se admite el origen del frontend. |
 | **Datos personales** | Minimización: nunca se persisten el email, el teléfono ni el barrio de la Fuente, ni el padrón, ni el cuerpo de las respuestas HTTP. Ver [database § 11](../database/README.md#11-datos-personales-qué-se-guarda-y-qué-no). |
-| **Autenticación (P2)** | Cognito: MatriculAR no guarda contraseñas. API Gateway valida el token antes de invocar las funciones de P1 y P2. |
+| **Autenticación (P1 y P2)** | Cognito: MatriculAR no guarda contraseñas. API Gateway valida el token antes de invocar las funciones de P1 y P2. |
 | **Vínculo (P1)** | El código se guarda **solo como hash**, vence y tiene un límite de intentos. El email de la Fuente se usa en memoria. |
 | **Secretos** | El P0 no tiene secretos de aplicación. El token de LocalStack y las credenciales de AWS viven en `.env` o en el perfil local, nunca en el repositorio. |
 | **Fuentes** | No se evita ninguna protección (captcha, bloqueo por 403). La identificación del adaptador ante Ecogas queda pendiente de su respuesta sobre las condiciones de uso ([P-1](fuentes-y-adaptadores.md#9-puntos-pendientes)). |
-| **Repositorio público** | Sin datos personales reales. Los ejemplos son ficticios y la investigación fue anonimizada. |
+| **Repositorio público** | Los archivos actuales no tienen datos personales reales: los ejemplos son ficticios y la investigación fue anonimizada. **El historial de git conserva la versión anterior** de la investigación (commit `5afe305`). Reescribir el historial se evaluó y quedó pendiente de decisión del equipo, porque altera commits que el tutor ya revisó. |
 
 ---
 
@@ -297,7 +297,7 @@ Estas garantías reemplazan a las de la primera entrega, que suponían un pipeli
 | **Reintento** | Hasta 3 Intentos, solo ante fallas transitorias, dentro de un presupuesto de 24 s. |
 | **Se conserva el estado del fallo** | Consulta `FALLIDA` con motivo y detalle. La evidencia anterior no se toca. |
 | **Se informa** | Resultado `NO_VERIFICABLE` en la respuesta, con el motivo, y endpoint de salud de la Fuente (`GET /fuentes/{fuente_id}/consultas`). |
-| **Evidencia inmutable** | Escrituras condicionales `attribute_not_exists` y permisos de IAM sin `Update` ni `Delete`. |
+| **Evidencia inmutable** | Escrituras condicionales `attribute_not_exists` (la garantía), reforzadas por permisos de IAM sin `DeleteItem` y sin `UpdateItem` sobre la evidencia, salvo la finalización de la Consulta. |
 | **Idempotencia** | Las escrituras condicionales hacen que repetir un paso no pise datos. Un reintento del Cliente crea una Verificación nueva, lo cual es correcto: es otra pregunta en otro momento. |
 | **Sin estados intermedios** | La finalización de una Verificación es una única transacción `TransactWriteItems`. |
 | **Máquinas de estado explícitas** | La Consulta y la Contratación tienen estados y transiciones definidos ([modelo § 7](modelo-de-dominio.md#7-estados)). Las transiciones de la Contratación se escriben de forma condicional. |
@@ -340,7 +340,7 @@ Se desarrolla con TDD (primero la prueba y después el código), empezando por e
 | Vencimiento del Free plan antes de la defensa | Media | Medio | Pasar a Paid plan (se conservan los créditos) o redesplegar con Terraform. |
 | SES en *sandbox* solo envía a direcciones verificadas (P1) | Alta | Medio | Pedir acceso de producción a SES al empezar P1. Mientras tanto, se demuestra con direcciones verificadas. |
 | Alcance: 4 niveles de prioridad en unas 7 semanas | **Alta** | Alto | P0 primero y completo. P1 a P3 se recortan en ese orden. Backlog congelado ([módulos](modulos.md)). |
-| Datos personales expuestos en el repositorio público | Baja (ya mitigado) | Alto | Anonimización, ejemplos ficticios, `.gitignore` para las muestras. |
+| Datos personales expuestos en el repositorio público | Media (mitigado en los archivos actuales, no en el historial) | Alto | Anonimización, ejemplos ficticios y `.gitignore` para las muestras. Queda pendiente decidir si se reescribe el historial de git. |
 
 ---
 

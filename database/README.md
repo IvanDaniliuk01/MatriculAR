@@ -25,7 +25,7 @@
 
 ## 1. Cómo leer este documento
 
-- Hay **14 tablas**: **8 del P0** (el núcleo de verificación), descriptas con todo detalle, y **6 de P1 y P2**, modeladas de forma más simple, como se acordó.
+- Hay **15 tablas**: **8 del P0** (el núcleo de verificación), descriptas con todo detalle, y **7 de P1 y P2**, modeladas de forma más simple, como se acordó.
 - Cada tabla tiene su **definición formal** en [`tablas/`](tablas/): un JSON **válido como entrada de `CreateTable`** de DynamoDB, que declara claves, índices y modo de facturación. Es el equivalente al DDL. Se puede aplicar tal cual en LocalStack (`aws dynamodb create-table --cli-input-json file://database/tablas/Fuentes.json`), y en la implementación se traduce a recursos `aws_dynamodb_table` de Terraform.
 - Los **datos iniciales** (configuración de Fuentes, Categorías y Tipos de trabajo) están en [`seed/`](seed/): es el equivalente al DML. Los **ejemplos ficticios** de cada entidad están en [`seed/ejemplos-ficticios/`](seed/ejemplos-ficticios/).
 - DynamoDB no aplica un esquema a los atributos que no son clave. **El esquema de cada documento lo garantiza la aplicación**, que valida cada ítem con Zod antes de escribirlo. Las tablas de campos de este documento son ese contrato.
@@ -137,7 +137,7 @@ erDiagram
     Fuentes ||--o{ Consultas : "es leída por"
     Consultas ||--|{ ResultadosVerificacion : "produce uno por matrícula"
     ResultadosVerificacion |o--o| Credenciales : "si ENCONTRADA crea"
-    Verificaciones ||--|| Consultas : "genera"
+    Consultas ||--o{ Verificaciones : "respalda"
     TiposTrabajo ||--o{ Verificaciones : "es pedido en"
     Verificaciones ||--o| Evaluaciones : "solo si hay Credencial"
     Credenciales ||--o{ Evaluaciones : "es evaluada en"
@@ -146,7 +146,8 @@ erDiagram
 
 Lectura de las cardinalidades más importantes:
 
-- **Consultas → ResultadosVerificacion (1 a N):** una Consulta produce un Resultado por matrícula buscada. En el P0, N vale 1. En la revalidación de P3, una sola descarga del padrón resuelve todas las matrículas de los Profesionales de esa Fuente.
+- **Consultas → ResultadosVerificacion (1 a N):** una Consulta produce un Resultado por matrícula buscada. En el P0, N vale 1. En la búsqueda de P1 y en la revalidación de P3, una sola descarga del padrón resuelve todas las matrículas de esa Fuente.
+- **Consultas → Verificaciones (1 a 0..N):** en el P0 cada Verificación tiene su propia Consulta. En la búsqueda (P1), las Verificaciones de todos los candidatos de una Fuente comparten la misma Consulta. La revalidación (P3) hace Consultas sin Verificaciones.
 - **ResultadosVerificacion → Credenciales (0 o 1):** solo un Resultado `ENCONTRADA` crea una Credencial.
 - **Verificaciones → Evaluaciones (0 o 1):** solo hay Evaluación si hay Credencial (INV-2).
 - **Credenciales → Evaluaciones (1 a N):** la misma Credencial puede evaluarse para distintos Tipos de trabajo, y cada resultado es independiente.
@@ -176,6 +177,11 @@ erDiagram
         S profesional_id PK, FK
         S fuente_matricula PK "clave de ordenamiento"
         S estado "NO_VERIFICADO, VERIFICADO"
+        S verificado_en
+    }
+    TitularesMatricula {
+        S fuente_matricula PK
+        S profesional_id FK
         S verificado_en
     }
     ZonasTrabajo {
@@ -212,6 +218,7 @@ erDiagram
 
     Usuarios ||--o| Profesionales : "puede ser"
     Profesionales ||--o{ Vinculos : "declara"
+    Profesionales ||--o{ TitularesMatricula : "es titular verificado de"
     Vinculos }o--|| Credenciales : "sobre la matrícula de"
     Profesionales ||--o{ ZonasTrabajo : "ofrece servicio en"
     Usuarios ||--o{ Contrataciones : "solicita como Cliente"
@@ -294,7 +301,7 @@ Reglas de categoría, **versionadas**. Definición: [`tablas/TiposTrabajo.json`]
 | `descripcion` | S | ✔ | Explicación en lenguaje claro. |
 | `condiciones` | L\<S\> | ✔ | Condiciones que asume el tipo; se muestran al Cliente y se copian como Limitación. |
 | `categorias_admitidas` | SS | ✔ | **Conjunto** de categorías que pueden hacer el trabajo. |
-| `fundamento` | L\<M\> | ✔ | Uno por categoría del catálogo: `categoria` (S), `admitida` (BOOL), `norma` (S), `articulo` (S), `cita` (S), `url` (S). |
+| `fundamento` | L\<M\> | ✔ | Uno por categoría del catálogo: `categoria` (S), `admitida` (BOOL), `norma` (S), `articulo` (S), `cita` (S), `url` (S) y, opcionalmente, `nota` (S) con la explicación de por qué una categoría no está admitida. |
 | `limitaciones` | L\<S\> | ✔ | Limitaciones propias del tipo (puede ser una lista vacía). |
 | `tipo_recomendado_si_duda` | S \| NULL | | Tipo más restrictivo que se sugiere si el Cliente no sabe si cumple las condiciones (A1 → A2). |
 | `activo` | BOOL | ✔ | Si se ofrece en nuevas Verificaciones. |
@@ -323,10 +330,10 @@ Reglas de categoría, **versionadas**. Definición: [`tablas/TiposTrabajo.json`]
 | `origen` | S | ✔ | `VERIFICACION` \| `REVALIDACION` (P3) \| `BUSQUEDA` (P1). |
 | `matriculas_buscadas` | L\<S\> | ✔ | Matrículas que se buscaron. |
 | `estado` | S | ✔ | `EN_CURSO` \| `EXITOSA` \| `FALLIDA` \| `NO_REALIZADA`. |
-| `motivo_falla` | S \| NULL | | `FUENTE_NO_DISPONIBLE` \| `EXTRACCION_FALLIDA` \| `FUENTE_NO_AUTOMATIZABLE` (este último, para `NO_REALIZADA`). |
+| `motivo_falla` | S \| NULL | | Para `FALLIDA`: `FUENTE_NO_DISPONIBLE` \| `EXTRACCION_FALLIDA` \| `INTERRUMPIDA` (falla de MatriculAR, que no cuenta en la salud de la Fuente). Para `NO_REALIZADA`: `FUENTE_NO_AUTOMATIZABLE`. |
 | `detalle_falla` | M \| NULL | | `validacion` (S: `V1`…`V5` o nulo), `descripcion` (S), `esperado` (S), `obtenido` (S). |
 | `iniciada_en` | S | ✔ | Momento del registro, **antes** del primer pedido. |
-| `plazo_maximo_en` | S | ✔ | Si la Consulta sigue `EN_CURSO` después de este momento, se lee como `FALLIDA` (interrumpida). |
+| `plazo_maximo_en` | S | ✔ | Si la Consulta sigue `EN_CURSO` después de este momento, se lee como `FALLIDA` con motivo `INTERRUMPIDA`. |
 | `finalizada_en` | S \| ausente | | Momento en que terminó. **Se omite mientras la Consulta está `EN_CURSO`**, porque es clave del índice `exitosas-por-fuente` y DynamoDB no admite `NULL` en una clave de índice. |
 | `intentos` | L\<M\> | ✔ | Cada Intento: `numero` (N), `iniciado_en` (S), `duracion_ms` (N), `resultado` (S: `EXITO` o un motivo), `reintentable` (BOOL), `pedidos` (L\<M\>: `url`, `metodo`, `status`, `content_type`, `bytes`, `duracion_ms`, `error`). **Nunca el cuerpo de la respuesta.** Lista vacía si la Consulta es `NO_REALIZADA`. |
 | `url_recurso` | S \| NULL | | URL del recurso efectivamente leído. |
@@ -483,7 +490,7 @@ GSI `por-usuario`: PK `usuario_id` → el perfil de un usuario.
 | PK | `profesional_id` | S |
 | SK | `fuente_matricula` | S |
 
-GSI `por-matricula`: PK `fuente_matricula`, SK `estado` → comprobar que una matrícula no tenga dos Vínculos `VERIFICADO`.
+GSI `por-matricula`: PK `fuente_matricula`, SK `estado` → listar quiénes declararon una matrícula. Es informativo: **la unicidad del Vínculo verificado la garantiza [`TitularesMatricula`](#titularesmatricula)**, porque un índice secundario es eventualmente consistente y dos confirmaciones simultáneas podrían pasar.
 
 | Campo | Tipo | Oblig. | Descripción |
 |---|---|---|---|
@@ -496,6 +503,20 @@ GSI `por-matricula`: PK `fuente_matricula`, SK `estado` → comprobar que una ma
 | `intentos_codigo` | N | ✔ | Para limitar intentos de adivinar el código. |
 | `declarado_en` | S | ✔ | |
 | `verificado_en` | S \| NULL | | |
+
+### TitularesMatricula
+
+Garantiza que una matrícula tenga **a lo sumo un** Vínculo `VERIFICADO`. Al confirmar un código, una misma transacción (`TransactWriteItems`) pasa el Vínculo a `VERIFICADO` y escribe este ítem con la condición `attribute_not_exists(fuente_matricula)`. Si otro Profesional ya verificó esa matrícula, la transacción entera falla y el Vínculo sigue `NO_VERIFICADO`.
+
+| Clave | Atributo | Tipo |
+|---|---|---|
+| PK | `fuente_matricula` | S |
+
+| Campo | Tipo | Oblig. | Descripción |
+|---|---|---|---|
+| `fuente_matricula` | S | ✔ | Matrícula verificada. |
+| `profesional_id` | S | ✔ | FK → `Profesionales`: su titular verificado. |
+| `verificado_en` | S | ✔ | |
 
 ### ZonasTrabajo
 
@@ -602,7 +623,7 @@ Todas las lecturas del sistema, con la tabla o el índice que las resuelve. **Ni
 | AP-15 | P0 | Consultas de una Fuente por fecha (monitoreo) | GSI `por-fuente` | `Query` con rango de fechas |
 | AP-16 | P1 | Perfil del usuario autenticado | GSI `por-usuario` (Profesionales) | `Query` |
 | AP-17 | P1 | Vínculos de un Profesional | `Vinculos` | `Query` PK=`profesional_id` |
-| AP-18 | P1 | ¿La matrícula ya tiene un Vínculo verificado? | GSI `por-matricula` (Vinculos) | `Query` PK=`fuente_matricula`, SK=`VERIFICADO` |
+| AP-18 | P1 | ¿La matrícula ya tiene un titular verificado? | `TitularesMatricula` | `GetItem` con lectura consistente. La unicidad se garantiza con la escritura condicional al confirmar. |
 | AP-19 | P1 | Profesionales en una provincia que ofrecen un tipo de trabajo | `ZonasTrabajo` | `Query` PK=`provincia`, filtro por `tipos_trabajo` |
 | AP-20 | P2 | Contrataciones de un Cliente | GSI `por-cliente` | `Query` |
 | AP-21 | P2 | Contrataciones de un Profesional | GSI `por-profesional` (Contrataciones) | `Query` |
@@ -616,7 +637,7 @@ Todas las lecturas del sistema, con la tabla o el índice que las resuelve. **Ni
 
 Como DynamoDB no tiene claves foráneas, la integridad la garantiza la aplicación con tres mecanismos:
 
-1. **Validación previa.** Antes de crear una Verificación se leen la Fuente y el Tipo de trabajo vigentes (AP-01 y AP-04). Si no existen o no están activos, el pedido se rechaza con `400` y no se escribe nada.
+1. **Validación previa.** Antes de crear una Verificación se leen la Fuente y el Tipo de trabajo vigentes (AP-01 y AP-04). Si no existen, el pedido se rechaza con `404`; si existen pero no están activos, con `400`. En los dos casos no se escribe nada.
 2. **Transacción al finalizar.** Una vez leída la Fuente, se escribe todo junto con `TransactWriteItems`, sin que puedan quedar estados intermedios:
    - `UpdateItem` sobre `Consultas`: finalizar, con la condición `estado = EN_CURSO`;
    - `PutItem` sobre `ResultadosVerificacion`, uno por matrícula;
@@ -624,7 +645,7 @@ Como DynamoDB no tiene claves foráneas, la integridad la garantiza la aplicaci�
    - `PutItem` sobre `Evaluaciones`, si hay Credencial, con `attribute_not_exists`;
    - `PutItem` sobre `Verificaciones`, con `attribute_not_exists`.
 
-   Si la transacción falla, no queda ninguna de esas escrituras. La Consulta queda `EN_CURSO` y se lee como interrumpida al vencer su plazo, así el intento sigue registrado.
+   Si la transacción falla, no queda ninguna de esas escrituras. La Consulta queda `EN_CURSO` y, al vencer su plazo, se lee como `FALLIDA` con motivo `INTERRUMPIDA`, así el intento sigue registrado.
 3. **Escrituras condicionales.** Las condiciones `attribute_not_exists` hacen que la evidencia sea **inmutable** y que un reintento del mismo paso sea **idempotente**: no pisa lo que ya estaba escrito.
 
 En la revalidación de P3, con muchas matrículas por Consulta, los Resultados se escriben en lotes (`BatchWriteItem`), cada uno idempotente. La Consulta se finaliza al final.
@@ -655,7 +676,7 @@ En la revalidación de P3, con muchas matrículas por Consulta, los Resultados s
 | [`seed/fuentes.json`](seed/fuentes.json) | Configuración real de `ecogas` y `metrogas` (versión 1). | Todos. |
 | [`seed/categorias.json`](seed/categorias.json) | Catálogo de las 3 categorías con su cita de la NAG-200. | Todos. |
 | [`seed/tipos-trabajo.json`](seed/tipos-trabajo.json) | Los 3 Tipos de trabajo (A1, A2, B), versión 1, con fundamento. | Todos. |
-| [`seed/provincias.json`](seed/provincias.json) | Catálogo de las 24 jurisdicciones, con código y nombre. Es un catálogo estático que se empaqueta con las funciones, no una tabla. | Se empaqueta con el código. |
+| [`seed/provincias.json`](seed/provincias.json) | Catálogo de las 24 provincias (incluida la Ciudad Autónoma de Buenos Aires), con código y nombre. Es un catálogo estático que se empaqueta con las funciones, no una tabla. | Se empaqueta con el código. |
 | [`seed/ejemplos-ficticios/`](seed/ejemplos-ficticios/) | Ítems de ejemplo de `Consultas`, `ResultadosVerificacion`, `Credenciales`, `Verificaciones` y `Evaluaciones` para los escenarios S1, S2, S6, S7 y S9 del [modelo de dominio](../docs/modelo-de-dominio.md#9-escenarios). | **Ninguno.** Son documentación y fixtures de tests. **Nunca se cargan en la base de un entorno** (INV-12: el sistema distingue lo que puede conocer de lo que solo simula). |
 
 Los archivos de seed son **listas de ítems en JSON plano**. El script de carga (etapa de implementación) los convierte al formato de DynamoDB y los escribe con `BatchWriteItem`. Para cambiar una regla se agrega un archivo o ítem con una **nueva versión**; nunca se edita una versión que ya se cargó.
@@ -666,7 +687,7 @@ Los archivos de seed son **listas de ítems en JSON plano**. El script de carga 
 
 - **Modo de facturación:** `PAY_PER_REQUEST` (bajo demanda) en todas las tablas. No hay que estimar capacidad, y con el volumen de un proyecto académico el costo es de centavos (en AWS real lo cubren los créditos del Free plan; ver [arquitectura](../docs/arquitectura.md#7-entornos-y-costos)).
 - **Tamaño de los ítems:** el más grande es la Consulta, con hasta 3 Intentos y unos 20 pedidos cada uno, que queda muy por debajo del límite de 400 KB de DynamoDB.
-- **Volumen esperado:** una Verificación genera 4 o 5 ítems de unos pocos KB. Mil Verificaciones ocupan del orden de 10 MB.
+- **Volumen esperado:** una Verificación genera de 3 a 5 ítems de unos pocos KB (Consulta, Resultado y Verificación, más Credencial y Evaluación si la matrícula figura). Mil Verificaciones ocupan del orden de 10 MB.
 - **Retención:** en el P0 se conserva todo, porque la evidencia histórica es parte del valor del sistema. La política de retención (por ejemplo, archivar Consultas de más de un año) se define en la fase 2.
 - **Backups:** la recuperación a un punto en el tiempo (PITR) queda desactivada en el P0 y se evalúa para AWS real en la etapa 4.
 
@@ -688,6 +709,7 @@ database/
 │   ├── Evaluaciones.json
 │   ├── Profesionales.json              P1
 │   ├── Vinculos.json                   P1
+│   ├── TitularesMatricula.json         P1
 │   ├── ZonasTrabajo.json               P1
 │   ├── Usuarios.json                   P2
 │   ├── Contrataciones.json             P2

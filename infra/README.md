@@ -9,9 +9,9 @@
 ```
 infra/
 ├── modulos/
-│   ├── tablas/          las 14 tablas de DynamoDB (a partir de database/tablas/*.json)
+│   ├── tablas/          las 15 tablas de DynamoDB (a partir de database/tablas/*.json)
 │   ├── funcion/         una función Lambda (nodejs24.x) con su rol IAM de mínimo privilegio
-│   ├── api/             API Gateway REST, rutas, límites de uso, CORS y autorizador de Cognito (P2)
+│   ├── api/             API Gateway REST, rutas, límites de uso, CORS y autorizador de Cognito (desde P1)
 │   └── observabilidad/  grupos de logs, alarma de Consultas fallidas y alerta de presupuesto
 └── entornos/
     ├── local/           LocalStack: se aplica con `lstk terraform` (reemplaza a tflocal, que está deprecado)
@@ -22,9 +22,9 @@ infra/
 
 | Recurso | P0 | P1 | P2 | P3 |
 |---|---|---|---|---|
-| Tablas de DynamoDB | 8 del núcleo | +3 | +3 | — |
+| Tablas de DynamoDB | 8 del núcleo | +4 | +3 | — |
 | Funciones Lambda | `verificacion` | `profesionales` | `contrataciones` | `revalidacion`, `notificaciones` |
-| API Gateway REST | ✔ | rutas | rutas y autorizador | — |
+| API Gateway REST | ✔ | rutas y autorizador | rutas | — |
 | Cognito | — | ✔ (básico) | ✔ (roles) | — |
 | SES | — | ✔ | — | — |
 | EventBridge Scheduler y SNS | — | — | — | ✔ |
@@ -33,5 +33,5 @@ infra/
 ## Reglas
 
 - **Ningún recurso se crea a mano.** El entorno se levanta y se destruye con un comando.
-- Los roles de IAM **no otorgan** `UpdateItem` ni `DeleteItem` sobre `Credenciales`, `Evaluaciones` y `Verificaciones` (inmutabilidad de la evidencia, INV-1).
+- Los roles de IAM **no otorgan** `DeleteItem` sobre las tablas de evidencia, ni `UpdateItem` sobre `ResultadosVerificacion`, `Credenciales`, `Evaluaciones` y `Verificaciones` (solo `Consultas` se actualiza, una vez, para finalizarla). Esto **refuerza** la inmutabilidad (INV-1); la garantía la dan las escrituras condicionales.
 - Los secretos (token de LocalStack, credenciales de AWS) nunca se guardan en el repositorio.

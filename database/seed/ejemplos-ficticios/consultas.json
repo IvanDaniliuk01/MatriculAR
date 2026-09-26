@@ -31,22 +31,37 @@
             "error": null
           },
           {
-            "url": "https://www.ecogas.com.ar/_next/static/chunks/3182-5194f519f6f9f5b0.js",
+            "url": "https://www.ecogas.com.ar/_next/static/chunks/3182-7c1d2e3f4a5b6c7d.js",
             "metodo": "GET",
             "status": 200,
             "content_type": "application/javascript; charset=UTF-8",
-            "bytes": 1116256,
+            "bytes": 1113870,
             "duracion_ms": 1480,
             "error": null
           }
         ]
       }
     ],
-    "url_recurso": "https://www.ecogas.com.ar/_next/static/chunks/3182-5194f519f6f9f5b0.js",
+    "url_recurso": "https://www.ecogas.com.ar/_next/static/chunks/3182-7c1d2e3f4a5b6c7d.js",
     "huella_recurso": "890d95b4ffb59dee40d98ba8e0b175b125cfbd976c9ab77bbf1f35756181ffa5",
-    "bytes_recurso": 1116256,
+    "bytes_recurso": 1113870,
     "registros_extraidos": 5019,
-    "resumen": null,
+    "resumen": {
+      "por_categoria": {
+        "1": 1638,
+        "2": 2229,
+        "3": 1152
+      },
+      "por_provincia": {
+        "CORDOBA": 3255,
+        "MENDOZA": 1225,
+        "SAN_LUIS": 240,
+        "SAN_JUAN": 224,
+        "CATAMARCA": 38,
+        "LA_RIOJA": 36,
+        "BUENOS_AIRES": 1
+      }
+    },
     "claves_no_esperadas": [],
     "exito_fuente_id": "ecogas"
   },

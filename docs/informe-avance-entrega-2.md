@@ -34,7 +34,7 @@ La devolución v2 nos mostró que **obtener correctamente un dato no implica int
 | Ítem de la consigna | Estado | Dónde |
 |---|---|---|
 | No se subió código ni implementación | ✅ | Las carpetas `/backend`, `/frontend` e `/infra` solo tienen READMEs y la estructura. Los scripts Python de [`investigacion/`](../investigacion/) son la prueba técnica **que pidió el tutor en la etapa anterior**, identificada como exploración aislada ([ver § 4](#4-sobre-el-código-por-qué-esta-entrega-es-solo-diseño)). |
-| Diseño de base de datos completo | ✅ | [`database/README.md`](../database/README.md): 14 tablas, con campos, tipos, claves, "FK", relaciones, índices, patrones de acceso y diagramas entidad-relación. |
+| Diseño de base de datos completo | ✅ | [`database/README.md`](../database/README.md): 15 tablas, con campos, tipos, claves, "FK", relaciones, índices, patrones de acceso y diagramas entidad-relación. |
 | Scripts de base de datos en `/database` | ✅ | [`database/tablas/`](../database/tablas/): definición de cada tabla (formato `CreateTable`, equivalente al DDL). [`database/seed/`](../database/seed/): datos iniciales (equivalente al DML). |
 | Listado de módulos con descripción y prioridad | ✅ | [`docs/modulos.md`](modulos.md): 15 módulos, P0 a P3, con dependencias y criterios de terminado. |
 | Arquitectura documentada (tecnologías definitivas y justificación) | ✅ | [`docs/arquitectura.md`](arquitectura.md) y [`docs/adr/`](adr/). |
@@ -74,7 +74,7 @@ La devolución v2 nos mostró que **obtener correctamente un dato no implica int
 | *Invariante: la ausencia de evidencia no debe convertirse en certeza.* | Es la **invariante rectora** del modelo y se traduce en reglas concretas: INV-3, INV-4, INV-5, INV-6 e INV-11 ([modelo § 8](modelo-de-dominio.md#8-invariantes)). |
 | *Cambiar "automatizable de forma legítima" por una formulación más prudente.* | Ahora dice *"la fuente resultó técnicamente accesible en las condiciones ensayadas"*, con la aclaración de que es una fuente web no contractual ([errata E3](../investigacion/MatriculAR_investigacion_fuentes_gas.md) · [fuentes § 8](fuentes-y-adaptadores.md#8-uso-responsable-de-las-fuentes)). |
 | *Precisión metodológica: se procesa la fuente completa y se persiste una muestra.* | Corregido con la frase sugerida ([errata E4](../investigacion/MatriculAR_investigacion_fuentes_gas.md)). En el diseño **no se persiste el padrón**, solo su huella ([ADR-0002](adr/0002-consulta-bajo-demanda-sin-copia-del-padron.md)). |
-| *Evitar nombres, teléfonos y correos reales en GitHub.* | Anonimizamos la investigación y los scripts. Todos los ejemplos son ficticios. El diseño **nunca persiste** el email, el teléfono ni el barrio de la Fuente (INV-9). |
+| *Evitar nombres, teléfonos y correos reales en GitHub.* | Anonimizamos la investigación y los scripts. Todos los ejemplos son ficticios. El diseño **nunca persiste** el email, el teléfono ni el barrio de la Fuente (INV-9). El historial de git todavía conserva la versión anterior; reescribirlo queda a decisión del equipo, porque altera commits ya revisados. |
 | *La URL fija y el extractor ahora son responsabilidad del adaptador.* | El adaptador descubre el recurso desde el HTML y valida en cinco pasos. Ya pasó en la realidad: el 26/09 la URL fija daba 404 y el patrón encontraba 0 registros ([fuentes § 4.1](fuentes-y-adaptadores.md#41-qué-sabemos-del-recurso)). |
 | *Una extracción inesperadamente vacía es un posible error de la fuente: mantener esa regla.* | Mantenida y ampliada: vacía, parcial o con una **caída brusca** de registros cuenta como `EXTRACCION_FALLIDA` (validaciones V4 y V5). |
 | *No dar por justificada una arquitectura compleja de colas y DLQ.* | Eliminadas. Reintentos sincrónicos dentro de la invocación, con los **criterios que justificarían colas** escritos ([ADR-0001](adr/0001-sin-colas-reintentos-sincronicos.md)). |
@@ -117,7 +117,7 @@ Los scripts Python de [`investigacion/`](../investigacion/) son la **prueba téc
 | Diferencial | "Ninguna plataforma lo resuelve." | Existe un verificador puntual multi-distribuidora (servidos.ar). El diferencial es la **compatibilidad por tipo de trabajo, con cita normativa y evidencia fechada**, y la contratación sobre ese núcleo. | Investigación de la etapa anterior. |
 | Oficios | Electricistas y gasistas. | **Solo gasistas.** Electricistas en la fase 2. | Toda la evidencia investigada es de gas. |
 | Estado del Profesional | `pendiente → verificado → vencido`. | Sin estado de habilitación: Credenciales con historial y Evaluaciones por trabajo. | ADR-0003. |
-| Pipeline | S3 → SQS → Lambda → DLQ, más el scheduler. | Sincrónico, con reintentos simples. El scheduler (P3) reutiliza el mismo caso de uso. | ADR-0001. |
+| Pipeline | S3 → SQS → Lambda → DLQ, más el scheduler. | Sincrónico, con reintentos simples. El scheduler (P3) reutiliza los mismos componentes del núcleo. | ADR-0001. |
 | Padrones | Mock configurable. | Adaptadores reales (Ecogas y MetroGAS). Simulaciones solo en los tests. | D4 revisada. |
 | Carga de documentos a S3 | Sí. | **Eliminada.** La titularidad se prueba con un código al email que publica la Fuente. | Una foto del carné no prueba nada que el sistema pueda chequear. |
 | Lenguaje | Node.js (sin especificar). | **TypeScript 7 sobre Node.js 24**, en frontend y backend. | Arquitectura § 5. |

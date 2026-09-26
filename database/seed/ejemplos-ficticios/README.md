@@ -1,6 +1,6 @@
 # Ejemplos ficticios
 
-> **Estos datos son inventados.** Las matrículas (serie 99001–99005), los nombres ("PERSONA FICTICIA UNO"), las huellas SHA-256 y los identificadores no corresponden a ninguna persona ni a ninguna consulta real. Los conteos por categoría y provincia de los resúmenes son agregados reales del 26/09/2026 y no contienen datos personales.
+> **Estos datos son inventados.** Las matrículas (serie 99001–99005), los nombres ("PERSONA FICTICIA UNO"), las huellas SHA-256 y los identificadores no corresponden a ninguna persona ni a ninguna consulta real. Los conteos por categoría y provincia de las Consultas del 26/09 son agregados reales de ese día; los de la Consulta del 20/09 (S0) son ilustrativos. Ninguno contiene datos personales.
 
 Muestran **cómo se ve cada ítem** de las tablas del núcleo en los escenarios del [modelo de dominio](../../../docs/modelo-de-dominio.md#9-escenarios). Sirven como:
 

@@ -292,7 +292,7 @@ Formato único:
 | 400 | `FUENTE_INACTIVA` / `TIPO_TRABAJO_INACTIVO` | Existen, pero no están activos. |
 | 404 | `FUENTE_INEXISTENTE` / `TIPO_TRABAJO_INEXISTENTE` / `VERIFICACION_INEXISTENTE` | El identificador no existe. |
 | 429 | (API Gateway) | Se excedió el límite de uso. |
-| 500 | `ERROR_INTERNO` | Falla de MatriculAR: por ejemplo, no se pudo escribir en la base. **La Consulta queda registrada** como `EN_CURSO` y se lee como interrumpida. |
+| 500 | `ERROR_INTERNO` | Falla de MatriculAR: por ejemplo, no se pudo escribir en la base. **La Consulta queda registrada** como `EN_CURSO` y, al vencer su plazo, se lee como `FALLIDA` con motivo `INTERRUMPIDA` (no se le atribuye a la Fuente). |
 
 **Nunca** se responde `5xx` porque la Fuente falló. Eso es `201` con `NO_VERIFICABLE`.
 

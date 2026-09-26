@@ -1,0 +1,16 @@
+{
+  "TableName": "TitularesMatricula",
+  "BillingMode": "PAY_PER_REQUEST",
+  "AttributeDefinitions": [
+    {
+      "AttributeName": "fuente_matricula",
+      "AttributeType": "S"
+    }
+  ],
+  "KeySchema": [
+    {
+      "AttributeName": "fuente_matricula",
+      "KeyType": "HASH"
+    }
+  ]
+}

@@ -45,7 +45,7 @@ Regla de recorte: si el plan se atrasa, **se recorta de abajo hacia arriba** (pr
 | **M11** | Usuarios y autenticación | **P2** | Cuentas de Cliente y Profesional con Cognito. Autorización en API Gateway. | Cognito · `λ contrataciones` |
 | **M12** | Contratación | **P2** | Solicitud → aceptada → realizada → calificada, o cancelada. Cada Contratación queda asociada a una Verificación hecha al crearla. | `λ contrataciones` · [`backend/contrataciones/`](../backend/contrataciones/) |
 | **M13** | Reseñas y reputación | **P2** | Puntaje y comentario sobre Contrataciones realizadas, más el promedio del Profesional. | `λ contrataciones` |
-| **M14** | Revalidación programada | **P3** | Todos los días, una Consulta por Fuente para todas las matrículas vinculadas. Reutiliza el caso de uso *Verificar*. | `λ revalidacion` · [`backend/revalidacion/`](../backend/revalidacion/) |
+| **M14** | Revalidación programada | **P3** | Todos los días, una Consulta por Fuente para todas las matrículas vinculadas. Caso de uso *Revalidar*, armado con los mismos componentes del núcleo que *Verificar*. | `λ revalidacion` · [`backend/revalidacion/`](../backend/revalidacion/) |
 | **M15** | Notificaciones | **P3** | Avisos cuando una revalidación cambia el Resultado de verificación de un Profesional (por ejemplo, de `ENCONTRADA` a `NO_ENCONTRADA`). | `λ notificaciones` · [`backend/notificaciones/`](../backend/notificaciones/) |
 
 ---
@@ -156,7 +156,7 @@ Para cada módulo: qué hace, con qué datos trabaja, qué expone y cómo se dem
 
 | | |
 |---|---|
-| **Responsabilidades** | Terraform para las 8 tablas del núcleo (más las de P1 y P2 cuando se implementen), la función, API Gateway con límites de uso, IAM de mínimo privilegio (sin `Update` ni `Delete` sobre la evidencia) y logs. Script de carga de datos semilla. Levantar y destruir el entorno con un comando. |
+| **Responsabilidades** | Terraform para las 8 tablas del núcleo (más las de P1 y P2 cuando se implementen), la función, API Gateway con límites de uso, IAM de mínimo privilegio (sin `DeleteItem` sobre la evidencia y sin `UpdateItem` salvo para finalizar la Consulta) y logs. Script de carga de datos semilla. Levantar y destruir el entorno con un comando. |
 | **Diseño** | [`infra/README.md`](../infra/README.md) · [`database/`](../database/) |
 | **Terminado cuando** | `lstk terraform apply` más el seed dejan el sistema funcionando desde cero, y `destroy` lo elimina sin residuos. |
 
@@ -179,8 +179,8 @@ Para cada módulo: qué hace, con qué datos trabaja, qué expone y cómo se dem
 
 | | |
 |---|---|
-| **Responsabilidades** | Declarar una matrícula (queda `NO_VERIFICADO`). Enviar un código al email que publica la Fuente (se usa en memoria y no se guarda). Confirmar el código (pasa a `VERIFICADO`). Garantizar un solo Vínculo verificado por matrícula. Mostrar como "no verificado" al que no tiene email en la Fuente. |
-| **Datos** | `Vinculos` (el código solo como hash). |
+| **Responsabilidades** | Declarar una matrícula (queda `NO_VERIFICADO`). Enviar un código al email que publica la Fuente (se usa en memoria y no se guarda). Confirmar el código (pasa a `VERIFICADO`). Garantizar un solo Vínculo verificado por matrícula, con una escritura condicional en `TitularesMatricula` dentro de la misma transacción. Mostrar como "no verificado" al que no tiene email en la Fuente. |
+| **Datos** | `Vinculos` (el código solo como hash) y `TitularesMatricula`. |
 | **Riesgo** | SES en modo *sandbox* ([arquitectura § 12](arquitectura.md#12-riesgos)). |
 | **Terminado cuando** | Un Profesional verifica su matrícula con el código. Un segundo usuario no puede verificar la misma matrícula. |
 
@@ -221,7 +221,7 @@ Para cada módulo: qué hace, con qué datos trabaja, qué expone y cómo se dem
 
 | | |
 |---|---|
-| **Responsabilidades** | Todos los días, EventBridge Scheduler invoca una Consulta por Fuente con todas las matrículas vinculadas y registra los Resultados. Es la misma lógica que *Verificar*, con otro disparador (el espíritu de la D3). |
+| **Responsabilidades** | Todos los días, EventBridge Scheduler invoca una Consulta por Fuente con todas las matrículas vinculadas y registra los Resultados. El caso de uso *Revalidar* usa los mismos componentes del núcleo que *Verificar* (lectura de la Fuente, registro de la Consulta y de los Resultados), con otro disparador (el espíritu de la D3). |
 | **Terminado cuando** | Una revalidación con 100 matrículas hace **una** descarga por Fuente. |
 
 ### M15 · Notificaciones · P3

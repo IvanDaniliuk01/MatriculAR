@@ -81,7 +81,7 @@ Es la "interfaz mínima" que pidió el tutor para recorrer el flujo completo.
 
 Reglas de la interfaz:
 
-- **Nunca** se usa "habilitado", "vigente" ni "verificado".
+- En los resultados de una Verificación **nunca** se usa "habilitado", "vigente" ni "verificado". "Verificado" solo aparece para el estado del Vínculo del Profesional (P1).
 - Toda afirmación muestra **de qué Fuente y de qué fecha** es la evidencia.
 - La evidencia previa, cuando se muestra, va separada y rotulada como *"Última evidencia disponible (no se usa para concluir)"*.
 - El sitio es responsive: se tiene que poder usar desde el celular, frente al gasista.
