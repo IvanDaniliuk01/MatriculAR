@@ -1,239 +1,201 @@
-# MatriculAR - Trabajo final — Tecnicatura Universitaria en Programación (UTN)
+# MatriculAR
 
-**Plataforma de contratación de oficios regulados con verificación continua de credenciales profesionales.**
+**Trabajo final · Tecnicatura Universitaria en Programación (UTN)**
+
+Plataforma que responde, **con evidencia fechada y citable**, si la matrícula de un gasista es compatible con un trabajo concreto: qué sabemos, de qué fuente, cuándo lo consultamos y qué no podemos afirmar. Sobre ese núcleo se monta la búsqueda y la contratación de profesionales.
+
+> **Estado del proyecto:** etapa 3 de la hoja de ruta, **Arquitectura y Módulos** (segunda entrega, 27/09/2026). Es una etapa de **análisis y diseño: todavía no hay código del sistema.** La implementación empieza cuando el tutor apruebe este diseño.
+>
+> 👉 **Para revisar la entrega, empezar por el [informe de avance](docs/informe-avance-entrega-2.md)**, que incluye la respuesta punto por punto a la devolución v2.
 
 ---
 
 ## Tabla de contenidos
 
+- [Documentación](#documentación)
 - [El problema](#el-problema)
 - [Qué es MatriculAR](#qué-es-matricular)
 - [Principios rectores](#principios-rectores)
-- [Arquitectura](#arquitectura)
-- [Stack](#stack)
-- [Alcance del MVP](#alcance-del-mvp)
-- [Máquinas de estado](#máquinas-de-estado)
-- [Puesta en marcha](#puesta-en-marcha)
+- [Cómo funciona](#cómo-funciona)
+- [Alcance](#alcance)
+- [Arquitectura y tecnologías](#arquitectura-y-tecnologías)
 - [Estructura del repositorio](#estructura-del-repositorio)
-- [Decisiones de diseño](#decisiones-de-diseño)
+- [Puesta en marcha](#puesta-en-marcha)
 - [Equipo](#equipo)
+
+---
+
+## Documentación
+
+| Documento | Qué contiene |
+|---|---|
+| [**Informe de avance, entrega 2**](docs/informe-avance-entrega-2.md) | Qué se hizo, checklist de la consigna, respuesta a la devolución v2, hallazgos y preguntas para el tutor. |
+| [Glosario (`CONTEXT.md`)](CONTEXT.md) | Vocabulario del dominio: Fuente, Consulta, Credencial, Evaluación, Verificación… |
+| [Modelo de dominio](docs/modelo-de-dominio.md) | Credencial frente a Evaluación, recorrido de una Verificación, estados, invariantes y escenarios. |
+| [Reglas de categoría y de zona](docs/reglas-de-categoria.md) | Qué habilita cada categoría según la NAG-200, Tipos de trabajo, criterio de zona y vigencia, con citas. |
+| [Fuentes y adaptadores](docs/fuentes-y-adaptadores.md) | Cómo se lee el padrón de Ecogas, las cinco validaciones, fallas, reintentos y MetroGAS. |
+| [**Esquema de base de datos**](database/README.md) | 14 tablas de DynamoDB: campos, tipos, claves, relaciones, índices y patrones de acceso. |
+| [**Módulos**](docs/modulos.md) | 15 módulos con prioridad, dependencias y plan tentativo. |
+| [**Arquitectura**](docs/arquitectura.md) | Estilo, capas, tecnologías definitivas y justificación, entornos, seguridad y riesgos. |
+| [API](docs/api.md) | Contrato de endpoints, ejemplos por resultado y diagramas de secuencia. |
+| [Decisiones (ADR)](docs/adr/) | 0001 sin colas · 0002 consulta bajo demanda · 0003 Credencial separada de Evaluación · 0004 una tabla por entidad. |
+| [Consulta a Ecogas](docs/consulta-a-ecogas.md) | Preguntas enviadas a la distribuidora y cómo cambia el diseño según la respuesta. |
+| [Investigación de fuentes](investigacion/) | Prueba técnica de la etapa anterior (MetroGAS y Ecogas), con fe de erratas. |
+
+Todos los diagramas están en **Mermaid** dentro de los `.md`, así que se ven directamente en GitHub.
 
 ---
 
 ## El problema
 
-En Argentina ya existen varias apps que conectan hogares con profesionales de oficios (Timbrit, Clickie, Muovi, Tegu, Tutti, Yamba, Homesolution). La búsqueda y el matching están razonablemente resueltos.
+En Argentina ya existen varias apps que conectan hogares con profesionales de oficios (Timbrit, Clickie, Muovi, Tegu, Tutti, Yamba, Homesolution). La búsqueda y el matching están razonablemente resueltos. Lo que sigue sin resolverse es **saber si el gasista que vas a contratar puede hacer legalmente *ese* trabajo**:
 
-Lo que ninguna resuelve es **la credencial como dato vivo**:
-
-- La habilitación legal está fragmentada por organismo y jurisdicción — COPIME (CABA/nacional), ERSeP (Córdoba, con categorías I, II y III), APSE (PBA) para electricistas; ENARGAS más las distribuidoras regionales (MetroGAS, Naturgy BAN, Camuzzi, Ecogas, Litoral Gas) para gasistas.
-- Las matrículas **vencen**. Un trabajo firmado con matrícula vencida no tiene validez y puede dejar al cliente sin cobertura del seguro ante un siniestro.
-- Las plataformas actuales verifican una única vez, al alta, y delegan el control en el usuario final: *"pedile el número y consultalo en el organismo"*.
+- **La habilitación está fragmentada.** Las matrículas de gasista las otorga cada **distribuidora** (MetroGAS, Naturgy BAN, Camuzzi, Ecogas, Litoral Gas…) bajo las normas de ENARGAS, y cada una publica su padrón de una manera distinta: un archivo web (Ecogas), un buscador protegido con captcha (MetroGAS), un listado por partido (Naturgy BAN).
+- **La categoría importa, y no es un nivel.** La NAG-200 define tres categorías con alcances distintos. Por ejemplo, la 3ª solo puede trabajar en viviendas unifamiliares, y un artefacto comercial de más de 50.000 kcal/h requiere la 1ª. "Tiene matrícula" no alcanza: la pregunta es si tiene la categoría **para este trabajo**.
+- **Ningún padrón informa la vigencia.** La matrícula se renueva todos los años (vence el 31/03), pero quien no renueva recién sale del registro a los tres años. Figurar en un padrón **no prueba** que la matrícula esté al día.
+- **Las verificaciones existentes son puntuales.** Hay un verificador que consulta varias distribuidoras a la vez (servidos.ar), y las plataformas de oficios verifican una vez, al alta, o delegan el control en el usuario: *"pedile el número y consultalo"*. Ninguna dice **para qué trabajo** alcanza la matrícula, **de qué fuente y de qué fecha** es la evidencia, ni **qué no se puede afirmar**.
 
 > **Enunciado del problema**
-> No existe una plataforma que garantice de forma continua y automática que la habilitación legal de un profesional de oficio esté vigente, en la jurisdicción correcta y para la categoría de trabajo correcta, al momento de contratarlo.
+> No existe una plataforma que informe, con evidencia fechada y trazable, si la matrícula de un gasista es compatible con un trabajo concreto, distinguiendo lo que se sabe de lo que no se puede verificar.
+
+---
 
 ## Qué es MatriculAR
 
-Un marketplace de oficios regulados cuyo núcleo **no es el listado de profesionales sino un motor de verificación de matrículas**: multi-organismo, multi-jurisdicción y continuo en el tiempo.
+Un marketplace de gasistas cuyo núcleo **no es el listado de profesionales, sino la verificación de matrículas contra las fuentes reales**, que responde con precisión:
 
-Sobre ese motor se monta el ciclo completo de contratación: solicitud, aceptación, realización y calificación.
+| Pregunta | Cómo la responde MatriculAR |
+|---|---|
+| ¿Qué sabemos? | La **Credencial**: matrícula, nombre, categoría y provincia que informa el padrón. |
+| ¿De dónde lo sabemos? | La **Fuente**: el padrón de una distribuidora concreta. |
+| ¿Cuándo lo verificamos? | La **Consulta**: fecha, intentos y huella del recurso leído. |
+| ¿Qué podemos concluir? | La **Evaluación** para un tipo de trabajo: `COMPATIBLE`, `NO_COMPATIBLE` o `INDETERMINADA`, con su fundamento normativo. |
+| ¿Qué no podemos afirmar? | Las **Limitaciones** (por ejemplo, la vigencia) y los resultados `NO_VERIFICABLE`. |
+
+Sobre ese núcleo se montan el perfil de los profesionales, la búsqueda por tipo de trabajo y zona, y el ciclo de contratación con reseñas.
+
+---
 
 ## Principios rectores
 
 | Principio | Qué significa en la práctica |
 |---|---|
-| **La confianza se verifica, no se declara** | Ningún profesional figura como matriculado sin validación contra el padrón del organismo. |
-| **La matrícula es un dato vivo** | El sistema la revalida periódicamente y degrada el estado del profesional de forma automática. |
-| **Arquitectura orientada a eventos** | Todo lo que no necesita respuesta inmediata ocurre asíncrono, desacoplado y con reintentos. |
-| **Recorte despiadado de alcance** | Pocas cosas completas en lugar de muchas a medias; lo excluido queda documentado como fase 2. |
-| **Diseñado para migrar** | Corre 100% local sobre AWS emulado, pero cada decisión se toma como si mañana fuera AWS real. |
+| **La confianza se verifica, no se declara** | Ningún gasista figura como compatible con un trabajo sin evidencia de una Fuente real, y la titularidad de una matrícula se prueba con un código enviado al email que publica la propia Fuente. |
+| **La ausencia de evidencia no se convierte en certeza** | Si una Fuente no se pudo consultar, el resultado es `NO_VERIFICABLE`, no "no encontrado". Nunca se dice "no aparece en ningún padrón" si alguna Fuente no se consultó. |
+| **Validar la regla antes de automatizarla** | Ninguna regla entra al sistema sin una cita normativa que la respalde. Lo que no tiene respaldo se informa como `INDETERMINADO`. |
+| **La evidencia es inmutable y fechada** | Cada Credencial queda asociada a una Consulta con fecha. Nunca se modifica ni se borra, y una falla nunca pisa la evidencia anterior. |
+| **Complejidad solo cuando la necesidad la justifica** | Sin colas ni DLQ hasta que haya un motivo concreto. Los criterios que las justificarían están escritos. |
+| **Recorte despiadado de alcance** | Pocas cosas completas en lugar de muchas a medias. El núcleo (P0) se entrega completo y el resto se recorta de abajo hacia arriba. |
+| **Diseñado para migrar** | Se desarrolla sobre AWS emulado (LocalStack) y se despliega en AWS real con el mismo código de infraestructura. |
 
-## Arquitectura
+---
 
-La solución separa un **camino síncrono** (petición-respuesta) de un **pipeline asíncrono** orientado a eventos. El frontend habla únicamente con API Gateway; los documentos suben directo a S3 mediante URLs prefirmadas; y la verificación, notificación y revalidación ocurren por detrás.
+## Cómo funciona
 
-```
-                          ┌──────────────┐
-                          │   Frontend   │  React (fuera de LocalStack)
-                          └──────┬───────┘
-                                 │
-                          ┌──────▼───────┐
-                          │ API Gateway  │
-                          └──┬────────┬──┘
-              ┌──────────────┘        └──────────────┐
-      ┌───────▼────────┐                    ┌────────▼────────┐
-      │ λ profesionales│                    │ λ contrataciones│
-      │ registro·perfil│                    │ solicitudes     │
-      │ búsqueda       │                    │ estados·reseñas │
-      └───────┬────────┘                    └────────┬────────┘
-              └──────────────┐        ┌──────────────┘
-                          ┌──▼────────▼──┐
-                          │   DynamoDB   │
-                          └──────▲───────┘
-                                 │
-  ┌───────────────┐   ┌──────────┴─────┐   ┌──────────────────┐
-  │ S3 documentos │──▶│ SQS + DLQ      │──▶│  λ verificador   │
-  │ (URL prefirm.)│   │ verificación   │   │ mock de padrones │
-  └───────────────┘   └────────▲───────┘   └────────┬─────────┘
-                               │                    │
-                      ┌────────┴───────┐   ┌────────▼─────────┐
-                      │   Scheduler    │   │ SNS + λ notific. │
-                      │ EventBridge    │   └──────────────────┘
-                      │ (diario)       │
-                      └────────────────┘
+```mermaid
+flowchart LR
+    P([Cliente: ¿el gasista con matrícula 99001<br/>de Ecogas puede conectar un calefón<br/>en una casa de Córdoba?]) --> C[Consulta a Ecogas<br/>descarga, extrae y valida]
+    C -->|la lectura falla| NV([NO_VERIFICABLE<br/>muestra la última evidencia<br/>con su fecha, sin concluir])
+    C -->|la matrícula no figura| NE([NO_ENCONTRADA<br/>en Ecogas, en esta fecha])
+    C -->|la matrícula figura| CR[Credencial nueva<br/>categoría 2ª · Córdoba · 26/09 15:40]
+    CR --> EV[Evaluación<br/>categoría: 2ª admitida · NAG-200 8.3.1<br/>zona: Córdoba en el área de Ecogas]
+    EV --> R([COMPATIBLE<br/>más las Limitaciones:<br/>la vigencia no se puede afirmar])
 ```
 
-**Flujo síncrono** — API Gateway enruta por prefijo hacia la Lambda de profesionales (registro, perfil, credenciales, búsqueda) o la de contrataciones (solicitudes, transiciones, reseñas). Ambas leen y escriben DynamoDB de forma directa.
+Detalle: [modelo de dominio](docs/modelo-de-dominio.md#4-el-recorrido-de-una-verificación) · [API](docs/api.md#6-secuencias).
 
-**Flujo asíncrono** — La subida de una credencial a S3 emite un evento que se encola en SQS. La Lambda verificadora consume el mensaje, consulta el mock de padrones y, según el veredicto, actualiza el estado del profesional en DynamoDB y publica el resultado en SNS, que dispara la Lambda notificadora. Tras **tres intentos fallidos** el mensaje pasa a la **DLQ**. El scheduler diario re-encola a los profesionales con matrícula próxima a vencer o vencida, **reutilizando el mismo pipeline**.
+---
 
-## Stack
+## Alcance
 
-| Necesidad | Servicio AWS (emulado en LocalStack) |
+| Prioridad | Módulos | Compromiso |
+|---|---|---|
+| **P0 · núcleo** | Fuentes y adaptadores · Consultas y evidencia · Reglas y evaluación · Verificación y API · Interfaz de verificación · Infraestructura · Despliegue en la nube | **Se entrega completo.** |
+| **P1 · marketplace** | Profesionales · Vínculos (titularidad de la matrícula) · Búsqueda | Si el P0 está cerrado. |
+| **P2 · contratación** | Usuarios y autenticación · Contratación · Reseñas | Si el tiempo alcanza. |
+| **P3 · continuidad** | Revalidación programada · Notificaciones | Fase 2 si no alcanza. |
+
+**Fuentes del P0:** Ecogas (Córdoba, Catamarca, La Rioja, Mendoza, San Juan y San Luis; se consulta automáticamente) y MetroGAS (CABA; protegida con captcha, así que **no se consulta automáticamente** y el sistema lo informa como `NO_VERIFICABLE`).
+
+**Fuera de alcance (fase 2):** electricistas, otras distribuidoras, pagos, chat, geolocalización fina, back-office y apps nativas. Detalle en [módulos § 5](docs/modulos.md#5-fuera-de-alcance).
+
+---
+
+## Arquitectura y tecnologías
+
+**Serverless en AWS**, organizado como monolito modular por contexto (una función Lambda por contexto), con **arquitectura hexagonal** dentro de cada función, comunicación **sincrónica** y **sin colas**. Detalle y justificación: [arquitectura](docs/arquitectura.md).
+
+| Capa | Tecnología |
 |---|---|
-| API del sistema | API Gateway + Lambda |
-| Documentos de credenciales | S3 con URLs prefirmadas |
-| Verificación asíncrona | SQS + Lambda consumidora + DLQ |
-| Notificaciones | SNS (fan-out) + Lambda notificadora |
-| Perfiles, credenciales y contrataciones | DynamoDB |
-| Revalidación de vencimientos | EventBridge Scheduler + Lambda |
-| Infraestructura reproducible | Terraform (IaC del 100% de los recursos) |
+| Lenguaje | **TypeScript 7** (compilador nativo), en frontend y backend |
+| Backend | **AWS Lambda** con **Node.js 24** (`nodejs24.x`) · esbuild · Zod |
+| API | **Amazon API Gateway** (REST) |
+| Base de datos | **Amazon DynamoDB**, una tabla por entidad |
+| Frontend | **React + Vite** |
+| Autenticación (P1 y P2) | **Amazon Cognito** |
+| Tareas programadas y notificaciones (P3) | **EventBridge Scheduler** · **SNS** |
+| Infraestructura como código | **Terraform** (`lstk terraform` en local) |
+| Entorno local | **LocalStack** + Docker |
+| Nube (etapa 4) | **AWS** (Free plan) |
+| Calidad | Vitest · Biome · `tsc --noEmit` |
 
-Frontend de demostración: **React** (corre fuera de LocalStack).
+Decisiones de la primera entrega (D1–D6) y su estado actual: [arquitectura § 6](docs/arquitectura.md#6-decisiones-de-la-primera-entrega-qué-sigue-y-qué-cambió).
 
-## Alcance del MVP
-
-### ✅ Corte vertical A — El sello de confianza
-
-- Registro de profesional con carga de credencial (subida directa a S3).
-- Pipeline de verificación asíncrono contra padrones simulados (mock configurable de COPIME / ERSeP / APSE / distribuidoras de gas).
-- Estados del profesional; se publica en la búsqueda solo cuando está verificado y vigente.
-- Revalidación diaria de vencimientos y notificaciones asociadas.
-
-### ✅ Corte vertical B — El ciclo de contratación
-
-- Búsqueda de profesionales por rubro y zona, filtrando por estado *verificado*.
-- Ciclo de vida de la solicitud: solicitada → aceptada → realizada → calificada (con cancelación).
-- Calificación simple (puntaje + comentario) que alimenta la reputación.
-- Notificaciones de hitos vía el pipeline de eventos.
-
-### ❌ Fuera de alcance (fase 2, documentada)
-
-- Pagos y facturación dentro de la plataforma.
-- Chat en tiempo real entre cliente y profesional.
-- Geolocalización fina y cálculo de distancias (la zona se modela como listado de partidos/localidades).
-- Panel de administración y back-office.
-- Apps móviles nativas (el frontend del MVP es web).
-- Integración con los padrones reales (la interfaz queda preparada — ver decisión D4).
-
-## Máquinas de estado
-
-**Profesional**
-
-```
-pendiente_verificación ──▶ verificado
-                       └─▶ rechazado
-
-verificado ──▶ vencido ──(revalidación)──▶ verificado
-```
-
-**Contratación**
-
-```
-solicitada ──▶ aceptada ──▶ realizada ──▶ calificada
-     │             │
-     └─────────────┴──▶ cancelada
-```
-
-## Puesta en marcha
-
-> ⚠️ Sección en construcción — se completa durante el Mes 1 (Fundaciones). Los comandos de abajo son la interfaz que apuntamos a tener.
-
-### Requisitos
-
-- Docker y Docker Compose
-- Terraform ≥ 1.x
-- Node.js (runtime de las Lambdas y frontend)
-- `awslocal` / `tflocal` (wrappers de LocalStack)
-
-### Levantar el entorno
-
-```bash
-# 1. Levantar LocalStack
-docker compose up -d
-
-# 2. Provisionar toda la infraestructura
-cd infra && tflocal init && tflocal apply
-
-# 3. Empaquetar y desplegar las Lambdas
-./scripts/deploy.sh
-
-# 4. Cargar datos semilla
-./scripts/seed.sh
-
-# 5. Frontend de demostración
-cd frontend && npm install && npm run dev
-```
-
-### Destruir y recrear
-
-Todo el entorno se destruye y se recrea con un comando — es requisito de diseño (D6) y habilita la demo en vivo.
-
-```bash
-cd infra && tflocal destroy -auto-approve
-```
+---
 
 ## Estructura del repositorio
 
-> Propuesta inicial, sujeta a ajuste durante el Mes 1.
-
 ```
-matriculAR/
-├── infra/              # Terraform: 100% de los recursos
-├── services/
-│   ├── profesionales/  # λ registro · perfil · credenciales · búsqueda
-│   ├── contrataciones/ # λ solicitudes · estados · reseñas
-│   ├── verificador/    # λ consumidora de SQS + puerto de padrones
-│   └── notificador/    # λ suscripta a SNS
-├── mocks/padrones/     # Mock configurable de organismos
-├── frontend/           # React (demo)
-├── scripts/            # deploy · hot-reload · seed · smoke tests
-├── tests/              # Integración e idempotencia contra LocalStack
-└── docs/               # Manifiesto, diseño técnico, ADRs
+MatriculAR/
+├── README.md                  este archivo
+├── CONTEXT.md                 glosario del dominio
+├── docs/                      diseño: informe de avance, modelo, reglas, fuentes, arquitectura, módulos, API
+│   └── adr/                   decisiones de arquitectura
+├── database/                  esquema de colecciones (DynamoDB)
+│   ├── tablas/                definición de cada tabla (equivalente al DDL)
+│   └── seed/                  datos iniciales (equivalente al DML) y ejemplos ficticios
+├── backend/                   estructura del backend, sin código todavía
+│   ├── compartido/            núcleo: dominio, casos de uso, puertos, adaptadores
+│   ├── verificacion/          λ P0
+│   ├── profesionales/         λ P1
+│   ├── contrataciones/        λ P2
+│   ├── revalidacion/          λ P3
+│   └── notificaciones/        λ P3
+├── frontend/                  estructura del frontend (React), sin código todavía
+├── infra/                     estructura de Terraform, sin código todavía
+├── scripts/                   scripts previstos (levantar, seed, desplegar)
+└── investigacion/             prueba técnica de la etapa anterior (exploración aislada)
 ```
 
-### Riesgos vigentes
+---
 
-| Riesgo | Prob. | Mitigación |
-|---|---|---|
-| Cobertura parcial de servicios en LocalStack gratuito | Media | Diseño restringido a servicios core bien soportados; prueba de humo por recurso en el Mes 1. |
-| Scope creep por abarcar dos cortes verticales | **Alta** | Backlog congelado: toda idea nueva va a fase 2; revisión quincenal contra el manifiesto. |
-| Fricción del ciclo de desarrollo serverless local | Media | Scripts de empaquetado y hot-reload desde el inicio; tests de integración automatizados. |
-| Pérdida del estado local del contenedor | Baja | Volumen persistente y scripts de datos semilla reproducibles. |
-| Consigna de la cátedra aún no publicada | Media | Diseño portable (LocalStack ↔ AWS real) y documento versionado. |
+## Puesta en marcha
 
-## Decisiones de diseño
+> Se completa en la etapa de implementación. Este es el flujo previsto ([arquitectura § 7](docs/arquitectura.md#7-entornos-y-costos)).
 
-| # | Decisión | Fundamento |
-|---|---|---|
-| **D1** | Entorno de ejecución local con LocalStack | Aprender arquitectura cloud sin cuenta de AWS, sin tarjeta y sin riesgo de facturación. La migración a AWS real es opción, no requisito. |
-| **D2** | Serverless puro con Lambdas por contexto | Funciones agrupadas por contexto de negocio (profesionales, contrataciones, verificador, notificador) en lugar de una por endpoint. Menos piezas, misma pureza arquitectónica. |
-| **D3** | Un único pipeline de verificación con dos disparadores | La verificación inicial (evento S3) y la revalidación (scheduler diario) recorren el mismo camino. Un solo código que probar y mantener. |
-| **D4** | Padrones simulados detrás de una interfaz | El verificador consulta un *puerto* de padrones; el MVP implementa un mock configurable (respuestas válidas, vencidas, rechazadas, con demora). Integrar un padrón real es escribir un adaptador, no tocar el pipeline. |
-| **D5** | DynamoDB como almacenamiento | Patrones de acceso acotados y conocidos; base clave-valor administrada, alineada con el modelo serverless. |
-| **D6** | Infraestructura 100% como código (Terraform) | Ningún recurso se crea a mano; el entorno se levanta y destruye con un comando. |
+**Requisitos:** Docker, una cuenta gratuita de LocalStack (plan Student u Hobby) con `LOCALSTACK_AUTH_TOKEN`, Terraform 1.x con `lstk`, y Node.js 24.
 
-### Garantías operativas comprometidas
+```bash
+# 1. Levantar LocalStack (el token va en .env, que está ignorado por git)
+docker compose up -d
 
-- **Idempotencia** en los consumidores de eventos: procesar dos veces el mismo mensaje no debe corromper datos.
-- **Reintentos + DLQ**: tres intentos antes de derivar a la cola de mensajes muertos.
-- **Máquinas de estado explícitas** con transiciones auditables.
-- **Documentos que nunca pasan por la capa de cómputo**: subida directa vía URL prefirmada.
+# 2. Crear toda la infraestructura (tablas, funciones, API)
+cd infra/entornos/local && lstk terraform init && lstk terraform apply
+
+# 3. Cargar la configuración real (Fuentes, Categorías, Tipos de trabajo)
+./scripts/seed
+
+# 4. Frontend
+cd frontend && npm install && npm run dev
+```
+
+Todo el entorno se destruye y se recrea con un comando (decisión D6).
+
+---
 
 ## Equipo
 
-| Integrante | |
+| Integrante | Rol |
 |---|---|
 | **Iván Daniliuk** | Desarrollo e infraestructura |
 | **Nicolás Gabriel Demiryi** | Desarrollo e infraestructura |

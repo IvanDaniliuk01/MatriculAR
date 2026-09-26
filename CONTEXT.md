@@ -9,7 +9,7 @@ Empresa licenciataria de gas que otorga y registra matrículas de gasistas en su
 _Avoid_: Organismo, ente
 
 **Área de concesión**:
-Conjunto de provincias o zonas donde opera una Distribuidora (Ecogas: Córdoba, Catamarca, La Rioja, Mendoza, San Juan, San Luis).
+Conjunto de provincias donde opera una Distribuidora (Ecogas: Córdoba, Catamarca, La Rioja, Mendoza, San Juan, San Luis). Si la Distribuidora opera solo en parte de una provincia, esa provincia es de concesión parcial.
 _Avoid_: Jurisdicción
 
 **Fuente**:
@@ -23,6 +23,10 @@ _Avoid_: Scraping, sincronización
 **Intento**:
 Cada ejecución completa de la lectura de una Fuente dentro de una Consulta, con su hora, las respuestas obtenidas y el error. Solo las fallas transitorias (red, tiempo agotado, error 5xx o 429) generan un nuevo Intento; una `EXTRACCION_FALLIDA` no se reintenta.
 _Avoid_: Retry, request
+
+**Huella del recurso**:
+Identificador (SHA-256) del contenido exacto que leyó una Consulta exitosa. Permite saber qué versión del padrón se leyó sin guardar el padrón.
+_Avoid_: Hash, checksum
 
 **Resultado de verificación**:
 Lo que una Consulta permite afirmar sobre cada matrícula buscada en una Fuente: `ENCONTRADA`, `NO_ENCONTRADA` (la Consulta fue exitosa y la matrícula no figura) o `NO_VERIFICABLE` (la Consulta falló o no se realizó).
