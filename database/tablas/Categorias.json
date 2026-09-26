@@ -1,0 +1,16 @@
+{
+  "TableName": "Categorias",
+  "BillingMode": "PAY_PER_REQUEST",
+  "AttributeDefinitions": [
+    {
+      "AttributeName": "categoria_id",
+      "AttributeType": "S"
+    }
+  ],
+  "KeySchema": [
+    {
+      "AttributeName": "categoria_id",
+      "KeyType": "HASH"
+    }
+  ]
+}

@@ -1,0 +1,129 @@
+[
+  {
+    "codigo": "BUENOS_AIRES",
+    "nombre": "Buenos Aires",
+    "alias": []
+  },
+  {
+    "codigo": "CATAMARCA",
+    "nombre": "Catamarca",
+    "alias": []
+  },
+  {
+    "codigo": "CHACO",
+    "nombre": "Chaco",
+    "alias": []
+  },
+  {
+    "codigo": "CHUBUT",
+    "nombre": "Chubut",
+    "alias": []
+  },
+  {
+    "codigo": "CIUDAD_AUTONOMA_DE_BUENOS_AIRES",
+    "nombre": "Ciudad Autónoma de Buenos Aires",
+    "alias": [
+      "CABA",
+      "CAPITAL FEDERAL",
+      "CIUDAD DE BUENOS AIRES",
+      "CIUDAD AUTONOMA DE BUENOS AIRES"
+    ]
+  },
+  {
+    "codigo": "CORDOBA",
+    "nombre": "Córdoba",
+    "alias": []
+  },
+  {
+    "codigo": "CORRIENTES",
+    "nombre": "Corrientes",
+    "alias": []
+  },
+  {
+    "codigo": "ENTRE_RIOS",
+    "nombre": "Entre Ríos",
+    "alias": []
+  },
+  {
+    "codigo": "FORMOSA",
+    "nombre": "Formosa",
+    "alias": []
+  },
+  {
+    "codigo": "JUJUY",
+    "nombre": "Jujuy",
+    "alias": []
+  },
+  {
+    "codigo": "LA_PAMPA",
+    "nombre": "La Pampa",
+    "alias": []
+  },
+  {
+    "codigo": "LA_RIOJA",
+    "nombre": "La Rioja",
+    "alias": []
+  },
+  {
+    "codigo": "MENDOZA",
+    "nombre": "Mendoza",
+    "alias": []
+  },
+  {
+    "codigo": "MISIONES",
+    "nombre": "Misiones",
+    "alias": []
+  },
+  {
+    "codigo": "NEUQUEN",
+    "nombre": "Neuquén",
+    "alias": []
+  },
+  {
+    "codigo": "RIO_NEGRO",
+    "nombre": "Río Negro",
+    "alias": []
+  },
+  {
+    "codigo": "SALTA",
+    "nombre": "Salta",
+    "alias": []
+  },
+  {
+    "codigo": "SAN_JUAN",
+    "nombre": "San Juan",
+    "alias": []
+  },
+  {
+    "codigo": "SAN_LUIS",
+    "nombre": "San Luis",
+    "alias": []
+  },
+  {
+    "codigo": "SANTA_CRUZ",
+    "nombre": "Santa Cruz",
+    "alias": []
+  },
+  {
+    "codigo": "SANTA_FE",
+    "nombre": "Santa Fe",
+    "alias": []
+  },
+  {
+    "codigo": "SANTIAGO_DEL_ESTERO",
+    "nombre": "Santiago del Estero",
+    "alias": []
+  },
+  {
+    "codigo": "TIERRA_DEL_FUEGO",
+    "nombre": "Tierra del Fuego, Antártida e Islas del Atlántico Sur",
+    "alias": [
+      "TIERRA DEL FUEGO"
+    ]
+  },
+  {
+    "codigo": "TUCUMAN",
+    "nombre": "Tucumán",
+    "alias": []
+  }
+]

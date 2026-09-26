@@ -1,0 +1,42 @@
+{
+  "TableName": "Resenas",
+  "BillingMode": "PAY_PER_REQUEST",
+  "AttributeDefinitions": [
+    {
+      "AttributeName": "contratacion_id",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "profesional_id",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "creada_en",
+      "AttributeType": "S"
+    }
+  ],
+  "KeySchema": [
+    {
+      "AttributeName": "contratacion_id",
+      "KeyType": "HASH"
+    }
+  ],
+  "GlobalSecondaryIndexes": [
+    {
+      "IndexName": "por-profesional",
+      "KeySchema": [
+        {
+          "AttributeName": "profesional_id",
+          "KeyType": "HASH"
+        },
+        {
+          "AttributeName": "creada_en",
+          "KeyType": "RANGE"
+        }
+      ],
+      "Projection": {
+        "ProjectionType": "ALL"
+      }
+    }
+  ]
+}

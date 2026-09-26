@@ -1,0 +1,92 @@
+[
+  {
+    "fuente_id": "ecogas",
+    "version": 1,
+    "nombre": "Ecogas",
+    "distribuidora": "Ecogas",
+    "licenciatarias": [
+      "Distribuidora de Gas del Centro",
+      "Distribuidora de Gas Cuyana"
+    ],
+    "area_concesion": [
+      "CORDOBA",
+      "CATAMARCA",
+      "LA_RIOJA",
+      "MENDOZA",
+      "SAN_JUAN",
+      "SAN_LUIS"
+    ],
+    "area_concesion_parcial": [],
+    "modo_acceso": "AUTOMATICA",
+    "adaptador": "ECOGAS_RECURSO_NEXT",
+    "url_pagina": "https://www.ecogas.com.ar/hogares-comercios/tramites-y-servicios/listado-de-gasistas-matriculados",
+    "url_buscador_oficial": "https://www.ecogas.com.ar/hogares-comercios/tramites-y-servicios/listado-de-gasistas-matriculados",
+    "config_extraccion": {
+      "prefijo_preferido": "3182-",
+      "max_candidatos": 20,
+      "claves_obligatorias": [
+        "id",
+        "nombre_apellido",
+        "categoria",
+        "provincia",
+        "localidad"
+      ],
+      "claves_conocidas": [
+        "correo_electronico",
+        "telefono",
+        "barrio"
+      ]
+    },
+    "config_reintentos": {
+      "max_intentos": 3,
+      "esperas_ms": [
+        1000,
+        2000
+      ],
+      "timeout_pedido_ms": 6000,
+      "timeout_consulta_ms": 24000
+    },
+    "config_validacion": {
+      "umbral_caida": 0.5,
+      "piso_registros": 1000
+    },
+    "limitaciones": [
+      "La Fuente no informa la vigencia de la matrícula. Según la NAG-200 la matrícula se renueva todos los años y vence el 31 de marzo; figurar en el padrón no prueba que esté renovada. Para confirmarlo, pedile al gasista su carné con la matrícula actualizada (NAG-200, 8.6.1).",
+      "La provincia que publica Ecogas corresponde al domicilio del matriculado, no a la zona donde puede trabajar.",
+      "El padrón de Ecogas es una publicación web sin fecha de actualización: esta evidencia refleja lo publicado en el momento de la consulta."
+    ],
+    "activa": true,
+    "vigente_desde": "2026-09-26T00:00:00.000Z",
+    "vigente_hasta": null,
+    "creada_en": "2026-09-26T00:00:00.000Z"
+  },
+  {
+    "fuente_id": "metrogas",
+    "version": 1,
+    "nombre": "MetroGAS",
+    "distribuidora": "MetroGAS",
+    "licenciatarias": [
+      "MetroGAS"
+    ],
+    "area_concesion": [
+      "CIUDAD_AUTONOMA_DE_BUENOS_AIRES"
+    ],
+    "area_concesion_parcial": [
+      "BUENOS_AIRES"
+    ],
+    "modo_acceso": "NO_AUTOMATIZABLE",
+    "adaptador": "NO_AUTOMATIZABLE",
+    "url_pagina": null,
+    "url_buscador_oficial": "https://www.metrogas.com.ar/colaboradores/listado-de-gasistas-con-matricula/",
+    "config_extraccion": null,
+    "config_reintentos": null,
+    "config_validacion": null,
+    "limitaciones": [
+      "MetroGAS no permite consultas automáticas: su buscador exige un captcha. La matrícula se puede verificar manualmente en el buscador oficial."
+    ],
+    "activa": true,
+    "vigente_desde": "2026-09-26T00:00:00.000Z",
+    "vigente_hasta": null,
+    "creada_en": "2026-09-26T00:00:00.000Z"
+  }
+]

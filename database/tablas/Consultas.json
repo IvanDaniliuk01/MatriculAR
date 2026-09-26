@@ -1,0 +1,70 @@
+{
+  "TableName": "Consultas",
+  "BillingMode": "PAY_PER_REQUEST",
+  "AttributeDefinitions": [
+    {
+      "AttributeName": "consulta_id",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "fuente_id",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "iniciada_en",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "exito_fuente_id",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "finalizada_en",
+      "AttributeType": "S"
+    }
+  ],
+  "KeySchema": [
+    {
+      "AttributeName": "consulta_id",
+      "KeyType": "HASH"
+    }
+  ],
+  "GlobalSecondaryIndexes": [
+    {
+      "IndexName": "por-fuente",
+      "KeySchema": [
+        {
+          "AttributeName": "fuente_id",
+          "KeyType": "HASH"
+        },
+        {
+          "AttributeName": "iniciada_en",
+          "KeyType": "RANGE"
+        }
+      ],
+      "Projection": {
+        "ProjectionType": "ALL"
+      }
+    },
+    {
+      "IndexName": "exitosas-por-fuente",
+      "KeySchema": [
+        {
+          "AttributeName": "exito_fuente_id",
+          "KeyType": "HASH"
+        },
+        {
+          "AttributeName": "finalizada_en",
+          "KeyType": "RANGE"
+        }
+      ],
+      "Projection": {
+        "ProjectionType": "INCLUDE",
+        "NonKeyAttributes": [
+          "registros_extraidos",
+          "huella_recurso"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,152 @@
+[
+  {
+    "tipo_trabajo_id": "artefacto-vivienda-unifamiliar",
+    "version": 1,
+    "codigo": "A1",
+    "nombre": "Conexión o reemplazo de un artefacto en una vivienda unifamiliar",
+    "descripcion": "Conectar, reemplazar o agregar un artefacto doméstico (calefón, cocina, calefactor, termotanque) en una casa que es la única vivienda del terreno.",
+    "condiciones": [
+      "Vivienda unifamiliar: un predio con una única vivienda (no edificio, PH, dúplex ni similares).",
+      "Gas natural por red, con presión de suministro menor de 2 kg/cm².",
+      "Consumo total de la vivienda de hasta 5 m³/h.",
+      "Ningún artefacto supera 50.000 kcal/h y la presión interna no supera 200 mm de columna de agua."
+    ],
+    "categorias_admitidas": [
+      "1",
+      "2",
+      "3"
+    ],
+    "fundamento": [
+      {
+        "categoria": "1",
+        "admitida": true,
+        "norma": "NAG-200",
+        "articulo": "8.2.1",
+        "cita": "cualquier tipo de instalaciones domiciliarias domésticas, comerciales o industriales en todo el territorio del país, ya sea para gas distribuido por redes o envasado",
+        "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf"
+      },
+      {
+        "categoria": "2",
+        "admitida": true,
+        "norma": "NAG-200",
+        "articulo": "8.3.1",
+        "cita": "instalaciones domiciliarias domésticas, comerciales, industriales o varias en toda la República […] siempre que las tomas correspondan a artefactos cuyos consumos individuales no excedan a 50.000 kcal/h […] y la presión interna […] no supere los 200 mm de columna de agua",
+        "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf"
+      },
+      {
+        "categoria": "3",
+        "admitida": true,
+        "norma": "NAG-200",
+        "articulo": "8.4.1",
+        "cita": "en toda la República, instalaciones domiciliarias domésticas, en viviendas unifamiliares, cuyo consumo total no exceda de 5 m³/h de gas natural, suministrado por redes a presión menor de 2 kg/cm²",
+        "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf"
+      }
+    ],
+    "limitaciones": [],
+    "tipo_recomendado_si_duda": "artefacto-vivienda-general",
+    "activo": true,
+    "vigente_desde": "2026-09-26T00:00:00.000Z",
+    "vigente_hasta": null,
+    "creado_en": "2026-09-26T00:00:00.000Z"
+  },
+  {
+    "tipo_trabajo_id": "artefacto-vivienda-general",
+    "version": 1,
+    "codigo": "A2",
+    "nombre": "Conexión o reemplazo de un artefacto en otras viviendas",
+    "descripcion": "Conectar, reemplazar o agregar un artefacto doméstico en un departamento, PH, dúplex, o en una casa cuyo consumo total supera 5 m³/h. También es el tipo recomendado si no sabés si tu vivienda cumple las condiciones de una vivienda unifamiliar.",
+    "condiciones": [
+      "Gas natural por red, con presión de suministro de hasta 2 kg/cm²; no se alimenta con tanque a granel.",
+      "Ningún artefacto supera 50.000 kcal/h y la presión interna no supera 200 mm de columna de agua."
+    ],
+    "categorias_admitidas": [
+      "1",
+      "2"
+    ],
+    "fundamento": [
+      {
+        "categoria": "1",
+        "admitida": true,
+        "norma": "NAG-200",
+        "articulo": "8.2.1",
+        "cita": "cualquier tipo de instalaciones domiciliarias domésticas, comerciales o industriales en todo el territorio del país, ya sea para gas distribuido por redes o envasado",
+        "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf"
+      },
+      {
+        "categoria": "2",
+        "admitida": true,
+        "norma": "NAG-200",
+        "articulo": "8.3.1",
+        "cita": "instalaciones domiciliarias domésticas, comerciales, industriales o varias en toda la República […] siempre que las tomas correspondan a artefactos cuyos consumos individuales no excedan a 50.000 kcal/h […] y la presión interna […] no supere los 200 mm de columna de agua",
+        "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf"
+      },
+      {
+        "categoria": "3",
+        "admitida": false,
+        "norma": "NAG-200",
+        "articulo": "8.4.1",
+        "cita": "en toda la República, instalaciones domiciliarias domésticas, en viviendas unifamiliares, cuyo consumo total no exceda de 5 m³/h de gas natural, suministrado por redes a presión menor de 2 kg/cm²",
+        "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf",
+        "nota": "La 3ª categoría se limita a viviendas unifamiliares con consumo total de hasta 5 m³/h; la FAQ de MetroGAS excluye edificios, PH, dúplex y similares."
+      }
+    ],
+    "limitaciones": [],
+    "tipo_recomendado_si_duda": null,
+    "activo": true,
+    "vigente_desde": "2026-09-26T00:00:00.000Z",
+    "vigente_hasta": null,
+    "creado_en": "2026-09-26T00:00:00.000Z"
+  },
+  {
+    "tipo_trabajo_id": "comercio-artefacto-alto-consumo",
+    "version": 1,
+    "codigo": "B",
+    "nombre": "Comercio con un artefacto de alto consumo",
+    "descripcion": "Instalar, conectar o reemplazar un artefacto en un comercio (restaurante, panadería, local gastronómico) cuando al menos un artefacto consume más de 50.000 kcal/h, por ejemplo un horno o anafe industrial.",
+    "condiciones": [
+      "Uso comercial.",
+      "Gas natural por red.",
+      "Al menos un artefacto de más de 50.000 kcal/h.",
+      "Ningún artefacto supera 150.000 kcal/h."
+    ],
+    "categorias_admitidas": [
+      "1"
+    ],
+    "fundamento": [
+      {
+        "categoria": "1",
+        "admitida": true,
+        "norma": "NAG-200",
+        "articulo": "8.2.1",
+        "cita": "cualquier tipo de instalaciones domiciliarias domésticas, comerciales o industriales en todo el territorio del país, ya sea para gas distribuido por redes o envasado",
+        "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf"
+      },
+      {
+        "categoria": "2",
+        "admitida": false,
+        "norma": "NAG-200",
+        "articulo": "8.3.1",
+        "cita": "instalaciones domiciliarias domésticas, comerciales, industriales o varias en toda la República […] siempre que las tomas correspondan a artefactos cuyos consumos individuales no excedan a 50.000 kcal/h […] y la presión interna […] no supere los 200 mm de columna de agua",
+        "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf",
+        "nota": "La 2ª categoría limita cada artefacto a 50.000 kcal/h."
+      },
+      {
+        "categoria": "3",
+        "admitida": false,
+        "norma": "NAG-200",
+        "articulo": "8.4.1",
+        "cita": "en toda la República, instalaciones domiciliarias domésticas, en viviendas unifamiliares, cuyo consumo total no exceda de 5 m³/h de gas natural, suministrado por redes a presión menor de 2 kg/cm²",
+        "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf",
+        "nota": "La 3ª categoría se limita a instalaciones domésticas en viviendas unifamiliares."
+      }
+    ],
+    "limitaciones": [
+      "Por excepción (NAG-200, 8.3.1), un instalador de 2ª categoría puede hacer este trabajo con autorización expresa de la distribuidora cuando no hay matriculados de 1ª en la zona. MatriculAR no puede verificar esa autorización."
+    ],
+    "tipo_recomendado_si_duda": null,
+    "activo": true,
+    "vigente_desde": "2026-09-26T00:00:00.000Z",
+    "vigente_hasta": null,
+    "creado_en": "2026-09-26T00:00:00.000Z"
+  }
+]
