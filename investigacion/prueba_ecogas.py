@@ -50,10 +50,10 @@ def extraer_registros(texto_js: str) -> list[dict]:
     Cada registro está embebido como un objeto JSON bien formado, con esta
     estructura confirmada mediante inspección manual (ver diagnostico_ecogas.py):
 
-    {"id":"11143","nombre_apellido":"CARLOS PEDRO LOVAGNINI","categoria":"1",
+    {"id":"11143","nombre_apellido":"[NOMBRE ANONIMIZADO]","categoria":"1",
      "provincia":"SAN LUIS","localidad":"CAPITAL SAN LUIS",
-     "correo_electronico":"carloslovagnini@gmail.com",
-     "telefono":"02664426978","barrio":"BAJO GRANDE"}
+     "correo_electronico":"[EMAIL ANONIMIZADO]",
+     "telefono":"[TELÉFONO ANONIMIZADO]","barrio":"[BARRIO ANONIMIZADO]"}
 
     Se captura el objeto completo (no campo por campo) y se parsea con
     json.loads, que es más robusto que reconstruirlo manualmente.

@@ -1,0 +1,33 @@
+# Material de la cátedra (consignas, lecturas, devoluciones): se conserva localmente, no forma parte del proyecto
+catedra/
+
+# Salidas de los scripts de investigación (pueden contener datos personales reales)
+investigacion/muestra_ecogas.json
+investigacion/*.json
+
+# Dependencias y builds (a partir de la etapa de implementación)
+node_modules/
+dist/
+.vite/
+coverage/
+
+# Terraform / LocalStack
+.terraform/
+*.tfstate
+*.tfstate.*
+.lstk/
+
+# Secretos y configuración local
+.env
+.env.*
+!.env.example
+
+# Sistema operativo y editores
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Herramientas locales de asistentes de IA (skills y su lock): no forman parte del proyecto
+.claude/
+skills-lock.json

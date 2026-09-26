@@ -1,0 +1,34 @@
+{
+  "TableName": "Profesionales",
+  "BillingMode": "PAY_PER_REQUEST",
+  "AttributeDefinitions": [
+    {
+      "AttributeName": "profesional_id",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "usuario_id",
+      "AttributeType": "S"
+    }
+  ],
+  "KeySchema": [
+    {
+      "AttributeName": "profesional_id",
+      "KeyType": "HASH"
+    }
+  ],
+  "GlobalSecondaryIndexes": [
+    {
+      "IndexName": "por-usuario",
+      "KeySchema": [
+        {
+          "AttributeName": "usuario_id",
+          "KeyType": "HASH"
+        }
+      ],
+      "Projection": {
+        "ProjectionType": "ALL"
+      }
+    }
+  ]
+}

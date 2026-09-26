@@ -1,0 +1,42 @@
+{
+  "TableName": "Verificaciones",
+  "BillingMode": "PAY_PER_REQUEST",
+  "AttributeDefinitions": [
+    {
+      "AttributeName": "verificacion_id",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "fuente_matricula",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "solicitada_en",
+      "AttributeType": "S"
+    }
+  ],
+  "KeySchema": [
+    {
+      "AttributeName": "verificacion_id",
+      "KeyType": "HASH"
+    }
+  ],
+  "GlobalSecondaryIndexes": [
+    {
+      "IndexName": "por-matricula",
+      "KeySchema": [
+        {
+          "AttributeName": "fuente_matricula",
+          "KeyType": "HASH"
+        },
+        {
+          "AttributeName": "solicitada_en",
+          "KeyType": "RANGE"
+        }
+      ],
+      "Projection": {
+        "ProjectionType": "ALL"
+      }
+    }
+  ]
+}

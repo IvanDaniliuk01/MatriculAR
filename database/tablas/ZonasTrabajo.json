@@ -1,0 +1,24 @@
+{
+  "TableName": "ZonasTrabajo",
+  "BillingMode": "PAY_PER_REQUEST",
+  "AttributeDefinitions": [
+    {
+      "AttributeName": "provincia",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "profesional_id",
+      "AttributeType": "S"
+    }
+  ],
+  "KeySchema": [
+    {
+      "AttributeName": "provincia",
+      "KeyType": "HASH"
+    },
+    {
+      "AttributeName": "profesional_id",
+      "KeyType": "RANGE"
+    }
+  ]
+}

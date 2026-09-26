@@ -1,0 +1,46 @@
+{
+  "TableName": "Vinculos",
+  "BillingMode": "PAY_PER_REQUEST",
+  "AttributeDefinitions": [
+    {
+      "AttributeName": "profesional_id",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "fuente_matricula",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "estado",
+      "AttributeType": "S"
+    }
+  ],
+  "KeySchema": [
+    {
+      "AttributeName": "profesional_id",
+      "KeyType": "HASH"
+    },
+    {
+      "AttributeName": "fuente_matricula",
+      "KeyType": "RANGE"
+    }
+  ],
+  "GlobalSecondaryIndexes": [
+    {
+      "IndexName": "por-matricula",
+      "KeySchema": [
+        {
+          "AttributeName": "fuente_matricula",
+          "KeyType": "HASH"
+        },
+        {
+          "AttributeName": "estado",
+          "KeyType": "RANGE"
+        }
+      ],
+      "Projection": {
+        "ProjectionType": "ALL"
+      }
+    }
+  ]
+}

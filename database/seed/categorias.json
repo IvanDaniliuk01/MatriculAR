@@ -1,0 +1,38 @@
+[
+  {
+    "categoria_id": "1",
+    "nombre": "Primera categoría",
+    "version": 1,
+    "alcance": "Cualquier instalación de gas: doméstica, comercial o industrial, por red o envasado.",
+    "fundamento": {
+      "norma": "NAG-200",
+      "articulo": "8.2.1",
+      "cita": "cualquier tipo de instalaciones domiciliarias domésticas, comerciales o industriales en todo el territorio del país, ya sea para gas distribuido por redes o envasado",
+      "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf"
+    }
+  },
+  {
+    "categoria_id": "2",
+    "nombre": "Segunda categoría",
+    "version": 1,
+    "alcance": "Instalaciones domésticas, comerciales o industriales con artefactos de hasta 50.000 kcal/h cada uno y presión interna de hasta 200 mm de columna de agua; no instalaciones alimentadas por tanques a granel ni con presión de distribución mayor a 2 kg/cm².",
+    "fundamento": {
+      "norma": "NAG-200",
+      "articulo": "8.3.1",
+      "cita": "instalaciones domiciliarias domésticas, comerciales, industriales o varias en toda la República […] siempre que las tomas correspondan a artefactos cuyos consumos individuales no excedan a 50.000 kcal/h […] y la presión interna […] no supere los 200 mm de columna de agua",
+      "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf"
+    }
+  },
+  {
+    "categoria_id": "3",
+    "nombre": "Tercera categoría",
+    "version": 1,
+    "alcance": "Instalaciones domésticas en viviendas unifamiliares con consumo total de hasta 5 m³/h de gas natural por red (presión menor de 2 kg/cm²); en gas envasado, un solo equipo de dos cilindros.",
+    "fundamento": {
+      "norma": "NAG-200",
+      "articulo": "8.4.1",
+      "cita": "en toda la República, instalaciones domiciliarias domésticas, en viviendas unifamiliares, cuyo consumo total no exceda de 5 m³/h de gas natural, suministrado por redes a presión menor de 2 kg/cm²",
+      "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf"
+    }
+  }
+]

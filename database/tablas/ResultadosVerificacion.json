@@ -1,0 +1,50 @@
+{
+  "TableName": "ResultadosVerificacion",
+  "BillingMode": "PAY_PER_REQUEST",
+  "AttributeDefinitions": [
+    {
+      "AttributeName": "consulta_id",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "matricula",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "fuente_matricula",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "determinado_en",
+      "AttributeType": "S"
+    }
+  ],
+  "KeySchema": [
+    {
+      "AttributeName": "consulta_id",
+      "KeyType": "HASH"
+    },
+    {
+      "AttributeName": "matricula",
+      "KeyType": "RANGE"
+    }
+  ],
+  "GlobalSecondaryIndexes": [
+    {
+      "IndexName": "por-matricula",
+      "KeySchema": [
+        {
+          "AttributeName": "fuente_matricula",
+          "KeyType": "HASH"
+        },
+        {
+          "AttributeName": "determinado_en",
+          "KeyType": "RANGE"
+        }
+      ],
+      "Projection": {
+        "ProjectionType": "ALL"
+      }
+    }
+  ]
+}

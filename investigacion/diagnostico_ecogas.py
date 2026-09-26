@@ -18,7 +18,9 @@ HEADERS = {
 resp = requests.get(URL, headers=HEADERS, timeout=15)
 texto = resp.text
 
-apellido_buscado = "LOVAGNINI"
+# Anonimizado para el repositorio público: reemplazar localmente por un
+# apellido que figure en el padrón antes de ejecutar el diagnóstico.
+apellido_buscado = "APELLIDO_DE_PRUEBA"
 idx = texto.upper().find(apellido_buscado)
 
 if idx == -1:
@@ -27,5 +29,5 @@ if idx == -1:
 else:
     inicio = max(0, idx - 250)
     fin = min(len(texto), idx + 250)
-    print("Contexto encontrado alrededor de LOVAGNINI:\n")
+    print(f"Contexto encontrado alrededor de {apellido_buscado}:\n")
     print(texto[inicio:fin])

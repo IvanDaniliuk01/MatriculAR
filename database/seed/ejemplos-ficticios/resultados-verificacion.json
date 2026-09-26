@@ -1,0 +1,56 @@
+[
+  {
+    "consulta_id": "01M2ZEQ030KDF2QM9Z2CK5XYT0",
+    "matricula": "99001",
+    "fuente_id": "ecogas",
+    "fuente_matricula": "ecogas#99001",
+    "resultado": "FOUND",
+    "determinado_en": "2026-09-20T13:05:02.140Z",
+    "credencial_evidencia_id": "2026-09-20T13:05:02.140Z#01M2ZEQ030KDF2QM9Z2CK5XYT0"
+  },
+  {
+    "consulta_id": "01M3FFPJ2054EHQKZK0AN2P9E0",
+    "matricula": "99001",
+    "fuente_id": "ecogas",
+    "fuente_matricula": "ecogas#99001",
+    "resultado": "UNVERIFIABLE",
+    "determinado_en": "2026-09-26T18:30:06.950Z",
+    "credencial_evidencia_id": null
+  },
+  {
+    "consulta_id": "01M3FG90YX2CPVTY9M7AM85DXW",
+    "matricula": "99001",
+    "fuente_id": "ecogas",
+    "fuente_matricula": "ecogas#99001",
+    "resultado": "FOUND",
+    "determinado_en": "2026-09-26T18:40:12.345Z",
+    "credencial_evidencia_id": "2026-09-26T18:40:12.345Z#01M3FG90YX2CPVTY9M7AM85DXW"
+  },
+  {
+    "consulta_id": "01M3FGD9JMAJNXQJNYRE157YSR",
+    "matricula": "99001",
+    "fuente_id": "ecogas",
+    "fuente_matricula": "ecogas#99001",
+    "resultado": "FOUND",
+    "determinado_en": "2026-09-26T18:42:32.240Z",
+    "credencial_evidencia_id": "2026-09-26T18:42:32.240Z#01M3FGD9JMAJNXQJNYRE157YSR"
+  },
+  {
+    "consulta_id": "01M3FGHVZ054179B3MBQF1VMBM",
+    "matricula": "99004",
+    "fuente_id": "ecogas",
+    "fuente_matricula": "ecogas#99004",
+    "resultado": "NOT_FOUND",
+    "determinado_en": "2026-09-26T18:45:02.140Z",
+    "credencial_evidencia_id": null
+  },
+  {
+    "consulta_id": "01M3FGQBR0KGEFMNB9DZ4BW2FS",
+    "matricula": "99005",
+    "fuente_id": "metrogas",
+    "fuente_matricula": "metrogas#99005",
+    "resultado": "UNVERIFIABLE",
+    "determinado_en": "2026-09-26T18:48:00.000Z",
+    "credencial_evidencia_id": null
+  }
+]
