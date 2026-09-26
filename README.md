@@ -69,8 +69,8 @@ Un marketplace de gasistas cuyo núcleo **no es el listado de profesionales, sin
 | ¿Qué sabemos? | La **Credencial**: matrícula, nombre, categoría y provincia que informa el padrón. |
 | ¿De dónde lo sabemos? | La **Fuente**: el padrón de una distribuidora concreta. |
 | ¿Cuándo lo verificamos? | La **Consulta**: fecha, intentos y huella del recurso leído. |
-| ¿Qué podemos concluir? | La **Evaluación** para un tipo de trabajo: `COMPATIBLE`, `NO_COMPATIBLE` o `INDETERMINADA`, con su fundamento normativo. |
-| ¿Qué no podemos afirmar? | Las **Limitaciones** (por ejemplo, la vigencia) y los resultados `NO_VERIFICABLE`. |
+| ¿Qué podemos concluir? | La **Evaluación** para un tipo de trabajo: `COMPATIBLE`, `INCOMPATIBLE` o `INDETERMINATE`, con su fundamento normativo. |
+| ¿Qué no podemos afirmar? | Las **Limitaciones** (por ejemplo, la vigencia) y los resultados `UNVERIFIABLE`. |
 
 Sobre ese núcleo se montan el perfil de los profesionales, la búsqueda por tipo de trabajo y zona, y el ciclo de contratación con reseñas.
 
@@ -81,8 +81,8 @@ Sobre ese núcleo se montan el perfil de los profesionales, la búsqueda por tip
 | Principio | Qué significa en la práctica |
 |---|---|
 | **La confianza se verifica, no se declara** | Ningún gasista figura como compatible con un trabajo sin evidencia de una Fuente real, y la titularidad de una matrícula se prueba con un código enviado al email que publica la propia Fuente. |
-| **La ausencia de evidencia no se convierte en certeza** | Si una Fuente no se pudo consultar, el resultado es `NO_VERIFICABLE`, no "no encontrado". Nunca se dice "no aparece en ningún padrón" si alguna Fuente no se consultó. |
-| **Validar la regla antes de automatizarla** | Ninguna regla entra al sistema sin una cita normativa que la respalde. Lo que no tiene respaldo se informa como `INDETERMINADO`. |
+| **La ausencia de evidencia no se convierte en certeza** | Si una Fuente no se pudo consultar, el resultado es `UNVERIFIABLE`, no "no encontrado". Nunca se dice "no aparece en ningún padrón" si alguna Fuente no se consultó. |
+| **Validar la regla antes de automatizarla** | Ninguna regla entra al sistema sin una cita normativa que la respalde. Lo que no tiene respaldo se informa como `INDETERMINATE`. |
 | **La evidencia es inmutable y fechada** | Cada Credencial queda asociada a una Consulta con fecha. Nunca se modifica ni se borra, y una falla nunca pisa la evidencia anterior. |
 | **Complejidad solo cuando la necesidad la justifica** | Sin colas ni DLQ hasta que haya un motivo concreto. Los criterios que las justificarían están escritos. |
 | **Recorte despiadado de alcance** | Pocas cosas completas en lugar de muchas a medias. El núcleo (P0) se entrega completo y el resto se recorta de abajo hacia arriba. |
@@ -95,8 +95,8 @@ Sobre ese núcleo se montan el perfil de los profesionales, la búsqueda por tip
 ```mermaid
 flowchart LR
     P([Cliente: ¿el gasista con matrícula 99001<br/>de Ecogas puede conectar un calefón<br/>en una casa de Córdoba?]) --> C[Consulta a Ecogas<br/>descarga, extrae y valida]
-    C -->|la lectura falla| NV([NO_VERIFICABLE<br/>muestra la última evidencia<br/>con su fecha, sin concluir])
-    C -->|la matrícula no figura| NE([NO_ENCONTRADA<br/>en Ecogas, en esta fecha])
+    C -->|la lectura falla| NV([UNVERIFIABLE<br/>muestra la última evidencia<br/>con su fecha, sin concluir])
+    C -->|la matrícula no figura| NE([NOT_FOUND<br/>en Ecogas, en esta fecha])
     C -->|la matrícula figura| CR[Credencial nueva<br/>categoría 2ª · Córdoba · 26/09 15:40]
     CR --> EV[Evaluación<br/>categoría: 2ª admitida · NAG-200 8.3.1<br/>zona: Córdoba en el área de Ecogas]
     EV --> R([COMPATIBLE<br/>más las Limitaciones:<br/>la vigencia no se puede afirmar])
@@ -115,7 +115,7 @@ Detalle: [modelo de dominio](docs/modelo-de-dominio.md#4-el-recorrido-de-una-ver
 | **P2 · contratación** | Usuarios y autenticación · Contratación · Reseñas | Si el tiempo alcanza. |
 | **P3 · continuidad** | Revalidación programada · Notificaciones | Fase 2 si no alcanza. |
 
-**Fuentes del P0:** Ecogas (Córdoba, Catamarca, La Rioja, Mendoza, San Juan y San Luis; se consulta automáticamente) y MetroGAS (CABA; protegida con captcha, así que **no se consulta automáticamente** y el sistema lo informa como `NO_VERIFICABLE`).
+**Fuentes del P0:** Ecogas (Córdoba, Catamarca, La Rioja, Mendoza, San Juan y San Luis; se consulta automáticamente) y MetroGAS (CABA; protegida con captcha, así que **no se consulta automáticamente** y el sistema lo informa como `UNVERIFIABLE`).
 
 **Fuera de alcance (fase 2):** electricistas, otras distribuidoras, pagos, chat, geolocalización fina, back-office y apps nativas. Detalle en [módulos § 5](docs/modulos.md#5-fuera-de-alcance).
 

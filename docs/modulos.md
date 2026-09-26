@@ -46,7 +46,7 @@ Regla de recorte: si el plan se atrasa, **se recorta de abajo hacia arriba** (pr
 | **M12** | Contratación | **P2** | Solicitud → aceptada → realizada → calificada, o cancelada. Cada Contratación queda asociada a una Verificación hecha al crearla. | `λ contrataciones` · [`backend/contrataciones/`](../backend/contrataciones/) |
 | **M13** | Reseñas y reputación | **P2** | Puntaje y comentario sobre Contrataciones realizadas, más el promedio del Profesional. | `λ contrataciones` |
 | **M14** | Revalidación programada | **P3** | Todos los días, una Consulta por Fuente para todas las matrículas vinculadas. Caso de uso *Revalidar*, armado con los mismos componentes del núcleo que *Verificar*. | `λ revalidacion` · [`backend/revalidacion/`](../backend/revalidacion/) |
-| **M15** | Notificaciones | **P3** | Avisos cuando una revalidación cambia el Resultado de verificación de un Profesional (por ejemplo, de `ENCONTRADA` a `NO_ENCONTRADA`). | `λ notificaciones` · [`backend/notificaciones/`](../backend/notificaciones/) |
+| **M15** | Notificaciones | **P3** | Avisos cuando una revalidación cambia el Resultado de verificación de un Profesional (por ejemplo, de `FOUND` a `NOT_FOUND`). | `λ notificaciones` · [`backend/notificaciones/`](../backend/notificaciones/) |
 
 ---
 
@@ -121,7 +121,7 @@ Para cada módulo: qué hace, con qué datos trabaja, qué expone y cómo se dem
 
 | | |
 |---|---|
-| **Responsabilidades** | Registrar la Consulta `EN_CURSO` antes del primer pedido. Finalizarla con estado, motivo, detalle, Intentos, huella y resumen. Crear un Resultado de verificación por matrícula y una Credencial inmutable si es `ENCONTRADA`. Interpretar como interrumpida una Consulta que sigue `EN_CURSO` después de su plazo. |
+| **Responsabilidades** | Registrar la Consulta `IN_PROGRESS` antes del primer pedido. Finalizarla con estado, motivo, detalle, Intentos, huella y resumen. Crear un Resultado de verificación por matrícula y una Credencial inmutable si es `FOUND`. Interpretar como interrumpida una Consulta que sigue `IN_PROGRESS` después de su plazo. |
 | **Datos** | `Consultas`, `ResultadosVerificacion` y `Credenciales`. |
 | **Invariantes** | INV-1, INV-3, INV-4, INV-9 y INV-10 ([modelo § 8](modelo-de-dominio.md#8-invariantes)). |
 | **Terminado cuando** | Las escrituras condicionales impiden modificar una Credencial (probado contra DynamoDB en LocalStack). Una falla no toca la evidencia anterior. El historial de una matrícula se lee en orden. |
@@ -130,7 +130,7 @@ Para cada módulo: qué hace, con qué datos trabaja, qué expone y cómo se dem
 
 | | |
 |---|---|
-| **Responsabilidades** | Cargar y servir las versiones vigentes de Categorías y Tipos de trabajo. Calcular los Criterios de categoría (por lista explícita, sin orden) y de zona (por Área de concesión, nunca `NO_CUMPLE`), el resultado global y las Limitaciones. Guardar la Evaluación con una copia de la regla aplicada. |
+| **Responsabilidades** | Cargar y servir las versiones vigentes de Categorías y Tipos de trabajo. Calcular los Criterios de categoría (por lista explícita, sin orden) y de zona (por Área de concesión, nunca `NOT_MET`), el resultado global y las Limitaciones. Guardar la Evaluación con una copia de la regla aplicada. |
 | **Datos** | `Categorias`, `TiposTrabajo` y `Evaluaciones`. |
 | **Diseño** | [`reglas-de-categoria.md`](reglas-de-categoria.md) · [modelo § 6](modelo-de-dominio.md#6-cómo-se-calcula-una-evaluación) |
 | **Terminado cuando** | Los escenarios S1 a S10 pasan como pruebas unitarias del dominio (sin AWS). Cada Tipo de trabajo tiene su cita normativa. |
@@ -142,7 +142,7 @@ Para cada módulo: qué hace, con qué datos trabaja, qué expone y cómo se dem
 | **Responsabilidades** | Caso de uso *Verificar*: validar el pedido, orquestar M01, M02 y M03 y persistir todo en una transacción. Armar el mensaje: qué sabemos, de dónde, cuándo, qué concluimos y qué no. Endpoints de consulta: Verificación, historial, salud de la Fuente y catálogos. |
 | **Datos** | `Verificaciones`, más todas las tablas del núcleo. |
 | **Expone** | [`api.md`](api.md) § 2 a 5. |
-| **Terminado cuando** | Los escenarios S1, S5, S6, S7 y S9 se recorren **de punta a punta** por HTTP contra LocalStack, con las respuestas del contrato. Una Fuente que falla responde `201 NO_VERIFICABLE`, nunca un `5xx`. |
+| **Terminado cuando** | Los escenarios S1, S5, S6, S7 y S9 se recorren **de punta a punta** por HTTP contra LocalStack, con las respuestas del contrato. Una Fuente que falla responde `201 UNVERIFIABLE`, nunca un `5xx`. |
 
 ### M05 · Interfaz de verificación · P0
 
@@ -150,7 +150,7 @@ Para cada módulo: qué hace, con qué datos trabaja, qué expone y cómo se dem
 |---|---|
 | **Responsabilidades** | Formulario (Fuente, matrícula, Tipo de trabajo con sus condiciones, provincia). Vista del resultado: resultado global, evidencia con fecha y Fuente, Criterios con su fundamento, Limitaciones, detalle técnico plegable (Consulta, Intentos, huella) e historial de la matrícula. Enlace para compartir una Verificación. |
 | **Diseño** | [`frontend/README.md`](../frontend/README.md) |
-| **Terminado cuando** | Los cuatro resultados posibles (`COMPATIBLE`, `NO_COMPATIBLE`, `INDETERMINADA`, sin Evaluación) y los dos tipos de `NO_VERIFICABLE` se ven distintos y se entienden sin leer la documentación. |
+| **Terminado cuando** | Los cuatro resultados posibles (`COMPATIBLE`, `INCOMPATIBLE`, `INDETERMINATE`, sin Evaluación) y los dos tipos de `UNVERIFIABLE` se ven distintos y se entienden sin leer la documentación. |
 
 ### M06 · Infraestructura y entorno · P0
 
@@ -179,7 +179,7 @@ Para cada módulo: qué hace, con qué datos trabaja, qué expone y cómo se dem
 
 | | |
 |---|---|
-| **Responsabilidades** | Declarar una matrícula (queda `NO_VERIFICADO`). Enviar un código al email que publica la Fuente (se usa en memoria y no se guarda). Confirmar el código (pasa a `VERIFICADO`). Garantizar un solo Vínculo verificado por matrícula, con una escritura condicional en `TitularesMatricula` dentro de la misma transacción. Mostrar como "no verificado" al que no tiene email en la Fuente. |
+| **Responsabilidades** | Declarar una matrícula (queda `UNVERIFIED`). Enviar un código al email que publica la Fuente (se usa en memoria y no se guarda). Confirmar el código (pasa a `VERIFIED`). Garantizar un solo Vínculo verificado por matrícula, con una escritura condicional en `TitularesMatricula` dentro de la misma transacción. Mostrar como "no verificado" al que no tiene email en la Fuente. |
 | **Datos** | `Vinculos` (el código solo como hash) y `TitularesMatricula`. |
 | **Riesgo** | SES en modo *sandbox* ([arquitectura § 12](arquitectura.md#12-riesgos)). |
 | **Terminado cuando** | Un Profesional verifica su matrícula con el código. Un segundo usuario no puede verificar la misma matrícula. |
@@ -190,7 +190,7 @@ Para cada módulo: qué hace, con qué datos trabaja, qué expone y cómo se dem
 |---|---|
 | **Responsabilidades** | Declarar zonas de trabajo. Buscar Profesionales por tipo de trabajo y provincia: una Consulta **por Fuente** para todos los candidatos (Consulta 1 → N), Evaluación de cada uno y listado con su resultado y la fecha de la evidencia. Por defecto solo se muestran Vínculos verificados. |
 | **Datos** | `ZonasTrabajo`, más el núcleo. |
-| **Terminado cuando** | La búsqueda muestra evidencia de ese momento y distingue claramente los resultados `COMPATIBLE`, `INDETERMINADA` y `NO_VERIFICABLE`. |
+| **Terminado cuando** | La búsqueda muestra evidencia de ese momento y distingue claramente los resultados `COMPATIBLE`, `INDETERMINATE` y `UNVERIFIABLE`. |
 
 ### M11 · Usuarios y autenticación · P2
 
@@ -204,7 +204,7 @@ Para cada módulo: qué hace, con qué datos trabaja, qué expone y cómo se dem
 
 | | |
 |---|---|
-| **Responsabilidades** | Crear la Contratación con una Verificación nueva. `NO_COMPATIBLE` la bloquea. `INDETERMINADA`, `NO_ENCONTRADA` y `NO_VERIFICABLE` exigen que el Cliente confirme la advertencia. Transiciones condicionales según la máquina de estados. Historial de transiciones. |
+| **Responsabilidades** | Crear la Contratación con una Verificación nueva. `INCOMPATIBLE` la bloquea. `INDETERMINATE`, `NOT_FOUND` y `UNVERIFIABLE` exigen que el Cliente confirme la advertencia. Transiciones condicionales según la máquina de estados. Historial de transiciones. |
 | **Datos** | `Contrataciones`. |
 | **Diseño** | [modelo § 7.4](modelo-de-dominio.md#74-contratación-p2) |
 | **Terminado cuando** | El ciclo completo funciona y una transición inválida se rechaza. |
@@ -215,7 +215,7 @@ Para cada módulo: qué hace, con qué datos trabaja, qué expone y cómo se dem
 |---|---|
 | **Responsabilidades** | Una Reseña por Contratación realizada (puntaje de 1 a 5 y comentario). Actualizar el promedio del Profesional. Listar las Reseñas públicas. |
 | **Datos** | `Resenas` y `Profesionales` (promedio). |
-| **Terminado cuando** | Calificar pasa la Contratación a `CALIFICADA` y actualiza la reputación. |
+| **Terminado cuando** | Calificar pasa la Contratación a `RATED` y actualiza la reputación. |
 
 ### M14 · Revalidación programada · P3
 

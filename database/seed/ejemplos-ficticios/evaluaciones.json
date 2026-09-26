@@ -59,12 +59,12 @@
     ],
     "criterios": {
       "categoria": {
-        "resultado": "CUMPLE",
+        "resultado": "MET",
         "categoria_informada": "2",
         "fundamento": "La categoría 2ª está admitida para este tipo de trabajo (NAG-200, 8.3.1)."
       },
       "zona": {
-        "resultado": "CUMPLE",
+        "resultado": "MET",
         "fundamento": "La provincia del trabajo está dentro del Área de concesión de Ecogas."
       }
     },
@@ -137,12 +137,12 @@
     ],
     "criterios": {
       "categoria": {
-        "resultado": "CUMPLE",
+        "resultado": "MET",
         "categoria_informada": "2",
         "fundamento": "La categoría 2ª está admitida para este tipo de trabajo (NAG-200, 8.3.1)."
       },
       "zona": {
-        "resultado": "CUMPLE",
+        "resultado": "MET",
         "fundamento": "La provincia del trabajo está dentro del Área de concesión de Ecogas."
       }
     },
@@ -215,16 +215,16 @@
     ],
     "criterios": {
       "categoria": {
-        "resultado": "NO_CUMPLE",
+        "resultado": "NOT_MET",
         "categoria_informada": "2",
         "fundamento": "La categoría 2ª no está admitida para este tipo de trabajo. La 2ª categoría limita cada artefacto a 50.000 kcal/h. (NAG-200, 8.3.1)."
       },
       "zona": {
-        "resultado": "CUMPLE",
+        "resultado": "MET",
         "fundamento": "La provincia del trabajo está dentro del Área de concesión de Ecogas."
       }
     },
-    "resultado": "NO_COMPATIBLE",
+    "resultado": "INCOMPATIBLE",
     "limitaciones": [
       "La Fuente no informa la vigencia de la matrícula. Según la NAG-200 la matrícula se renueva todos los años y vence el 31 de marzo; figurar en el padrón no prueba que esté renovada. Para confirmarlo, pedile al gasista su carné con la matrícula actualizada (NAG-200, 8.6.1).",
       "La provincia que publica Ecogas corresponde al domicilio del matriculado, no a la zona donde puede trabajar.",

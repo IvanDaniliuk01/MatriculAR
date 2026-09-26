@@ -31,7 +31,7 @@ El programa funcionó según esas reglas, pero produjo conclusiones falsas porqu
 - **qué decidimos automatizar**, y con qué alcance;
 - **qué no podemos afirmar**, y cómo lo informa el sistema.
 
-Regla de trabajo del proyecto: **ninguna regla entra al sistema sin una cita que la respalde.** Lo que no tiene respaldo se modela como incertidumbre (`INDETERMINADO`), no como un "no".
+Regla de trabajo del proyecto: **ninguna regla entra al sistema sin una cita que la respalde.** Lo que no tiene respaldo se modela como incertidumbre (`INDETERMINATE`), no como un "no".
 
 ---
 
@@ -76,9 +76,9 @@ La prueba técnica usaba `categoria_obtenida >= categoria_requerida`. Eso es inc
 
 | Categoría informada por la Fuente | Resultado del Criterio |
 |---|---|
-| Está en la lista de admitidas del Tipo de trabajo | `CUMPLE` |
-| Es una categoría conocida (1, 2 o 3) que no está en la lista | `NO_CUMPLE` |
-| Vacía, desconocida o fuera del catálogo | `INDETERMINADO` |
+| Está en la lista de admitidas del Tipo de trabajo | `MET` |
+| Es una categoría conocida (1, 2 o 3) que no está en la lista | `NOT_MET` |
+| Vacía, desconocida o fuera del catálogo | `INDETERMINATE` |
 
 Así el sistema **no depende de ningún orden** entre categorías. Como ventaja adicional, si la inferencia del anidamiento fuera falsa, las reglas siguen siendo correctas.
 
@@ -133,7 +133,7 @@ Siguiendo la indicación del tutor ("seleccionen uno o dos casos de trabajo sufi
 
 Limitación propia de B, que se muestra siempre: *"Por excepción (NAG-200, 8.3.1), un instalador de 2ª puede hacer este trabajo con autorización expresa de la distribuidora cuando no hay matriculados de 1ª en la zona. MatriculAR no puede verificar esa autorización."*
 
-> **Por qué B es `NO_CUMPLE` y no `INDETERMINADO` para la 2ª categoría.** La regla general es formal y está citada: la 2ª no puede. La excepción requiere un acto administrativo puntual (la autorización expresa) que ninguna Fuente publica. El sistema aplica la regla general, **informa la excepción como Limitación** y no finge saber si se otorgó.
+> **Por qué B es `NOT_MET` y no `INDETERMINATE` para la 2ª categoría.** La regla general es formal y está citada: la 2ª no puede. La excepción requiere un acto administrativo puntual (la autorización expresa) que ninguna Fuente publica. El sistema aplica la regla general, **informa la excepción como Limitación** y no finge saber si se otorgó.
 
 ### 3.4 Tabla de decisión
 
@@ -171,11 +171,11 @@ La zona se evalúa comparando la **provincia del trabajo** con el **Área de con
 
 | Provincia del trabajo | Qué sabemos | Criterio de zona |
 |---|---|---|
-| Dentro del Área de concesión de la Fuente | La matrícula figura en el padrón de la distribuidora de esa zona. | `CUMPLE` |
-| En una provincia donde la Distribuidora opera solo en parte (`area_concesion_parcial`) | El P0 modela la zona por provincia, así que no sabemos si la localidad del trabajo está dentro de la concesión. | `INDETERMINADO` |
-| Fuera del Área de concesión de la Fuente | El gasista podría estar registrado en la distribuidora de esa zona, pero no la consultamos. | `INDETERMINADO` |
+| Dentro del Área de concesión de la Fuente | La matrícula figura en el padrón de la distribuidora de esa zona. | `MET` |
+| En una provincia donde la Distribuidora opera solo en parte (`area_concesion_parcial`) | El P0 modela la zona por provincia, así que no sabemos si la localidad del trabajo está dentro de la concesión. | `INDETERMINATE` |
+| Fuera del Área de concesión de la Fuente | El gasista podría estar registrado en la distribuidora de esa zona, pero no la consultamos. | `INDETERMINATE` |
 
-**El Criterio de zona nunca da `NO_CUMPLE`.** Ninguna evidencia disponible permite afirmar que un gasista *no* puede trabajar en una zona: a lo sumo, no sabemos si puede.
+**El Criterio de zona nunca da `NOT_MET`.** Ninguna evidencia disponible permite afirmar que un gasista *no* puede trabajar en una zona: a lo sumo, no sabemos si puede.
 
 Área de concesión de las Fuentes del P0:
 
@@ -188,9 +188,9 @@ La zona se evalúa comparando la **provincia del trabajo** con el **Área de con
 
 | Credencial (ficticia) | Provincia del trabajo | Criterio de zona | Por qué |
 |---|---|---|---|
-| Ecogas, provincia informada Córdoba | San Luis | `CUMPLE` | San Luis está en el Área de concesión de Ecogas. **Este es el caso que la prueba técnica resolvió mal** (errata E1). |
-| Ecogas, provincia informada Córdoba | Córdoba | `CUMPLE` | Córdoba está en el Área de concesión. |
-| Ecogas, provincia informada Mendoza | Buenos Aires | `INDETERMINADO` | Buenos Aires está fuera del área de Ecogas. El gasista podría estar registrado en la distribuidora local, pero no la consultamos. |
+| Ecogas, provincia informada Córdoba | San Luis | `MET` | San Luis está en el Área de concesión de Ecogas. **Este es el caso que la prueba técnica resolvió mal** (errata E1). |
+| Ecogas, provincia informada Córdoba | Córdoba | `MET` | Córdoba está en el Área de concesión. |
+| Ecogas, provincia informada Mendoza | Buenos Aires | `INDETERMINATE` | Buenos Aires está fuera del área de Ecogas. El gasista podría estar registrado en la distribuidora local, pero no la consultamos. |
 
 ---
 
@@ -207,7 +207,7 @@ La zona se evalúa comparando la **provincia del trabajo** con el **Área de con
 
 **Consecuencia:** como la norma mantiene en el registro hasta tres años a quien no renovó, y los listados no muestran suspensiones, **figurar en el padrón no prueba que la matrícula esté vigente.** Por eso:
 
-- la Vigencia **no es un Criterio** y **no participa del resultado** de la Evaluación (si participara, todo resultado sería `INDETERMINADA`);
+- la Vigencia **no es un Criterio** y **no participa del resultado** de la Evaluación (si participara, todo resultado sería `INDETERMINATE`);
 - se informa **siempre** como Limitación, con este texto: *"La Fuente no informa la vigencia de la matrícula. Según la NAG-200 la matrícula se renueva todos los años y vence el 31 de marzo; figurar en el padrón no prueba que esté renovada. Para confirmarlo, pedile al gasista su carné con la matrícula actualizada (NAG-200, 8.6.1)."*;
 - **no se modela ninguna fecha de vencimiento ficticia** (devolución v2: "evitaría incorporar al modelo operativo una fecha_vencimiento ficticia").
 
@@ -234,7 +234,7 @@ El criterio de inclusión en el padrón se preguntó a Ecogas ([`consulta-a-ecog
 | I1 | ¿El listado de Ecogas incluye solo matrículas renovadas? | La Vigencia se informa como Limitación y nunca se afirma. | Respuesta de Ecogas (pregunta 1). |
 | I2 | ¿Cada cuánto se actualiza el listado? | Cada Credencial lleva la fecha de la Consulta que la produjo, nunca una fecha de "actualización del padrón". | Respuesta de Ecogas (pregunta 2). |
 | I3 | ¿La provincia informada es el domicilio? | No se usa para evaluar nada. Se muestra como "provincia informada por la Fuente". | Respuesta de Ecogas (pregunta 3). |
-| I4 | ¿Un matriculado de Ecogas Centro puede trabajar en la zona de Ecogas Cuyana sin registrarse aparte? | Hoy el Área de concesión de Ecogas se trata como una sola. Si se confirmara que hacen falta registros separados, se dividiría en dos y el Criterio de zona pasaría a `INDETERMINADO` entre licenciatarias. | Respuesta de Ecogas (pregunta 4). |
+| I4 | ¿Un matriculado de Ecogas Centro puede trabajar en la zona de Ecogas Cuyana sin registrarse aparte? | Hoy el Área de concesión de Ecogas se trata como una sola. Si se confirmara que hacen falta registros separados, se dividiría en dos y el Criterio de zona pasaría a `INDETERMINATE` entre licenciatarias. | Respuesta de Ecogas (pregunta 4). |
 | I5 | ¿Rige todavía la matrícula en combustión para artefactos de más de 150.000 kcal/h? | El Tipo de trabajo B se limita a artefactos de hasta 150.000 kcal/h. Los trabajos por encima de ese valor quedan fuera del catálogo. | Leer el texto completo de la Res. 468/2026 y consultar a la distribuidora. |
 | I6 | Anidamiento 2ª ⊇ 3ª | **No afecta:** las reglas usan listas explícitas y no dependen del orden entre categorías. | — |
 | I7 | La NAG-200 y la NAG-225 se están actualizando | Las reglas están versionadas y las Evaluaciones conservan la versión que aplicaron. | Seguimiento de las publicaciones de ENARGAS. |

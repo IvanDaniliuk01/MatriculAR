@@ -17,11 +17,11 @@ Padrón público de matriculados de una Distribuidora, tal como la Distribuidora
 _Avoid_: Organismo, API, padrón (como sinónimo suelto)
 
 **Consulta**:
-Lectura de una Fuente en un momento dado, para una o más Matrículas. Termina `EXITOSA`, `FALLIDA` (motivo `FUENTE_NO_DISPONIBLE`, `EXTRACCION_FALLIDA` o `INTERRUMPIDA`) o `NO_REALIZADA` (motivo `FUENTE_NO_AUTOMATIZABLE`). `INTERRUMPIDA` es una falla del propio MatriculAR, no de la Fuente.
+Lectura de una Fuente en un momento dado, para una o más Matrículas. Termina `SUCCEEDED`, `FAILED` (motivo `SOURCE_UNAVAILABLE`, `EXTRACTION_FAILED` o `INTERRUPTED`) o `NOT_ATTEMPTED` (motivo `SOURCE_NOT_AUTOMATABLE`). `INTERRUPTED` es una falla del propio MatriculAR, no de la Fuente.
 _Avoid_: Scraping, sincronización
 
 **Intento**:
-Cada ejecución completa de la lectura de una Fuente dentro de una Consulta, con su hora, las respuestas obtenidas y el error. Solo las fallas transitorias (red, tiempo agotado, error 5xx o 429) generan un nuevo Intento; una `EXTRACCION_FALLIDA` no se reintenta.
+Cada ejecución completa de la lectura de una Fuente dentro de una Consulta, con su hora, las respuestas obtenidas y el error. Solo las fallas transitorias (red, tiempo agotado, error 5xx o 429) generan un nuevo Intento; una `EXTRACTION_FAILED` no se reintenta.
 _Avoid_: Retry, request
 
 **Huella del recurso**:
@@ -29,7 +29,7 @@ Identificador (SHA-256) del contenido exacto que leyó una Consulta exitosa. Per
 _Avoid_: Hash, checksum
 
 **Resultado de verificación**:
-Lo que una Consulta permite afirmar sobre cada matrícula buscada en una Fuente: `ENCONTRADA`, `NO_ENCONTRADA` (la Consulta fue exitosa y la matrícula no figura) o `NO_VERIFICABLE` (la Consulta falló o no se realizó).
+Lo que una Consulta permite afirmar sobre cada matrícula buscada en una Fuente: `FOUND`, `NOT_FOUND` (la Consulta fue exitosa y la matrícula no figura) o `UNVERIFIABLE` (la Consulta falló o no se realizó).
 _Avoid_: "no aparece en ningún padrón", válida/inválida
 
 ## Evidencia
@@ -68,7 +68,7 @@ Lista explícita de Categorías que pueden realizar un Tipo de trabajo, respalda
 _Avoid_: Categoría mínima
 
 **Evaluación**:
-Resultado de aplicar las reglas de un Tipo de trabajo a una Credencial: `COMPATIBLE`, `NO_COMPATIBLE` o `INDETERMINADA`, siempre con el resultado de cada Criterio y su fundamento. Solo existe si hay Credencial. Una misma Credencial puede ser compatible con un Tipo de trabajo y no con otro.
+Resultado de aplicar las reglas de un Tipo de trabajo a una Credencial: `COMPATIBLE`, `INCOMPATIBLE` o `INDETERMINATE`, siempre con el resultado de cada Criterio y su fundamento. Solo existe si hay Credencial. Una misma Credencial puede ser compatible con un Tipo de trabajo y no con otro.
 _Avoid_: Apta, habilitado, verificado
 
 **Criterio**:
@@ -84,7 +84,7 @@ Gasista con cuenta en MatriculAR que declara una o más Matrículas para ofrecer
 _Avoid_: Matriculado (como sinónimo de usuario), prestador
 
 **Vínculo**:
-Relación entre un Profesional y una Matrícula de una Fuente. Es `VERIFICADO` cuando el Profesional confirmó un código enviado al email que la propia Fuente publica para esa Matrícula; si no, es `NO_VERIFICADO` y se muestra así.
+Relación entre un Profesional y una Matrícula de una Fuente. Es `VERIFIED` cuando el Profesional confirmó un código enviado al email que la propia Fuente publica para esa Matrícula; si no, es `UNVERIFIED` y se muestra así.
 _Avoid_: Matrícula del profesional, reclamo
 
 **Cliente**:
@@ -103,20 +103,35 @@ _Avoid_: Calificación (como entidad), review
 
 - Una **Verificación** se apoya en una **Consulta**: propia en una consulta directa, compartida con las demás Verificaciones de la misma Fuente en una búsqueda. Una revalidación hace Consultas sin Verificaciones.
 - Una **Consulta** lee una **Fuente** y produce un **Resultado de verificación** por cada Matrícula buscada.
-- Un Resultado `ENCONTRADA` produce una **Credencial**, y solo entonces se hace una **Evaluación**. `NO_ENCONTRADA` y `NO_VERIFICABLE` son respuestas distintas y ninguna produce Evaluación.
+- Un Resultado `FOUND` produce una **Credencial**, y solo entonces se hace una **Evaluación**. `NOT_FOUND` y `UNVERIFIABLE` son respuestas distintas y ninguna produce Evaluación.
 - Una **Evaluación** aplica un **Tipo de trabajo** a una **Credencial**; nunca modifica la Credencial.
-- Una **Contratación** con Evaluación `NO_COMPATIBLE` no puede crearse; cualquier otro resultado sin `COMPATIBLE` se muestra como advertencia al Cliente.
+- Una **Contratación** con Evaluación `INCOMPATIBLE` no puede crearse; cualquier otro resultado sin `COMPATIBLE` se muestra como advertencia al Cliente.
 - La zona se evalúa contra el **Área de concesión** de la Distribuidora de la Fuente, nunca contra la **Provincia informada**. Fuera del Área de concesión, el Criterio de zona es indeterminado, no incumplido.
 - Una **Consulta** tiene uno o más **Intentos**.
-- La ausencia de evidencia nunca se convierte en certeza: si una Fuente no pudo consultarse, el resultado es `NO_VERIFICABLE` y no hay Evaluación, aunque exista una Credencial anterior; esa Credencial se muestra con su fecha, pero no se usa para concluir.
+- La ausencia de evidencia nunca se convierte en certeza: si una Fuente no pudo consultarse, el resultado es `UNVERIFIABLE` y no hay Evaluación, aunque exista una Credencial anterior; esa Credencial se muestra con su fecha, pero no se usa para concluir.
 - Una **Evaluación** conserva la versión de las **Categorías admitidas** que aplicó; nunca se recalcula con reglas posteriores.
+
+## Códigos de estado
+
+Los términos del dominio se escriben en español; los **códigos de estado**, en inglés.
+
+| Concepto | Código | Significado |
+|---|---|---|
+| Consulta | `IN_PROGRESS` · `SUCCEEDED` · `FAILED` · `NOT_ATTEMPTED` | En curso · exitosa · fallida · no realizada |
+| Motivo de falla | `SOURCE_UNAVAILABLE` · `EXTRACTION_FAILED` · `INTERRUPTED` · `SOURCE_NOT_AUTOMATABLE` | Fuente no disponible · extracción fallida · interrumpida (falla propia) · Fuente no automatizable |
+| Resultado de verificación | `FOUND` · `NOT_FOUND` · `UNVERIFIABLE` | Encontrada · no encontrada · no verificable |
+| Evaluación | `COMPATIBLE` · `INCOMPATIBLE` · `INDETERMINATE` | Compatible · no compatible · indeterminada |
+| Criterio | `MET` · `NOT_MET` · `INDETERMINATE` | Cumple · no cumple · indeterminado |
+| Modo de acceso de la Fuente | `AUTOMATED` · `NOT_AUTOMATABLE` | Consultable automáticamente · no automatizable |
+| Vínculo | `UNVERIFIED` · `VERIFIED` | No verificado · verificado |
+| Contratación | `REQUESTED` · `ACCEPTED` · `COMPLETED` · `RATED` · `CANCELLED` | Solicitada · aceptada · realizada · calificada · cancelada |
 
 ## Ejemplo de diálogo
 
-> **Dev:** "La consulta a Ecogas falló por extracción, ¿marcamos la credencial como NO_ENCONTRADA?"
-> **Experto de dominio:** "No: la Consulta fue FALLIDA, así que el resultado es NO_VERIFICABLE y la Verificación no tiene Evaluación. La Credencial anterior sigue intacta con su fecha; lo que no podemos es afirmar nada nuevo hoy."
+> **Dev:** "La consulta a Ecogas falló por extracción, ¿marcamos la credencial como NOT_FOUND?"
+> **Experto de dominio:** "No: la Consulta fue FAILED, así que el resultado es UNVERIFIABLE y la Verificación no tiene Evaluación. La Credencial anterior sigue intacta con su fecha; lo que no podemos es afirmar nada nuevo hoy."
 > **Dev:** "¿Y si la Consulta fue exitosa y la matrícula no está?"
-> **Experto de dominio:** "Eso es NO_ENCONTRADA: un resultado negativo sobre Ecogas en esa fecha. Tampoco hay Evaluación, pero la respuesta al Cliente es distinta."
+> **Experto de dominio:** "Eso es NOT_FOUND: un resultado negativo sobre Ecogas en esa fecha. Tampoco hay Evaluación, pero la respuesta al Cliente es distinta."
 
 ## Ambigüedades resueltas
 

@@ -73,11 +73,11 @@ Es la "interfaz mínima" que pidió el tutor para recorrer el flujo completo.
 | Resultado | Encabezado | Color / ícono | Qué se muestra además |
 |---|---|---|---|
 | `COMPATIBLE` | "Compatible con este trabajo" | Verde · ✔ | Evidencia, Criterios y Limitaciones |
-| `NO_COMPATIBLE` | "No compatible con este trabajo" | Rojo · ✖ | Qué Criterio no se cumple y su cita |
-| `INDETERMINADA` | "No podemos determinarlo" | Ámbar · ? | Qué Criterio quedó indeterminado y por qué |
-| `NO_ENCONTRADA` | "No figura en el padrón de Ecogas" | Gris · — | La fecha de la Consulta exitosa y la aclaración "no dice nada sobre otras distribuidoras" |
-| `NO_VERIFICABLE` (falla) | "No pudimos consultar la Fuente" | Ámbar · ⚠ | El motivo, la **última evidencia con su fecha como contexto** y el link al buscador oficial |
-| `NO_VERIFICABLE` (MetroGAS) | "Esta Fuente no permite consultas automáticas" | Gris · ⓘ | El link al buscador oficial |
+| `INCOMPATIBLE` | "No compatible con este trabajo" | Rojo · ✖ | Qué Criterio no se cumple y su cita |
+| `INDETERMINATE` | "No podemos determinarlo" | Ámbar · ? | Qué Criterio quedó indeterminado y por qué |
+| `NOT_FOUND` | "No figura en el padrón de Ecogas" | Gris · — | La fecha de la Consulta exitosa y la aclaración "no dice nada sobre otras distribuidoras" |
+| `UNVERIFIABLE` (falla) | "No pudimos consultar la Fuente" | Ámbar · ⚠ | El motivo, la **última evidencia con su fecha como contexto** y el link al buscador oficial |
+| `UNVERIFIABLE` (MetroGAS) | "Esta Fuente no permite consultas automáticas" | Gris · ⓘ | El link al buscador oficial |
 
 Reglas de la interfaz:
 

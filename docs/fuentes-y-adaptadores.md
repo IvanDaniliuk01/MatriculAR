@@ -31,9 +31,9 @@ Esas fuentes **no tienen contrato**: pueden cambiar de URL, de formato o de orde
 El adaptador **aísla** esa variabilidad. El resto del sistema (Consultas, Credenciales, Evaluaciones) no sabe cómo está hecho el sitio de cada Distribuidora. Solo recibe una de dos respuestas:
 
 - **Lectura exitosa:** los registros normalizados de las matrículas buscadas, más los metadatos de la lectura.
-- **Lectura fallida:** un motivo (`FUENTE_NO_DISPONIBLE` o `EXTRACCION_FALLIDA`) y el detalle de cada Intento.
+- **Lectura fallida:** un motivo (`SOURCE_UNAVAILABLE` o `EXTRACTION_FAILED`) y el detalle de cada Intento.
 
-**Responsabilidad central** (devolución v2): *si la Fuente cambia su URL, el orden de los campos o la estructura del recurso, MatriculAR no debe interpretar "se encontraron cero matriculados". Debe producir FUENTE NO CONSULTABLE o EXTRACCIÓN FALLIDA.*
+**Responsabilidad central** (devolución v2): *si la Fuente cambia su URL, el orden de los campos o la estructura del recurso, MatriculAR no debe interpretar "se encontraron cero matriculados". Debe producir FUENTE NO CONSULTABLE o EXTRACCIÓN FAILED.*
 
 ---
 
@@ -56,7 +56,7 @@ Reglas del puerto:
 1. **El adaptador nunca devuelve datos de contacto** en `leer`. Email, teléfono y barrio se descartan dentro del adaptador (INV-9).
 2. **El adaptador no decide nada del dominio.** No evalúa categorías ni zonas: solo lee, valida y normaliza.
 3. **El adaptador no escribe en la base.** Devuelve los Intentos y los metadatos, y es el caso de uso el que los persiste en la Consulta.
-4. **Un resultado vacío nunca es "éxito sin registros".** Si no hay registros, es `EXTRACCION_FALLIDA` (INV-4).
+4. **Un resultado vacío nunca es "éxito sin registros".** Si no hay registros, es `EXTRACTION_FAILED` (INV-4).
 
 ---
 
@@ -68,7 +68,7 @@ La configuración de cada Fuente es un **dato versionado** (tabla `Fuentes`, car
 |---|---|---|
 | Distribuidora | Ecogas (Distribuidora de Gas del Centro y Distribuidora de Gas Cuyana) | MetroGAS |
 | Área de concesión | Córdoba, Catamarca, La Rioja, Mendoza, San Juan, San Luis | CABA y parte del conurbano (no interviene en Evaluaciones) |
-| Modo de acceso | `AUTOMATICA` | `NO_AUTOMATIZABLE` |
+| Modo de acceso | `AUTOMATED` | `NOT_AUTOMATABLE` |
 | Adaptador | `EcogasRecursoNext` | `NoAutomatizable` |
 | URL de la página | `https://www.ecogas.com.ar/hogares-comercios/tramites-y-servicios/listado-de-gasistas-matriculados` | — |
 | URL del buscador oficial (para el Cliente) | la misma | `https://www.metrogas.com.ar/colaboradores/listado-de-gasistas-con-matricula/` |
@@ -115,7 +115,7 @@ flowchart TD
     A1 -- no --> X1[/Clasificar la falla, ver 4.5/]
     A1 -- sí --> B[Extraer los src de /_next/static/chunks/*.js]
     B --> B1{¿Hay candidatos?}
-    B1 -- no --> X2[/EXTRACCION_FALLIDA:<br/>la página no referencia archivos/]
+    B1 -- no --> X2[/EXTRACTION_FAILED:<br/>la página no referencia archivos/]
     B1 -- sí --> C[Ordenar: primero el prefijo preferido 3182-,<br/>después el archivo de la página,<br/>después el resto. Máximo 20]
     C --> D[GET del siguiente candidato]
     D --> V1{V1: ¿200 y JavaScript?}
@@ -123,14 +123,14 @@ flowchart TD
     V1 -- sí --> V2{V2: ¿contiene JSON.parse de una lista<br/>de objetos con id y nombre_apellido?}
     V2 -- no --> D2
     D2 -- sí --> D
-    D2 -- no --> X3[/EXTRACCION_FALLIDA:<br/>marcador no encontrado/]
+    D2 -- no --> X3[/EXTRACTION_FAILED:<br/>marcador no encontrado/]
     V2 -- sí --> E[Decodificar el literal JS<br/>y parsear la lista COMPLETA]
     E --> V3{V3: ¿parseo sin errores?}
-    V3 -- no --> X4[/EXTRACCION_FALLIDA:<br/>parseo fallido/]
+    V3 -- no --> X4[/EXTRACTION_FAILED:<br/>parseo fallido/]
     V3 -- sí --> V4{V4: ¿más de 0 registros, claves<br/>obligatorias, ids únicos?}
-    V4 -- no --> X5[/EXTRACCION_FALLIDA:<br/>registros vacíos o inválidos/]
+    V4 -- no --> X5[/EXTRACTION_FAILED:<br/>registros vacíos o inválidos/]
     V4 -- sí --> V5{V5: ¿la cantidad no cae más del 50 %<br/>y supera el piso de 1.000?}
-    V5 -- no --> X6[/EXTRACCION_FALLIDA:<br/>caída brusca de registros/]
+    V5 -- no --> X6[/EXTRACTION_FAILED:<br/>caída brusca de registros/]
     V5 -- sí --> F[Calcular la huella SHA-256 del recurso,<br/>normalizar, buscar las matrículas]
     F --> G([Lectura exitosa])
 ```
@@ -144,7 +144,7 @@ Detalles:
 
 ### 4.3 Las cinco validaciones
 
-Una lectura es exitosa **solo si pasan las cinco**. Si falla cualquiera, la Consulta es `FALLIDA` con motivo `EXTRACCION_FALLIDA`, y se guarda **cuál** validación falló y por qué.
+Una lectura es exitosa **solo si pasan las cinco**. Si falla cualquiera, la Consulta es `FAILED` con motivo `EXTRACTION_FAILED`, y se guarda **cuál** validación falló y por qué.
 
 | # | Validación | Qué evita | Evidencia real |
 |---|---|---|---|
@@ -165,7 +165,7 @@ Controles adicionales, que **no hacen fallar** la lectura y quedan registrados e
 |---|---|---|
 | `id` | `matricula` | Texto, sin espacios ni ceros a la izquierda. |
 | `nombre_apellido` | `nombre_informado` | Espacios colapsados y en mayúsculas. **Se guarda** para que el Cliente pueda confirmar que la matrícula pertenece a la persona que tiene enfrente. |
-| `categoria` | `categoria_informada` | Texto tal como viene (`"1"`, `"2"`, `"3"`). **No se convierte a número** (INV-7). Si no está en el catálogo, el Criterio de categoría es `INDETERMINADO`. |
+| `categoria` | `categoria_informada` | Texto tal como viene (`"1"`, `"2"`, `"3"`). **No se convierte a número** (INV-7). Si no está en el catálogo, el Criterio de categoría es `INDETERMINATE`. |
 | `provincia` | `provincia_informada` | Mayúsculas, sin tildes, y se mapea al catálogo de provincias. Se muestra como "provincia informada por la Fuente". |
 | `localidad` | `localidad_informada` | Mayúsculas, espacios colapsados. |
 | `correo_electronico` | — | **Se descarta** en el adaptador. Solo `obtenerContactoParaVinculo` lo lee, en memoria (P1). |
@@ -178,15 +178,15 @@ Mecanismo acordado con el tutor: **registrar el intento → detectar el error �
 
 | Situación | Motivo | ¿Se reintenta? | Por qué |
 |---|---|---|---|
-| Error de red, DNS o conexión rechazada | `FUENTE_NO_DISPONIBLE` | **Sí** | Transitorio. |
-| Tiempo agotado de un pedido (más de 6 s) | `FUENTE_NO_DISPONIBLE` | **Sí** | Transitorio. |
-| HTTP 5xx | `FUENTE_NO_DISPONIBLE` | **Sí** | Falla del servidor, usualmente transitoria. |
-| HTTP 429 (demasiados pedidos) | `FUENTE_NO_DISPONIBLE` | **Sí**, respetando `Retry-After` si entra en el presupuesto de tiempo | Transitorio, pero indica que conviene espaciar. |
-| HTTP 403 (bloqueo por detección de bots) | `FUENTE_NO_DISPONIBLE` | **No** | Reintentar insistiría contra una protección. |
-| HTTP 404 o 410 de la página del listado | `EXTRACCION_FALLIDA` | **No** | La página cambió de dirección: es un cambio estructural. |
-| No hay candidatos, o ninguno pasa V1 y V2 | `EXTRACCION_FALLIDA` | **No** | Cambio estructural: fallaría igual en cada Intento. |
-| Falla V3, V4 o V5 | `EXTRACCION_FALLIDA` | **No** | Ídem. |
-| Se agota el tiempo total de la Consulta (24 s) | `FUENTE_NO_DISPONIBLE` | **No quedan Intentos** | Se respeta el límite de 29 s de API Gateway. |
+| Error de red, DNS o conexión rechazada | `SOURCE_UNAVAILABLE` | **Sí** | Transitorio. |
+| Tiempo agotado de un pedido (más de 6 s) | `SOURCE_UNAVAILABLE` | **Sí** | Transitorio. |
+| HTTP 5xx | `SOURCE_UNAVAILABLE` | **Sí** | Falla del servidor, usualmente transitoria. |
+| HTTP 429 (demasiados pedidos) | `SOURCE_UNAVAILABLE` | **Sí**, respetando `Retry-After` si entra en el presupuesto de tiempo | Transitorio, pero indica que conviene espaciar. |
+| HTTP 403 (bloqueo por detección de bots) | `SOURCE_UNAVAILABLE` | **No** | Reintentar insistiría contra una protección. |
+| HTTP 404 o 410 de la página del listado | `EXTRACTION_FAILED` | **No** | La página cambió de dirección: es un cambio estructural. |
+| No hay candidatos, o ninguno pasa V1 y V2 | `EXTRACTION_FAILED` | **No** | Cambio estructural: fallaría igual en cada Intento. |
+| Falla V3, V4 o V5 | `EXTRACTION_FAILED` | **No** | Ídem. |
+| Se agota el tiempo total de la Consulta (24 s) | `SOURCE_UNAVAILABLE` | **No quedan Intentos** | Se respeta el límite de 29 s de API Gateway. |
 
 Política de Intentos: **hasta 3**, con esperas de **1 s** antes del segundo y **2 s** antes del tercero. Un Intento solo arranca si queda en el presupuesto **al menos el tiempo máximo de un pedido** (`timeout_pedido_ms`, 6 s), y cada pedido usa como límite el menor entre 6 s y el tiempo que quede. En el peor caso (3 tiempos agotados): 6 s + 1 s + 6 s + 2 s = 15 s, quedan 9 s y el tercer Intento arranca.
 
@@ -199,15 +199,15 @@ Todo queda en la **Consulta** (ver [`database/README.md`](../database/README.md#
 | Consulta | Fuente y **versión de su configuración**, origen (Verificación, revalidación o búsqueda), matrículas buscadas, `iniciada_en`, `finalizada_en`, estado, motivo, detalle de la falla (qué validación y qué se esperaba), URL resuelta del recurso, **huella SHA-256 del recurso**, bytes, registros extraídos, resumen por categoría y provincia, claves no esperadas. |
 | Intento | Número, `iniciado_en`, duración, resultado (éxito o motivo), si se reintentó, y la lista de **pedidos HTTP**. |
 | Pedido HTTP | URL, método, código de estado, tipo de contenido, bytes, duración y error de red, si lo hubo. **Nunca el cuerpo de la respuesta.** |
-| Resultado de verificación | Uno por matrícula buscada: `ENCONTRADA`, `NO_ENCONTRADA` o `NO_VERIFICABLE`. |
+| Resultado de verificación | Uno por matrícula buscada: `FOUND`, `NOT_FOUND` o `UNVERIFIABLE`. |
 
 La **huella del recurso** (el hash SHA-256 del archivo descargado) permite decir exactamente *qué versión* del padrón se leyó sin guardar el padrón. Dos Consultas con la misma huella leyeron el mismo contenido.
 
-**La Consulta se registra en estado `EN_CURSO` antes del primer pedido**, así el intento queda asentado aunque la función se interrumpa. Una Consulta que sigue `EN_CURSO` después de su plazo máximo se interpreta como `FALLIDA` con motivo `INTERRUMPIDA`: es una falla de MatriculAR (por ejemplo, la base no respondió), no de la Fuente, y no cuenta en la salud de la Fuente.
+**La Consulta se registra en estado `IN_PROGRESS` antes del primer pedido**, así el intento queda asentado aunque la función se interrumpa. Una Consulta que sigue `IN_PROGRESS` después de su plazo máximo se interpreta como `FAILED` con motivo `INTERRUPTED`: es una falla de MatriculAR (por ejemplo, la base no respondió), no de la Fuente, y no cuenta en la salud de la Fuente.
 
 ### 4.7 Qué pasa con la evidencia anterior cuando falla una lectura
 
-Una lectura fallida **no toca** ninguna Credencial existente (INV-1). La Verificación responde `NO_VERIFICABLE` y adjunta la última Credencial disponible de esa matrícula, **con su fecha**, como contexto, **sin usarla para concluir** (ver [modelo § 5](modelo-de-dominio.md#5-no_encontrada-frente-a-no_verificable)).
+Una lectura fallida **no toca** ninguna Credencial existente (INV-1). La Verificación responde `UNVERIFIABLE` y adjunta la última Credencial disponible de esa matrícula, **con su fecha**, como contexto, **sin usarla para concluir** (ver [modelo § 5](modelo-de-dominio.md#5-not_found-frente-a-unverifiable)).
 
 ---
 
@@ -222,7 +222,7 @@ Una lectura fallida **no toca** ninguna Credencial existente (INV-1). La Verific
 Por eso el adaptador `NoAutomatizable`:
 
 1. **no hace ningún pedido** a MetroGAS;
-2. responde "no realizada": la Consulta queda `NO_REALIZADA`, sin Intentos, y el Resultado de verificación es `NO_VERIFICABLE`;
+2. responde "no realizada": la Consulta queda `NOT_ATTEMPTED`, sin Intentos, y el Resultado de verificación es `UNVERIFIABLE`;
 3. aporta la URL del **buscador oficial** para que el Cliente verifique a mano.
 
 MetroGAS se modela como Fuente, en lugar de omitirla, por dos razones: el Cliente puede preguntar por ella, y el sistema tiene que poder decir *"no pudimos consultar"* en vez de *"no está"*. Si MetroGAS ofreciera algún día un acceso para terceros, se cambia el adaptador de la Fuente con una nueva versión de su configuración.
@@ -239,15 +239,15 @@ Las pruebas del adaptador **no dependen de Ecogas**: usan **fixtures** (archivos
 | F2 | Mismos registros con **otro orden de claves** | Lectura exitosa (el parseo no depende del orden) |
 | F3 | Registros con **tildes y Ñ** escapadas (`\xNN`) | Lectura exitosa, sin perder registros |
 | F4 | Recurso con **otro prefijo** (no `3182-`) | Lectura exitosa, recorriendo candidatos |
-| F5 | La URL del recurso devuelve **404 con HTML** | `EXTRACCION_FALLIDA` (V1 en todos los candidatos) |
-| F6 | Solo está el archivo de la página (columnas sin datos) | `EXTRACCION_FALLIDA` (V2) |
-| F7 | Literal **truncado** | `EXTRACCION_FALLIDA` (V3) |
-| F8 | Lista **vacía** | `EXTRACCION_FALLIDA` (V4) |
-| F9 | Falta la clave `categoria` en los registros | `EXTRACCION_FALLIDA` (V4) |
-| F10 | 40 % de los registros de la Consulta anterior | `EXTRACCION_FALLIDA` (V5) |
-| F11 | Tiempo agotado en los 3 Intentos | `FUENTE_NO_DISPONIBLE`, 3 Intentos registrados |
+| F5 | La URL del recurso devuelve **404 con HTML** | `EXTRACTION_FAILED` (V1 en todos los candidatos) |
+| F6 | Solo está el archivo de la página (columnas sin datos) | `EXTRACTION_FAILED` (V2) |
+| F7 | Literal **truncado** | `EXTRACTION_FAILED` (V3) |
+| F8 | Lista **vacía** | `EXTRACTION_FAILED` (V4) |
+| F9 | Falta la clave `categoria` en los registros | `EXTRACTION_FAILED` (V4) |
+| F10 | 40 % de los registros de la Consulta anterior | `EXTRACTION_FAILED` (V5) |
+| F11 | Tiempo agotado en los 3 Intentos | `SOURCE_UNAVAILABLE`, 3 Intentos registrados |
 | F12 | 503 y después 200 | Lectura exitosa en el Intento 2; el Intento 1 queda registrado |
-| F13 | 403 | `FUENTE_NO_DISPONIBLE`, 1 Intento, sin reintento |
+| F13 | 403 | `SOURCE_UNAVAILABLE`, 1 Intento, sin reintento |
 | F14 | Aparece una clave nueva (`vigencia`) | Lectura exitosa, con `claves_no_esperadas` registradas |
 
 Además, se prueba que **ninguna** salida de `leer` contenga email, teléfono ni barrio (INV-9).
@@ -257,7 +257,7 @@ Además, se prueba que **ninguna** salida de `leer` contenga email, teléfono ni
 ## 7. Cómo se agrega una Fuente nueva
 
 1. **Investigar** la Fuente con el método de la investigación: dónde publica, qué protege, qué campos expone y qué no.
-2. **Decidir el modo de acceso.** Si hay captcha o una protección activa, es `NO_AUTOMATIZABLE` y no hace falta programar nada.
+2. **Decidir el modo de acceso.** Si hay captcha o una protección activa, es `NOT_AUTOMATABLE` y no hace falta programar nada.
 3. Si es automatizable y el mecanismo es nuevo, **escribir un adaptador** que implemente el puerto, con sus propias validaciones y fixtures.
 4. **Cargar la configuración** como una nueva Fuente en `database/seed/fuentes.json`, con su Área de concesión y sus Limitaciones.
 5. **Documentar** los hallazgos en este archivo.
@@ -281,6 +281,6 @@ Candidatas para fases posteriores (sin evaluar todavía): Naturgy BAN (listado H
 
 | # | Punto | Qué falta | Mientras tanto |
 |---|---|---|---|
-| P-1 | **Cómo se identifica el adaptador ante Ecogas.** La prueba técnica envió un `User-Agent` de navegador. | La respuesta de Ecogas sobre las condiciones de uso (pregunta 5). | En producción, el adaptador se identifica con un `User-Agent` propio de MatriculAR y un contacto. Si Ecogas lo bloquea, la Consulta da `FUENTE_NO_DISPONIBLE` (403) y el sistema sigue siendo coherente. **Se decide con la respuesta de Ecogas, antes de la implementación.** |
+| P-1 | **Cómo se identifica el adaptador ante Ecogas.** La prueba técnica envió un `User-Agent` de navegador. | La respuesta de Ecogas sobre las condiciones de uso (pregunta 5). | En producción, el adaptador se identifica con un `User-Agent` propio de MatriculAR y un contacto. Si Ecogas lo bloquea, la Consulta da `SOURCE_UNAVAILABLE` (403) y el sistema sigue siendo coherente. **Se decide con la respuesta de Ecogas, antes de la implementación.** |
 | P-2 | **Pedidos desde IPs de AWS** (etapa 4): la detección de bots de Ecogas podría bloquearlos. | Probarlo temprano en la etapa 4. | Si pasa, se aplica el mismo tratamiento que en P-1. |
 | P-3 | **Reutilizar en memoria el recurso descargado** por unos segundos, para Verificaciones casi simultáneas. | Medir si hace falta. | No se reutiliza: cada Consulta descarga el recurso. Si la carga lo justificara, se evaluaría con un ADR nuevo. |

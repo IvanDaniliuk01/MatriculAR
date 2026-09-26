@@ -3,11 +3,11 @@
     "consulta_id": "01M2ZEQ030KDF2QM9Z2CK5XYT0",
     "fuente_id": "ecogas",
     "fuente_version": 1,
-    "origen": "VERIFICACION",
+    "origen": "VERIFICATION",
     "matriculas_buscadas": [
       "99001"
     ],
-    "estado": "EXITOSA",
+    "estado": "SUCCEEDED",
     "motivo_falla": null,
     "detalle_falla": null,
     "iniciada_en": "2026-09-20T13:05:00.000Z",
@@ -18,7 +18,7 @@
         "numero": 1,
         "iniciado_en": "2026-09-20T13:05:00.015Z",
         "duracion_ms": 2110,
-        "resultado": "EXITO",
+        "resultado": "SUCCESS",
         "reintentable": false,
         "pedidos": [
           {
@@ -69,12 +69,12 @@
     "consulta_id": "01M3FFPJ2054EHQKZK0AN2P9E0",
     "fuente_id": "ecogas",
     "fuente_version": 1,
-    "origen": "VERIFICACION",
+    "origen": "VERIFICATION",
     "matriculas_buscadas": [
       "99001"
     ],
-    "estado": "FALLIDA",
-    "motivo_falla": "EXTRACCION_FALLIDA",
+    "estado": "FAILED",
+    "motivo_falla": "EXTRACTION_FAILED",
     "detalle_falla": {
       "validacion": "V2",
       "descripcion": "Ninguno de los archivos referenciados por la página contiene la lista de registros.",
@@ -89,7 +89,7 @@
         "numero": 1,
         "iniciado_en": "2026-09-26T18:30:05.132Z",
         "duracion_ms": 1805,
-        "resultado": "EXTRACCION_FALLIDA",
+        "resultado": "EXTRACTION_FAILED",
         "reintentable": false,
         "pedidos": [
           {
@@ -151,11 +151,11 @@
     "consulta_id": "01M3FG90YX2CPVTY9M7AM85DXW",
     "fuente_id": "ecogas",
     "fuente_version": 1,
-    "origen": "VERIFICACION",
+    "origen": "VERIFICATION",
     "matriculas_buscadas": [
       "99001"
     ],
-    "estado": "EXITOSA",
+    "estado": "SUCCEEDED",
     "motivo_falla": null,
     "detalle_falla": null,
     "iniciada_en": "2026-09-26T18:40:10.205Z",
@@ -166,7 +166,7 @@
         "numero": 1,
         "iniciado_en": "2026-09-26T18:40:10.220Z",
         "duracion_ms": 2110,
-        "resultado": "EXITO",
+        "resultado": "SUCCESS",
         "reintentable": false,
         "pedidos": [
           {
@@ -217,11 +217,11 @@
     "consulta_id": "01M3FGD9JMAJNXQJNYRE157YSR",
     "fuente_id": "ecogas",
     "fuente_version": 1,
-    "origen": "VERIFICACION",
+    "origen": "VERIFICATION",
     "matriculas_buscadas": [
       "99001"
     ],
-    "estado": "EXITOSA",
+    "estado": "SUCCEEDED",
     "motivo_falla": null,
     "detalle_falla": null,
     "iniciada_en": "2026-09-26T18:42:30.100Z",
@@ -232,7 +232,7 @@
         "numero": 1,
         "iniciado_en": "2026-09-26T18:42:30.115Z",
         "duracion_ms": 2110,
-        "resultado": "EXITO",
+        "resultado": "SUCCESS",
         "reintentable": false,
         "pedidos": [
           {
@@ -283,11 +283,11 @@
     "consulta_id": "01M3FGHVZ054179B3MBQF1VMBM",
     "fuente_id": "ecogas",
     "fuente_version": 1,
-    "origen": "VERIFICACION",
+    "origen": "VERIFICATION",
     "matriculas_buscadas": [
       "99004"
     ],
-    "estado": "EXITOSA",
+    "estado": "SUCCEEDED",
     "motivo_falla": null,
     "detalle_falla": null,
     "iniciada_en": "2026-09-26T18:45:00.000Z",
@@ -298,7 +298,7 @@
         "numero": 1,
         "iniciado_en": "2026-09-26T18:45:00.015Z",
         "duracion_ms": 2110,
-        "resultado": "EXITO",
+        "resultado": "SUCCESS",
         "reintentable": false,
         "pedidos": [
           {
@@ -349,12 +349,12 @@
     "consulta_id": "01M3FGQBR0KGEFMNB9DZ4BW2FS",
     "fuente_id": "metrogas",
     "fuente_version": 1,
-    "origen": "VERIFICACION",
+    "origen": "VERIFICATION",
     "matriculas_buscadas": [
       "99005"
     ],
-    "estado": "NO_REALIZADA",
-    "motivo_falla": "FUENTE_NO_AUTOMATIZABLE",
+    "estado": "NOT_ATTEMPTED",
+    "motivo_falla": "SOURCE_NOT_AUTOMATABLE",
     "detalle_falla": {
       "validacion": null,
       "descripcion": "La Fuente exige un captcha válido; MatriculAR no la consulta automáticamente.",

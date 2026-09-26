@@ -9,8 +9,8 @@ reemplaza: máquina de estados del Profesional de la primera entrega (pendiente_
 La primera entrega le daba al Profesional un estado de habilitación (`verificado`, `vencido`), y la investigación le agregaba a la credencial estados como `categoria_insuficiente` o `fuera_de_jurisdiccion`. El tutor señaló que esos estados dependen del trabajo y no de la credencial, y que ninguna Fuente informa vencimientos individuales. Decidimos:
 
 - que la **Credencial** sea evidencia inmutable **sin estado de aptitud** (qué matrícula, en qué Fuente, con qué categoría, según qué Consulta y cuándo);
-- que la **Evaluación** sea el resultado de aplicar un **Tipo de trabajo** a una Credencial (`COMPATIBLE`, `NO_COMPATIBLE` o `INDETERMINADA`), con un resultado por Criterio, su fundamento y una copia de la regla aplicada;
-- que **solo haya Evaluación cuando hay Credencial**: `NO_ENCONTRADA` y `NO_VERIFICABLE` son respuestas distintas del sistema;
+- que la **Evaluación** sea el resultado de aplicar un **Tipo de trabajo** a una Credencial (`COMPATIBLE`, `INCOMPATIBLE` o `INDETERMINATE`), con un resultado por Criterio, su fundamento y una copia de la regla aplicada;
+- que **solo haya Evaluación cuando hay Credencial**: `NOT_FOUND` y `UNVERIFIABLE` son respuestas distintas del sistema;
 - que la **Vigencia no sea un Criterio**: se informa siempre como Limitación y el sistema nunca la afirma.
 
 ## Por qué "compatible" y no "apta" o "habilitada"

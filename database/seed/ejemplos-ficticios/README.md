@@ -13,12 +13,12 @@ Muestran **cómo se ve cada ítem** de las tablas del núcleo en los escenarios 
 
 | Escenario | Hora (UTC) | Qué muestra | Ítems |
 |---|---|---|---|
-| S0 (contexto) | 20/09/2026 13:05 | Evidencia previa: la matrícula 99001 figuraba con categoría 2ª. | Consulta `EXITOSA`, Resultado `ENCONTRADA`, Credencial, Verificación, Evaluación `COMPATIBLE` |
-| S7 | 26/09/2026 18:30 | **Camino de error:** el recurso cambió y ningún archivo tiene la lista de registros (falla la validación V2). | Consulta `FALLIDA` (`EXTRACCION_FALLIDA`), Resultado `NO_VERIFICABLE`, Verificación **sin Evaluación** que adjunta la Credencial del 20/09 como contexto (`credencial_previa_ref`) |
-| S1 | 26/09/2026 18:40 | Categoría 2ª para A1 en Córdoba. | Consulta `EXITOSA`, Credencial nueva, Evaluación **`COMPATIBLE`** |
-| S2 | 26/09/2026 18:42 | La misma matrícula y la misma categoría, pero para el Tipo de trabajo B. | Evaluación **`NO_COMPATIBLE`** (categoría `NO_CUMPLE`) |
-| S6 | 26/09/2026 18:45 | La Consulta sale bien y la matrícula 99004 no figura. | Consulta `EXITOSA`, Resultado **`NO_ENCONTRADA`**, Verificación sin Credencial ni Evaluación |
-| S9 | 26/09/2026 18:48 | MetroGAS, que no es automatizable. | Consulta **`NO_REALIZADA`** sin Intentos, Resultado `NO_VERIFICABLE`, Verificación con link al buscador oficial |
+| S0 (contexto) | 20/09/2026 13:05 | Evidencia previa: la matrícula 99001 figuraba con categoría 2ª. | Consulta `SUCCEEDED`, Resultado `FOUND`, Credencial, Verificación, Evaluación `COMPATIBLE` |
+| S7 | 26/09/2026 18:30 | **Camino de error:** el recurso cambió y ningún archivo tiene la lista de registros (falla la validación V2). | Consulta `FAILED` (`EXTRACTION_FAILED`), Resultado `UNVERIFIABLE`, Verificación **sin Evaluación** que adjunta la Credencial del 20/09 como contexto (`credencial_previa_ref`) |
+| S1 | 26/09/2026 18:40 | Categoría 2ª para A1 en Córdoba. | Consulta `SUCCEEDED`, Credencial nueva, Evaluación **`COMPATIBLE`** |
+| S2 | 26/09/2026 18:42 | La misma matrícula y la misma categoría, pero para el Tipo de trabajo B. | Evaluación **`INCOMPATIBLE`** (categoría `NOT_MET`) |
+| S6 | 26/09/2026 18:45 | La Consulta sale bien y la matrícula 99004 no figura. | Consulta `SUCCEEDED`, Resultado **`NOT_FOUND`**, Verificación sin Credencial ni Evaluación |
+| S9 | 26/09/2026 18:48 | MetroGAS, que no es automatizable. | Consulta **`NOT_ATTEMPTED`** sin Intentos, Resultado `UNVERIFIABLE`, Verificación con link al buscador oficial |
 
 Observaciones para leer los archivos:
 

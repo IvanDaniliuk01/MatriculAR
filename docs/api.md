@@ -29,7 +29,7 @@
 | CORS | Solo el origen del frontend. |
 | Validación | Zod, con esquemas compartidos con el frontend. |
 
-> **Principio clave: una Fuente que falla no es un error HTTP.** Si Ecogas no responde o cambió su formato, `POST /verificaciones` responde **`201 Created`** con una Verificación cuyo `resultado_verificacion` es `NO_VERIFICABLE`. Es un resultado del dominio, y el cliente tiene que mostrarlo. Los códigos `4xx` quedan para los errores del pedido y los `5xx` para las fallas del propio MatriculAR.
+> **Principio clave: una Fuente que falla no es un error HTTP.** Si Ecogas no responde o cambió su formato, `POST /verificaciones` responde **`201 Created`** con una Verificación cuyo `resultado_verificacion` es `UNVERIFIABLE`. Es un resultado del dominio, y el cliente tiene que mostrarlo. Los códigos `4xx` quedan para los errores del pedido y los `5xx` para las fallas del propio MatriculAR.
 
 ---
 
@@ -77,13 +77,13 @@ La forma es **siempre la misma**. Los campos que no aplican al resultado vienen 
 | `verificacion_id` | string | Siempre. |
 | `solicitada_en` | string | Siempre. |
 | `pedido` | objeto | Siempre: los datos del pedido, normalizados, con el nombre de la Fuente, del Tipo de trabajo y de la provincia. |
-| `resultado_verificacion` | `ENCONTRADA` \| `NO_ENCONTRADA` \| `NO_VERIFICABLE` | Siempre. |
+| `resultado_verificacion` | `FOUND` \| `NOT_FOUND` \| `UNVERIFIABLE` | Siempre. |
 | `mensaje` | string | Siempre: el texto principal para el Cliente. Dice qué sabemos, de dónde y de cuándo. |
 | `consulta` | objeto | Siempre: `consulta_id`, `estado`, `motivo_falla`, `detalle_falla`, `iniciada_en`, `finalizada_en`, `cantidad_intentos`, `registros_extraidos`, `huella_recurso`. |
-| `credencial` | objeto \| null | Solo si es `ENCONTRADA`: `matricula`, `nombre_informado`, `categoria_informada`, `provincia_informada`, `localidad_informada`, `consultada_en`, `fuente`. |
+| `credencial` | objeto \| null | Solo si es `FOUND`: `matricula`, `nombre_informado`, `categoria_informada`, `provincia_informada`, `localidad_informada`, `consultada_en`, `fuente`. |
 | `evaluacion` | objeto \| null | Solo si hay Credencial: `evaluacion_id`, `resultado`, `criterios`, `limitaciones`, `regla_aplicada` (con el fundamento por categoría) y `tipo_trabajo_version`. |
-| `credencial_previa` | objeto \| null | Solo si es `NO_VERIFICABLE` y existe una Credencial anterior. Tiene la misma forma que `credencial` y **se muestra como contexto, no como conclusión**. |
-| `buscador_oficial` | string \| null | Si es `NO_VERIFICABLE`: el link para verificar a mano. |
+| `credencial_previa` | objeto \| null | Solo si es `UNVERIFIABLE` y existe una Credencial anterior. Tiene la misma forma que `credencial` y **se muestra como contexto, no como conclusión**. |
+| `buscador_oficial` | string \| null | Si es `UNVERIFIABLE`: el link para verificar a mano. |
 
 ### 3.3 Ejemplos
 
@@ -99,11 +99,11 @@ La forma es **siempre la misma**. Los campos que no aplican al resultado vienen 
     "tipo_trabajo": { "tipo_trabajo_id": "artefacto-vivienda-unifamiliar", "codigo": "A1", "nombre": "Conexión o reemplazo de un artefacto en una vivienda unifamiliar" },
     "provincia_trabajo": { "codigo": "CORDOBA", "nombre": "Córdoba" }
   },
-  "resultado_verificacion": "ENCONTRADA",
+  "resultado_verificacion": "FOUND",
   "mensaje": "La matrícula 99001 figura en el padrón de Ecogas (consulta del 26/09/2026 15:40) con categoría 2ª, que puede realizar este trabajo.",
   "consulta": {
     "consulta_id": "01M3FG90YX2CPVTY9M7AM85DXW",
-    "estado": "EXITOSA",
+    "estado": "SUCCEEDED",
     "motivo_falla": null,
     "detalle_falla": null,
     "iniciada_en": "2026-09-26T18:40:10.205Z",
@@ -125,8 +125,8 @@ La forma es **siempre la misma**. Los campos que no aplican al resultado vienen 
     "evaluacion_id": "01M3FG9331HHQC18K52PVWXD4Y",
     "resultado": "COMPATIBLE",
     "criterios": {
-      "categoria": { "resultado": "CUMPLE", "categoria_informada": "2", "fundamento": "La categoría 2ª está admitida para este tipo de trabajo (NAG-200, 8.3.1)." },
-      "zona": { "resultado": "CUMPLE", "fundamento": "La provincia del trabajo está dentro del Área de concesión de Ecogas." }
+      "categoria": { "resultado": "MET", "categoria_informada": "2", "fundamento": "La categoría 2ª está admitida para este tipo de trabajo (NAG-200, 8.3.1)." },
+      "zona": { "resultado": "MET", "fundamento": "La provincia del trabajo está dentro del Área de concesión de Ecogas." }
     },
     "limitaciones": [
       "La Fuente no informa la vigencia de la matrícula. Según la NAG-200 la matrícula se renueva todos los años y vence el 31 de marzo; figurar en el padrón no prueba que esté renovada. Para confirmarlo, pedile al gasista su carné con la matrícula actualizada (NAG-200, 8.6.1).",
@@ -142,13 +142,13 @@ La forma es **siempre la misma**. Los campos que no aplican al resultado vienen 
 }
 ```
 
-**S6: `NO_ENCONTRADA`** (se muestran solo los campos que cambian)
+**S6: `NOT_FOUND`** (se muestran solo los campos que cambian)
 
 ```json
 {
-  "resultado_verificacion": "NO_ENCONTRADA",
+  "resultado_verificacion": "NOT_FOUND",
   "mensaje": "La matrícula 99004 no figura en el padrón de Ecogas según la consulta exitosa del 26/09/2026 15:45. Esto no dice nada sobre otras distribuidoras.",
-  "consulta": { "estado": "EXITOSA", "registros_extraidos": 5031, "cantidad_intentos": 1 },
+  "consulta": { "estado": "SUCCEEDED", "registros_extraidos": 5031, "cantidad_intentos": 1 },
   "credencial": null,
   "evaluacion": null,
   "credencial_previa": null,
@@ -156,15 +156,15 @@ La forma es **siempre la misma**. Los campos que no aplican al resultado vienen 
 }
 ```
 
-**S7: `NO_VERIFICABLE` porque cambió el recurso** (el camino de error)
+**S7: `UNVERIFIABLE` porque cambió el recurso** (el camino de error)
 
 ```json
 {
-  "resultado_verificacion": "NO_VERIFICABLE",
+  "resultado_verificacion": "UNVERIFIABLE",
   "mensaje": "No pudimos consultar el padrón de Ecogas (26/09/2026 15:30): el formato del recurso cambió. No podemos afirmar nada con evidencia de hoy. Última evidencia disponible: figuraba con categoría 2ª según la consulta del 20/09/2026.",
   "consulta": {
-    "estado": "FALLIDA",
-    "motivo_falla": "EXTRACCION_FALLIDA",
+    "estado": "FAILED",
+    "motivo_falla": "EXTRACTION_FAILED",
     "detalle_falla": { "validacion": "V2", "descripcion": "Ninguno de los archivos referenciados por la página contiene la lista de registros." },
     "cantidad_intentos": 1,
     "registros_extraidos": null
@@ -181,13 +181,13 @@ La forma es **siempre la misma**. Los campos que no aplican al resultado vienen 
 }
 ```
 
-**S9: `NO_VERIFICABLE` porque MetroGAS no es automatizable**
+**S9: `UNVERIFIABLE` porque MetroGAS no es automatizable**
 
 ```json
 {
-  "resultado_verificacion": "NO_VERIFICABLE",
+  "resultado_verificacion": "UNVERIFIABLE",
   "mensaje": "MetroGAS no permite consultas automáticas: su buscador exige un captcha. Podés verificar la matrícula manualmente en el buscador oficial.",
-  "consulta": { "estado": "NO_REALIZADA", "motivo_falla": "FUENTE_NO_AUTOMATIZABLE", "cantidad_intentos": 0 },
+  "consulta": { "estado": "NOT_ATTEMPTED", "motivo_falla": "SOURCE_NOT_AUTOMATABLE", "cantidad_intentos": 0 },
   "credencial": null,
   "evaluacion": null,
   "credencial_previa": null,
@@ -195,16 +195,16 @@ La forma es **siempre la misma**. Los campos que no aplican al resultado vienen 
 }
 ```
 
-**S5: `INDETERMINADA` porque el trabajo está fuera del Área de concesión** (fragmento)
+**S5: `INDETERMINATE` porque el trabajo está fuera del Área de concesión** (fragmento)
 
 ```json
 {
-  "resultado_verificacion": "ENCONTRADA",
+  "resultado_verificacion": "FOUND",
   "evaluacion": {
-    "resultado": "INDETERMINADA",
+    "resultado": "INDETERMINATE",
     "criterios": {
-      "categoria": { "resultado": "CUMPLE", "categoria_informada": "3" },
-      "zona": { "resultado": "INDETERMINADO", "fundamento": "La provincia del trabajo está fuera del Área de concesión de Ecogas: el gasista podría estar registrado en la distribuidora de esa zona, que no se consultó." }
+      "categoria": { "resultado": "MET", "categoria_informada": "3" },
+      "zona": { "resultado": "INDETERMINATE", "fundamento": "La provincia del trabajo está fuera del Área de concesión de Ecogas: el gasista podría estar registrado en la distribuidora de esa zona, que no se consultó." }
     }
   }
 }
@@ -231,10 +231,10 @@ Historial de todo lo que MatriculAR supo de esa matrícula, del más reciente al
   "fuente_id": "ecogas",
   "matricula": "99001",
   "resultados": [
-    { "determinado_en": "2026-09-26T18:42:32.240Z", "resultado": "ENCONTRADA", "consulta_id": "…", "categoria_informada": "2" },
-    { "determinado_en": "2026-09-26T18:40:12.345Z", "resultado": "ENCONTRADA", "consulta_id": "…", "categoria_informada": "2" },
-    { "determinado_en": "2026-09-26T18:30:06.950Z", "resultado": "NO_VERIFICABLE", "consulta_id": "…", "motivo": "EXTRACCION_FALLIDA" },
-    { "determinado_en": "2026-09-20T13:05:02.140Z", "resultado": "ENCONTRADA", "consulta_id": "…", "categoria_informada": "2" }
+    { "determinado_en": "2026-09-26T18:42:32.240Z", "resultado": "FOUND", "consulta_id": "…", "categoria_informada": "2" },
+    { "determinado_en": "2026-09-26T18:40:12.345Z", "resultado": "FOUND", "consulta_id": "…", "categoria_informada": "2" },
+    { "determinado_en": "2026-09-26T18:30:06.950Z", "resultado": "UNVERIFIABLE", "consulta_id": "…", "motivo": "EXTRACTION_FAILED" },
+    { "determinado_en": "2026-09-20T13:05:02.140Z", "resultado": "FOUND", "consulta_id": "…", "categoria_informada": "2" }
   ]
 }
 ```
@@ -247,12 +247,12 @@ Historial de todo lo que MatriculAR supo de esa matrícula, del más reciente al
 ```json
 [
   {
-    "fuente_id": "ecogas", "nombre": "Ecogas", "modo_acceso": "AUTOMATICA",
+    "fuente_id": "ecogas", "nombre": "Ecogas", "modo_acceso": "AUTOMATED",
     "area_concesion": ["CORDOBA", "CATAMARCA", "LA_RIOJA", "MENDOZA", "SAN_JUAN", "SAN_LUIS"],
     "buscador_oficial": "https://www.ecogas.com.ar/…", "version": 1
   },
   {
-    "fuente_id": "metrogas", "nombre": "MetroGAS", "modo_acceso": "NO_AUTOMATIZABLE",
+    "fuente_id": "metrogas", "nombre": "MetroGAS", "modo_acceso": "NOT_AUTOMATABLE",
     "area_concesion": ["CIUDAD_AUTONOMA_DE_BUENOS_AIRES"],
     "buscador_oficial": "https://www.metrogas.com.ar/colaboradores/listado-de-gasistas-con-matricula/", "version": 1
   }
@@ -267,8 +267,8 @@ La configuración interna (tiempos, umbrales) no se expone.
 
 ```json
 [
-  { "consulta_id": "…", "iniciada_en": "2026-09-26T18:45:00.000Z", "estado": "EXITOSA", "registros_extraidos": 5031, "huella_recurso": "adbd…44b6", "cantidad_intentos": 1 },
-  { "consulta_id": "…", "iniciada_en": "2026-09-26T18:30:05.120Z", "estado": "FALLIDA", "motivo_falla": "EXTRACCION_FALLIDA", "validacion": "V2", "cantidad_intentos": 1 }
+  { "consulta_id": "…", "iniciada_en": "2026-09-26T18:45:00.000Z", "estado": "SUCCEEDED", "registros_extraidos": 5031, "huella_recurso": "adbd…44b6", "cantidad_intentos": 1 },
+  { "consulta_id": "…", "iniciada_en": "2026-09-26T18:30:05.120Z", "estado": "FAILED", "motivo_falla": "EXTRACTION_FAILED", "validacion": "V2", "cantidad_intentos": 1 }
 ]
 ```
 
@@ -283,18 +283,18 @@ Devuelven la versión vigente de cada ítem, tal como están en [`database/seed/
 Formato único:
 
 ```json
-{ "error": { "codigo": "VALIDACION", "mensaje": "El campo matricula es obligatorio.", "detalles": [ { "campo": "matricula", "problema": "requerido" } ] } }
+{ "error": { "codigo": "VALIDATION_ERROR", "mensaje": "El campo matricula es obligatorio.", "detalles": [ { "campo": "matricula", "problema": "requerido" } ] } }
 ```
 
 | HTTP | `codigo` | Cuándo |
 |---|---|---|
-| 400 | `VALIDACION` | El pedido no cumple el esquema. |
-| 400 | `FUENTE_INACTIVA` / `TIPO_TRABAJO_INACTIVO` | Existen, pero no están activos. |
-| 404 | `FUENTE_INEXISTENTE` / `TIPO_TRABAJO_INEXISTENTE` / `VERIFICACION_INEXISTENTE` | El identificador no existe. |
+| 400 | `VALIDATION_ERROR` | El pedido no cumple el esquema. |
+| 400 | `SOURCE_INACTIVE` / `JOB_TYPE_INACTIVE` | Existen, pero no están activos. |
+| 404 | `SOURCE_NOT_FOUND` / `JOB_TYPE_NOT_FOUND` / `VERIFICATION_NOT_FOUND` | El identificador no existe. |
 | 429 | (API Gateway) | Se excedió el límite de uso. |
-| 500 | `ERROR_INTERNO` | Falla de MatriculAR: por ejemplo, no se pudo escribir en la base. **La Consulta queda registrada** como `EN_CURSO` y, al vencer su plazo, se lee como `FALLIDA` con motivo `INTERRUMPIDA` (no se le atribuye a la Fuente). |
+| 500 | `INTERNAL_ERROR` | Falla de MatriculAR: por ejemplo, no se pudo escribir en la base. **La Consulta queda registrada** como `IN_PROGRESS` y, al vencer su plazo, se lee como `FAILED` con motivo `INTERRUPTED` (no se le atribuye a la Fuente). |
 
-**Nunca** se responde `5xx` porque la Fuente falló. Eso es `201` con `NO_VERIFICABLE`.
+**Nunca** se responde `5xx` porque la Fuente falló. Eso es `201` con `UNVERIFIABLE`.
 
 ---
 
@@ -317,7 +317,7 @@ sequenceDiagram
     A->>L: invoca con el pedido
     L->>L: valida con Zod
     L->>D: lee la Fuente y el Tipo de trabajo vigentes
-    L->>D: registra la Consulta EN_CURSO
+    L->>D: registra la Consulta IN_PROGRESS
     L->>D: lee la última Consulta exitosa (para V5)
     L->>E: GET página del listado
     E-->>L: 200 HTML
@@ -325,8 +325,8 @@ sequenceDiagram
     E-->>L: 200 JavaScript (1,1 MB)
     L->>L: V1 a V5 OK, normaliza y busca la matrícula
     L->>L: Evaluación (categoría y zona) y Limitaciones
-    L->>D: TransactWriteItems (Consulta EXITOSA, Resultado, Credencial, Evaluación, Verificación)
-    L-->>A: 201 Verificación ENCONTRADA y COMPATIBLE
+    L->>D: TransactWriteItems (Consulta SUCCEEDED, Resultado, Credencial, Evaluación, Verificación)
+    L-->>A: 201 Verificación FOUND y COMPATIBLE
     A-->>F: 201
     F-->>C: Resultado con evidencia, fecha, Criterios y Limitaciones
 ```
@@ -342,18 +342,18 @@ sequenceDiagram
     participant D as DynamoDB
     participant E as Ecogas
 
-    L->>D: registra la Consulta EN_CURSO
+    L->>D: registra la Consulta IN_PROGRESS
     L->>E: GET página del listado
     E-->>L: 200 HTML (referencia 4 archivos)
     loop por cada archivo candidato
         L->>E: GET archivo
         E-->>L: 200 JavaScript sin el marcador
     end
-    Note over L: V2 falla en todos los candidatos<br/>EXTRACCION_FALLIDA, sin reintento<br/>(un cambio estructural falla igual)
+    Note over L: V2 falla en todos los candidatos<br/>EXTRACTION_FAILED, sin reintento<br/>(un cambio estructural falla igual)
     L->>D: lee la última Credencial de la matrícula (del 20/09)
     Note over D: La Credencial del 20/09 NO se modifica
-    L->>D: TransactWriteItems (Consulta FALLIDA con detalle V2, Resultado NO_VERIFICABLE, Verificación con credencial_previa_ref)
-    L-->>L: 201 NO_VERIFICABLE, sin Evaluación, con la evidencia previa como contexto
+    L->>D: TransactWriteItems (Consulta FAILED con detalle V2, Resultado UNVERIFIABLE, Verificación con credencial_previa_ref)
+    L-->>L: 201 UNVERIFIABLE, sin Evaluación, con la evidencia previa como contexto
 ```
 
 ### 6.3 Falla transitoria con reintento exitoso (fixture F12)
@@ -365,7 +365,7 @@ sequenceDiagram
     participant D as DynamoDB
     participant E as Ecogas
 
-    L->>D: registra la Consulta EN_CURSO
+    L->>D: registra la Consulta IN_PROGRESS
     L->>E: Intento 1 · GET página
     E-->>L: 503
     Note over L: Falla transitoria, quedan Intentos y tiempo
@@ -375,7 +375,7 @@ sequenceDiagram
     L->>E: Intento 2 · GET archivo
     E-->>L: 200 JavaScript
     L->>L: V1 a V5 OK
-    L->>D: Consulta EXITOSA con 2 Intentos registrados (el primero con status 503)
+    L->>D: Consulta SUCCEEDED con 2 Intentos registrados (el primero con status 503)
 ```
 
 ### 6.4 Fuente no automatizable (S9)
@@ -387,10 +387,10 @@ sequenceDiagram
     participant D as DynamoDB
     participant M as MetroGAS
 
-    L->>D: lee la Fuente metrogas (NO_AUTOMATIZABLE)
+    L->>D: lee la Fuente metrogas (NOT_AUTOMATABLE)
     Note over L,M: No se hace ningún pedido a MetroGAS
-    L->>D: TransactWriteItems (Consulta NO_REALIZADA sin Intentos, Resultado NO_VERIFICABLE, Verificación)
-    L-->>L: 201 NO_VERIFICABLE con el link al buscador oficial
+    L->>D: TransactWriteItems (Consulta NOT_ATTEMPTED sin Intentos, Resultado UNVERIFIABLE, Verificación)
+    L-->>L: 201 UNVERIFIABLE con el link al buscador oficial
 ```
 
 ---
@@ -403,13 +403,13 @@ Se detallan al llegar a cada módulo. Todos requieren un token de Cognito.
 |---|---|---|---|
 | `POST` | `/profesionales` | P1 | Crear el perfil del Profesional autenticado. |
 | `GET` / `PATCH` | `/profesionales/yo` | P1 | Ver y editar el perfil propio. |
-| `POST` | `/profesionales/yo/vinculos` | P1 | Declarar una matrícula (`fuente_id`, `matricula`). Queda `NO_VERIFICADO`. |
+| `POST` | `/profesionales/yo/vinculos` | P1 | Declarar una matrícula (`fuente_id`, `matricula`). Queda `UNVERIFIED`. |
 | `POST` | `/profesionales/yo/vinculos/{fuente_id}/{matricula}/codigo` | P1 | Enviar el código al email que publica la Fuente. |
-| `POST` | `/profesionales/yo/vinculos/{fuente_id}/{matricula}/confirmacion` | P1 | Confirmar el código. Si es correcto, pasa a `VERIFICADO`. |
+| `POST` | `/profesionales/yo/vinculos/{fuente_id}/{matricula}/confirmacion` | P1 | Confirmar el código. Si es correcto, pasa a `VERIFIED`. |
 | `PUT` | `/profesionales/yo/zonas` | P1 | Declarar provincias, localidades y tipos de trabajo ofrecidos. |
 | `GET` | `/busqueda?tipo_trabajo_id=&provincia=` | P1 | Profesionales con Vínculo verificado que ofrecen ese trabajo en esa provincia, **con una Verificación del momento** (una Consulta por Fuente para todos los candidatos). `?incluir_no_verificados=true` agrega los que tienen el Vínculo sin verificar, marcados como tales. |
-| `POST` | `/contrataciones` | P2 | Crear una Contratación. Hace una Verificación nueva: si da `NO_COMPATIBLE`, responde `409`. Con `INDETERMINADA`, `NO_ENCONTRADA` o `NO_VERIFICABLE`, exige `advertencia_aceptada: true`. |
+| `POST` | `/contrataciones` | P2 | Crear una Contratación. Hace una Verificación nueva: si da `INCOMPATIBLE`, responde `409`. Con `INDETERMINATE`, `NOT_FOUND` o `UNVERIFIABLE`, exige `advertencia_aceptada: true`. |
 | `GET` | `/contrataciones?rol=cliente\|profesional` | P2 | Contrataciones propias. |
-| `POST` | `/contrataciones/{id}/transiciones` | P2 | `{ "a": "ACEPTADA" \| "REALIZADA" \| "CANCELADA" }`, validado contra la máquina de estados. |
-| `POST` | `/contrataciones/{id}/resena` | P2 | Reseña (puntaje de 1 a 5 y comentario). Pasa la Contratación a `CALIFICADA`. |
+| `POST` | `/contrataciones/{id}/transiciones` | P2 | `{ "a": "ACCEPTED" \| "COMPLETED" \| "CANCELLED" }`, validado contra la máquina de estados. |
+| `POST` | `/contrataciones/{id}/resena` | P2 | Reseña (puntaje de 1 a 5 y comentario). Pasa la Contratación a `RATED`. |
 | `GET` | `/profesionales/{id}/resenas` | P2 | Reseñas públicas de un Profesional. |

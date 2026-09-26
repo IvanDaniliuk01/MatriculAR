@@ -214,7 +214,7 @@ La lectura U1-A2 de la cátedra propone justificar el stack respondiendo cinco p
 | ¿Por qué este lenguaje y framework para el **backend**? | **TypeScript sobre Node.js 24, sin framework web** (los handlers de Lambda son funciones). Usamos el **mismo lenguaje en frontend y backend**, que es el escenario que la lectura asigna a JavaScript/TypeScript ("cuando se requiere unificación de lenguaje"). Esto permite **compartir los tipos del dominio y los esquemas Zod** entre la API y la interfaz. El dominio es una colección de estados enumerados y reglas, donde un error de tipos es un error de interpretación: el tipado estático los detecta al compilar. |
 | ¿Por qué este **gestor de base de datos**? ¿SQL o NoSQL? | **DynamoDB (NoSQL, clave-valor y documentos).** Los patrones de acceso son pocos y conocidos, la evidencia es inmutable y se lee por clave y fecha, sin *joins*, y es la base nativa del modelo serverless. Ver [database § 2](../database/README.md#2-por-qué-dynamodb-y-por-qué-una-tabla-por-entidad). |
 | ¿Por qué esta **plataforma de despliegue**? ¿Qué restricciones influyeron? | **AWS serverless (Lambda + API Gateway + DynamoDB), desarrollado sobre LocalStack.** Restricciones: aprender arquitectura cloud sin riesgo de facturación durante el desarrollo, uso intermitente y la etapa 4 de la hoja de ruta, que exige un servicio en la nube. |
-| ¿El equipo tiene **experiencia previa** con estas tecnologías? | **[A completar por el equipo antes de entregar: experiencia real de cada integrante con TypeScript, React y AWS.]** La lectura pide que la justificación sea honesta; donde no haya experiencia previa, se justifica por el objetivo de aprendizaje (D1) y se mitiga con el recorte de alcance del P0. |
+| ¿El equipo tiene **experiencia previa** con estas tecnologías? | **Sí.** Iván tiene experiencia en todas las partes del stack: TypeScript, React, AWS serverless (Lambda, API Gateway, DynamoDB) y Terraform. Esto cumple una de las condiciones que la lectura plantea para adoptar tecnologías: *"se cuenta con algún integrante del equipo que ya domina la tecnología y puede guiar al resto"*. La novedad real es el compilador de TypeScript 7; el riesgo se acota porque el lenguaje no cambia y se mitiga con las herramientas elegidas ([§ 12](#12-riesgos)). |
 
 ### 5.1 Tabla de tecnologías
 
@@ -282,7 +282,7 @@ Cosas a tener en cuenta sobre la cuenta de AWS:
 | **Vínculo (P1)** | El código se guarda **solo como hash**, vence y tiene un límite de intentos. El email de la Fuente se usa en memoria. |
 | **Secretos** | El P0 no tiene secretos de aplicación. El token de LocalStack y las credenciales de AWS viven en `.env` o en el perfil local, nunca en el repositorio. |
 | **Fuentes** | No se evita ninguna protección (captcha, bloqueo por 403). La identificación del adaptador ante Ecogas queda pendiente de su respuesta sobre las condiciones de uso ([P-1](fuentes-y-adaptadores.md#9-puntos-pendientes)). |
-| **Repositorio público** | Los archivos actuales no tienen datos personales reales: los ejemplos son ficticios y la investigación fue anonimizada. **El historial de git conserva la versión anterior** de la investigación (commit `5afe305`). Reescribir el historial se evaluó y quedó pendiente de decisión del equipo, porque altera commits que el tutor ya revisó. |
+| **Repositorio público** | Los archivos actuales no tienen datos personales reales: los ejemplos son ficticios y la investigación fue anonimizada. **El historial de git conserva la versión anterior** de la investigación (commit `5afe305`). **El historial se va a reescribir después de la aprobación del tutor**, coordinado entre los dos integrantes, para no alterar antes de la revisión commits que el tutor ya vio. |
 
 ---
 
@@ -292,11 +292,11 @@ Estas garantías reemplazan a las de la primera entrega, que suponían un pipeli
 
 | Garantía | Cómo se cumple |
 |---|---|
-| **Cada intento queda registrado** | La Consulta se crea en `EN_CURSO` **antes** del primer pedido, y cada Intento guarda sus pedidos HTTP. Si la función se corta, la Consulta queda como evidencia de un intento interrumpido. |
+| **Cada intento queda registrado** | La Consulta se crea en `IN_PROGRESS` **antes** del primer pedido, y cada Intento guarda sus pedidos HTTP. Si la función se corta, la Consulta queda como evidencia de un intento interrumpido. |
 | **Detección del error** | Las cinco validaciones del adaptador y la clasificación de fallas ([fuentes § 4.3 y § 4.5](fuentes-y-adaptadores.md#43-las-cinco-validaciones)). |
 | **Reintento** | Hasta 3 Intentos, solo ante fallas transitorias, dentro de un presupuesto de 24 s. |
-| **Se conserva el estado del fallo** | Consulta `FALLIDA` con motivo y detalle. La evidencia anterior no se toca. |
-| **Se informa** | Resultado `NO_VERIFICABLE` en la respuesta, con el motivo, y endpoint de salud de la Fuente (`GET /fuentes/{fuente_id}/consultas`). |
+| **Se conserva el estado del fallo** | Consulta `FAILED` con motivo y detalle. La evidencia anterior no se toca. |
+| **Se informa** | Resultado `UNVERIFIABLE` en la respuesta, con el motivo, y endpoint de salud de la Fuente (`GET /fuentes/{fuente_id}/consultas`). |
 | **Evidencia inmutable** | Escrituras condicionales `attribute_not_exists` (la garantía), reforzadas por permisos de IAM sin `DeleteItem` y sin `UpdateItem` sobre la evidencia, salvo la finalización de la Consulta. |
 | **Idempotencia** | Las escrituras condicionales hacen que repetir un paso no pise datos. Un reintento del Cliente crea una Verificación nueva, lo cual es correcto: es otra pregunta en otro momento. |
 | **Sin estados intermedios** | La finalización de una Verificación es una única transacción `TransactWriteItems`. |
@@ -307,8 +307,8 @@ Estas garantías reemplazan a las de la primera entrega, que suponían un pipeli
 ## 10. Observabilidad
 
 - **Logs estructurados** en JSON hacia CloudWatch Logs, con `verificacion_id` y `consulta_id` en cada línea, para seguir un pedido de punta a punta.
-- **Salud de la Fuente:** la tabla `Consultas` (índice `por-fuente`) ya registra cada lectura con su resultado. El endpoint `GET /fuentes/{fuente_id}/consultas` muestra las últimas, con estado, motivo, cantidad de registros y huella del recurso. Un cambio de huella indica que Ecogas actualizó el padrón, y una racha de `EXTRACCION_FALLIDA` indica que cambió la estructura.
-- **Alertas** (etapa 4): una alarma de CloudWatch si la proporción de Consultas `FALLIDA` supera un umbral en una hora.
+- **Salud de la Fuente:** la tabla `Consultas` (índice `por-fuente`) ya registra cada lectura con su resultado. El endpoint `GET /fuentes/{fuente_id}/consultas` muestra las últimas, con estado, motivo, cantidad de registros y huella del recurso. Un cambio de huella indica que Ecogas actualizó el padrón, y una racha de `EXTRACTION_FAILED` indica que cambió la estructura.
+- **Alertas** (etapa 4): una alarma de CloudWatch si la proporción de Consultas `FAILED` supera un umbral en una hora.
 
 ---
 
@@ -330,17 +330,17 @@ Se desarrolla con TDD (primero la prueba y después el código), empezando por e
 
 | Riesgo | Prob. | Impacto | Mitigación |
 |---|---|---|---|
-| Ecogas cambia la estructura o la URL del recurso | **Alta** (ya pasó entre el 04/09 y el 26/09) | Medio | Descubrimiento de la URL, cinco validaciones y resultado `NO_VERIFICABLE` en lugar de un falso negativo. Salud de la Fuente visible. |
-| Ecogas restringe el acceso automatizado o bloquea las IPs de AWS | Media | Alto | Consulta sobre condiciones de uso. Si pasa, la Consulta da `FUENTE_NO_DISPONIBLE` y el sistema sigue siendo coherente. El puerto permite reemplazar la Fuente. |
+| Ecogas cambia la estructura o la URL del recurso | **Alta** (ya pasó entre el 04/09 y el 26/09) | Medio | Descubrimiento de la URL, cinco validaciones y resultado `UNVERIFIABLE` en lugar de un falso negativo. Salud de la Fuente visible. |
+| Ecogas restringe el acceso automatizado o bloquea las IPs de AWS | Media | Alto | Consulta sobre condiciones de uso. Si pasa, la Consulta da `SOURCE_UNAVAILABLE` y el sistema sigue siendo coherente. El puerto permite reemplazar la Fuente. |
 | Cambios normativos (NAG-200 y NAG-225 en revisión) | Media | Medio | Reglas versionadas como datos y Evaluaciones con copia de la regla aplicada. |
-| Interpretación incorrecta de una regla | Media | Alto | Toda regla con cita, revisión cruzada entre los integrantes y resultado `INDETERMINADO` cuando no hay respaldo. |
+| Interpretación incorrecta de una regla | Media | Alto | Toda regla con cita, revisión cruzada entre los integrantes y resultado `INDETERMINATE` cuando no hay respaldo. |
 | Licencia de LocalStack (ahora requiere cuenta) | Baja (ya mitigado) | Medio | Diseño compatible con el plan Hobby. Se tramita el plan Student. |
 | Ecosistema de TypeScript 7 todavía inmaduro (herramientas que dependen de su API) | Media | Bajo | Biome en lugar de typescript-eslint. Si una herramienta crítica falla, se puede usar TS 6 como alias para esa herramienta. |
 | Costos en AWS real | Baja | Medio | Free plan, alerta de presupuesto de USD 5 y DynamoDB bajo demanda. |
 | Vencimiento del Free plan antes de la defensa | Media | Medio | Pasar a Paid plan (se conservan los créditos) o redesplegar con Terraform. |
 | SES en *sandbox* solo envía a direcciones verificadas (P1) | Alta | Medio | Pedir acceso de producción a SES al empezar P1. Mientras tanto, se demuestra con direcciones verificadas. |
 | Alcance: 4 niveles de prioridad en unas 7 semanas | **Alta** | Alto | P0 primero y completo. P1 a P3 se recortan en ese orden. Backlog congelado ([módulos](modulos.md)). |
-| Datos personales expuestos en el repositorio público | Media (mitigado en los archivos actuales, no en el historial) | Alto | Anonimización, ejemplos ficticios y `.gitignore` para las muestras. Queda pendiente decidir si se reescribe el historial de git. |
+| Datos personales expuestos en el repositorio público | Media (mitigado en los archivos actuales, no en el historial) | Alto | Anonimización, ejemplos ficticios y `.gitignore` para las muestras. Reescritura del historial de git después de la aprobación del tutor. |
 
 ---
 
@@ -348,9 +348,8 @@ Se desarrolla con TDD (primero la prueba y después el código), empezando por e
 
 | # | Pendiente | Cuándo se resuelve |
 |---|---|---|
-| A-1 | Experiencia previa del equipo en la justificación del stack ([§ 5](#5-tecnologías-definitivas-y-justificación)). | Antes de entregar. |
-| A-2 | Identificación del adaptador ante Ecogas (`User-Agent`), según su respuesta ([P-1](fuentes-y-adaptadores.md#9-puntos-pendientes)). | Antes de implementar el adaptador. |
-| A-3 | Versiones exactas de Zod, Biome, esbuild y React. | Al iniciar la implementación: se fijan en `package.json`. |
-| A-4 | Integración continua: se propone GitHub Actions con lint, chequeo de tipos y pruebas unitarias. Las pruebas con LocalStack requieren guardar el token como secreto. | Al iniciar la implementación. |
-| A-5 | HTTPS para el frontend en la nube: S3 solo sirve HTTP, así que haría falta CloudFront o una alternativa. | Etapa 4. |
-| A-6 | Disponibilidad de SES en el plan de LocalStack que se use. | Al empezar P1. |
+| A-1 | Identificación del adaptador ante Ecogas (`User-Agent`), según su respuesta ([P-1](fuentes-y-adaptadores.md#9-puntos-pendientes)). | Antes de implementar el adaptador. |
+| A-2 | Versiones exactas de Zod, Biome, esbuild y React. | Al iniciar la implementación: se fijan en `package.json`. |
+| A-3 | Integración continua: se propone GitHub Actions con lint, chequeo de tipos y pruebas unitarias. Las pruebas con LocalStack requieren guardar el token como secreto. | Al iniciar la implementación. |
+| A-4 | HTTPS para el frontend en la nube: S3 solo sirve HTTP, así que haría falta CloudFront o una alternativa. | Etapa 4. |
+| A-5 | Disponibilidad de SES en el plan de LocalStack que se use. | Al empezar P1. |

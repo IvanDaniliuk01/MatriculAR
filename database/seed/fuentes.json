@@ -17,8 +17,8 @@
       "SAN_LUIS"
     ],
     "area_concesion_parcial": [],
-    "modo_acceso": "AUTOMATICA",
-    "adaptador": "ECOGAS_RECURSO_NEXT",
+    "modo_acceso": "AUTOMATED",
+    "adaptador": "ECOGAS_NEXT_RESOURCE",
     "url_pagina": "https://www.ecogas.com.ar/hogares-comercios/tramites-y-servicios/listado-de-gasistas-matriculados",
     "url_buscador_oficial": "https://www.ecogas.com.ar/hogares-comercios/tramites-y-servicios/listado-de-gasistas-matriculados",
     "config_extraccion": {
@@ -74,8 +74,8 @@
     "area_concesion_parcial": [
       "BUENOS_AIRES"
     ],
-    "modo_acceso": "NO_AUTOMATIZABLE",
-    "adaptador": "NO_AUTOMATIZABLE",
+    "modo_acceso": "NOT_AUTOMATABLE",
+    "adaptador": "NOT_AUTOMATABLE",
     "url_pagina": null,
     "url_buscador_oficial": "https://www.metrogas.com.ar/colaboradores/listado-de-gasistas-con-matricula/",
     "config_extraccion": null,

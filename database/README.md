@@ -59,7 +59,7 @@
 | "FK" | DynamoDB no tiene claves foráneas. Una **FK es un atributo que guarda la clave de un ítem de otra tabla**. La aplicación valida que el ítem exista antes de escribir ([§ 10](#10-integridad-referencial-y-escrituras-atómicas)). En los diagramas se marcan como `FK`. |
 | Inmutabilidad | Las tablas de evidencia (`Consultas` una vez finalizadas, `ResultadosVerificacion`, `Credenciales`, `Evaluaciones` y `Verificaciones`) **no se modifican nunca**. Se escriben con la condición `attribute_not_exists`. |
 | Versionado | La configuración (`Fuentes`, `TiposTrabajo`) usa `version` como clave de ordenamiento. Un cambio **agrega una versión**, no edita la anterior. |
-| Enumerados | Strings en MAYÚSCULAS (`EXITOSA`, `NO_VERIFICABLE`, `COMPATIBLE`). |
+| Enumerados | Strings en MAYÚSCULAS y **en inglés** (`SUCCEEDED`, `UNVERIFIABLE`, `COMPATIBLE`). El vocabulario del dominio sigue en español; el significado de cada código está en el [glosario](../CONTEXT.md#códigos-de-estado). |
 | Opcionales | Un atributo opcional se guarda como `NULL`, **salvo que sea clave de un índice**: en ese caso se omite, porque DynamoDB no admite `NULL` en una clave de índice (y así los índices dispersos funcionan). |
 
 ---
@@ -73,7 +73,7 @@ erDiagram
     Fuentes {
         S fuente_id PK "ecogas, metrogas"
         N version PK "clave de ordenamiento"
-        S modo_acceso "AUTOMATICA o NO_AUTOMATIZABLE"
+        S modo_acceso "AUTOMATED o NOT_AUTOMATABLE"
         L area_concesion "provincias"
         M config_validacion "umbral y piso"
         BOOL activa
@@ -94,7 +94,7 @@ erDiagram
         S consulta_id PK "ULID"
         S fuente_id FK
         N fuente_version FK
-        S estado "EN_CURSO, EXITOSA, FALLIDA, NO_REALIZADA"
+        S estado "IN_PROGRESS, SUCCEEDED, FAILED, NOT_ATTEMPTED"
         S motivo_falla
         L intentos "con sus pedidos HTTP"
         S huella_recurso "SHA-256"
@@ -104,7 +104,7 @@ erDiagram
         S consulta_id PK, FK
         S matricula PK "clave de ordenamiento"
         S fuente_matricula "índice por matrícula"
-        S resultado "ENCONTRADA, NO_ENCONTRADA, NO_VERIFICABLE"
+        S resultado "FOUND, NOT_FOUND, UNVERIFIABLE"
     }
     Credenciales {
         S fuente_matricula PK "ecogas#99001"
@@ -130,13 +130,13 @@ erDiagram
         M credencial_ref FK
         M regla_aplicada "copia de la regla"
         M criterios "categoría y zona"
-        S resultado "COMPATIBLE, NO_COMPATIBLE, INDETERMINADA"
+        S resultado "COMPATIBLE, INCOMPATIBLE, INDETERMINATE"
         L limitaciones
     }
 
     Fuentes ||--o{ Consultas : "es leída por"
     Consultas ||--|{ ResultadosVerificacion : "produce uno por matrícula"
-    ResultadosVerificacion |o--o| Credenciales : "si ENCONTRADA crea"
+    ResultadosVerificacion |o--o| Credenciales : "si FOUND crea"
     Consultas ||--o{ Verificaciones : "respalda"
     TiposTrabajo ||--o{ Verificaciones : "es pedido en"
     Verificaciones ||--o| Evaluaciones : "solo si hay Credencial"
@@ -148,7 +148,7 @@ Lectura de las cardinalidades más importantes:
 
 - **Consultas → ResultadosVerificacion (1 a N):** una Consulta produce un Resultado por matrícula buscada. En el P0, N vale 1. En la búsqueda de P1 y en la revalidación de P3, una sola descarga del padrón resuelve todas las matrículas de esa Fuente.
 - **Consultas → Verificaciones (1 a 0..N):** en el P0 cada Verificación tiene su propia Consulta. En la búsqueda (P1), las Verificaciones de todos los candidatos de una Fuente comparten la misma Consulta. La revalidación (P3) hace Consultas sin Verificaciones.
-- **ResultadosVerificacion → Credenciales (0 o 1):** solo un Resultado `ENCONTRADA` crea una Credencial.
+- **ResultadosVerificacion → Credenciales (0 o 1):** solo un Resultado `FOUND` crea una Credencial.
 - **Verificaciones → Evaluaciones (0 o 1):** solo hay Evaluación si hay Credencial (INV-2).
 - **Credenciales → Evaluaciones (1 a N):** la misma Credencial puede evaluarse para distintos Tipos de trabajo, y cada resultado es independiente.
 
@@ -162,7 +162,7 @@ Los módulos P1 (Profesionales y búsqueda) y P2 (usuarios y contratación) se a
 erDiagram
     Usuarios {
         S usuario_id PK "sub de Cognito"
-        SS roles "CLIENTE, PROFESIONAL"
+        SS roles "CLIENT, PROFESSIONAL"
         S nombre
         S email
     }
@@ -176,7 +176,7 @@ erDiagram
     Vinculos {
         S profesional_id PK, FK
         S fuente_matricula PK "clave de ordenamiento"
-        S estado "NO_VERIFICADO, VERIFICADO"
+        S estado "UNVERIFIED, VERIFIED"
         S verificado_en
     }
     TitularesMatricula {
@@ -195,7 +195,7 @@ erDiagram
         S profesional_id FK
         S verificacion_id FK
         S tipo_trabajo_id FK
-        S estado "SOLICITADA ... CALIFICADA, CANCELADA"
+        S estado "REQUESTED ... RATED, CANCELLED"
         L historial
     }
     Resenas {
@@ -253,9 +253,9 @@ Configuración **versionada** de cada padrón. Definición: [`tablas/Fuentes.jso
 | `distribuidora` | S | ✔ | Distribuidora que publica el padrón. |
 | `licenciatarias` | L\<S\> | ✔ | Licenciatarias que agrupa: "Distribuidora de Gas del Centro", "Distribuidora de Gas Cuyana". |
 | `area_concesion` | L\<S\> | ✔ | Códigos de las provincias donde la Distribuidora opera en **todo** el territorio. |
-| `area_concesion_parcial` | L\<S\> | ✔ | Provincias donde opera solo en **parte** (por ejemplo, MetroGAS en Buenos Aires). Ahí el Criterio de zona es `INDETERMINADO`, porque el P0 modela la zona por provincia. Puede ser una lista vacía. |
-| `modo_acceso` | S | ✔ | `AUTOMATICA` \| `NO_AUTOMATIZABLE`. |
-| `adaptador` | S | ✔ | `ECOGAS_RECURSO_NEXT` \| `NO_AUTOMATIZABLE`. |
+| `area_concesion_parcial` | L\<S\> | ✔ | Provincias donde opera solo en **parte** (por ejemplo, MetroGAS en Buenos Aires). Ahí el Criterio de zona es `INDETERMINATE`, porque el P0 modela la zona por provincia. Puede ser una lista vacía. |
+| `modo_acceso` | S | ✔ | `AUTOMATED` \| `NOT_AUTOMATABLE`. |
+| `adaptador` | S | ✔ | `ECOGAS_NEXT_RESOURCE` \| `NOT_AUTOMATABLE`. |
 | `url_pagina` | S \| NULL | | Página donde el adaptador descubre el recurso. |
 | `url_buscador_oficial` | S | ✔ | Buscador público, para mostrarle al Cliente. |
 | `config_extraccion` | M \| NULL | | `prefijo_preferido` (S), `max_candidatos` (N), `claves_obligatorias` (L\<S\>), `claves_conocidas` (L\<S\>). |
@@ -320,34 +320,34 @@ Reglas de categoría, **versionadas**. Definición: [`tablas/TiposTrabajo.json`]
 | Índice (GSI) | PK | SK | Proyección | Para qué |
 |---|---|---|---|---|
 | `por-fuente` | `fuente_id` | `iniciada_en` | ALL | Historial de Consultas de una Fuente (monitoreo, informe de fallas). |
-| `exitosas-por-fuente` (disperso) | `exito_fuente_id` | `finalizada_en` | `registros_extraidos`, `huella_recurso` | **Última Consulta exitosa** de la Fuente, para la validación V5. Es disperso: solo las Consultas `EXITOSA` tienen `exito_fuente_id`. |
+| `exitosas-por-fuente` (disperso) | `exito_fuente_id` | `finalizada_en` | `registros_extraidos`, `huella_recurso` | **Última Consulta exitosa** de la Fuente, para la validación V5. Es disperso: solo las Consultas `SUCCEEDED` tienen `exito_fuente_id`. |
 
 | Campo | Tipo | Oblig. | Descripción |
 |---|---|---|---|
 | `consulta_id` | S | ✔ | ULID. |
 | `fuente_id` | S | ✔ | FK → `Fuentes`. |
 | `fuente_version` | N | ✔ | FK → `Fuentes`: versión de la configuración usada. |
-| `origen` | S | ✔ | `VERIFICACION` \| `REVALIDACION` (P3) \| `BUSQUEDA` (P1). |
+| `origen` | S | ✔ | `VERIFICATION` \| `REVALIDATION` (P3) \| `SEARCH` (P1). |
 | `matriculas_buscadas` | L\<S\> | ✔ | Matrículas que se buscaron. |
-| `estado` | S | ✔ | `EN_CURSO` \| `EXITOSA` \| `FALLIDA` \| `NO_REALIZADA`. |
-| `motivo_falla` | S \| NULL | | Para `FALLIDA`: `FUENTE_NO_DISPONIBLE` \| `EXTRACCION_FALLIDA` \| `INTERRUMPIDA` (falla de MatriculAR, que no cuenta en la salud de la Fuente). Para `NO_REALIZADA`: `FUENTE_NO_AUTOMATIZABLE`. |
+| `estado` | S | ✔ | `IN_PROGRESS` \| `SUCCEEDED` \| `FAILED` \| `NOT_ATTEMPTED`. |
+| `motivo_falla` | S \| NULL | | Para `FAILED`: `SOURCE_UNAVAILABLE` \| `EXTRACTION_FAILED` \| `INTERRUPTED` (falla de MatriculAR, que no cuenta en la salud de la Fuente). Para `NOT_ATTEMPTED`: `SOURCE_NOT_AUTOMATABLE`. |
 | `detalle_falla` | M \| NULL | | `validacion` (S: `V1`…`V5` o nulo), `descripcion` (S), `esperado` (S), `obtenido` (S). |
 | `iniciada_en` | S | ✔ | Momento del registro, **antes** del primer pedido. |
-| `plazo_maximo_en` | S | ✔ | Si la Consulta sigue `EN_CURSO` después de este momento, se lee como `FALLIDA` con motivo `INTERRUMPIDA`. |
-| `finalizada_en` | S \| ausente | | Momento en que terminó. **Se omite mientras la Consulta está `EN_CURSO`**, porque es clave del índice `exitosas-por-fuente` y DynamoDB no admite `NULL` en una clave de índice. |
-| `intentos` | L\<M\> | ✔ | Cada Intento: `numero` (N), `iniciado_en` (S), `duracion_ms` (N), `resultado` (S: `EXITO` o un motivo), `reintentable` (BOOL), `pedidos` (L\<M\>: `url`, `metodo`, `status`, `content_type`, `bytes`, `duracion_ms`, `error`). **Nunca el cuerpo de la respuesta.** Lista vacía si la Consulta es `NO_REALIZADA`. |
+| `plazo_maximo_en` | S | ✔ | Si la Consulta sigue `IN_PROGRESS` después de este momento, se lee como `FAILED` con motivo `INTERRUPTED`. |
+| `finalizada_en` | S \| ausente | | Momento en que terminó. **Se omite mientras la Consulta está `IN_PROGRESS`**, porque es clave del índice `exitosas-por-fuente` y DynamoDB no admite `NULL` en una clave de índice. |
+| `intentos` | L\<M\> | ✔ | Cada Intento: `numero` (N), `iniciado_en` (S), `duracion_ms` (N), `resultado` (S: `SUCCESS` o un motivo), `reintentable` (BOOL), `pedidos` (L\<M\>: `url`, `metodo`, `status`, `content_type`, `bytes`, `duracion_ms`, `error`). **Nunca el cuerpo de la respuesta.** Lista vacía si la Consulta es `NOT_ATTEMPTED`. |
 | `url_recurso` | S \| NULL | | URL del recurso efectivamente leído. |
 | `huella_recurso` | S \| NULL | | SHA-256 del recurso leído: identifica *qué versión* del padrón se leyó sin guardarlo. |
 | `bytes_recurso` | N \| NULL | | Tamaño del recurso. |
 | `registros_extraidos` | N \| NULL | | Cantidad de registros válidos. |
 | `resumen` | M \| NULL | | `por_categoria` (M), `por_provincia` (M): conteos sin datos personales. |
 | `claves_no_esperadas` | L\<S\> | ✔ | Claves nuevas detectadas en los registros (vacía si no hay). |
-| `exito_fuente_id` | S \| ausente | | Copia de `fuente_id` **solo** si `estado = EXITOSA`. Es la clave del índice disperso. |
+| `exito_fuente_id` | S \| ausente | | Copia de `fuente_id` **solo** si `estado = SUCCEEDED`. Es la clave del índice disperso. |
 
 Reglas de escritura:
 
-- Se crea con `estado = EN_CURSO` antes del primer pedido, con condición `attribute_not_exists(consulta_id)`.
-- Se finaliza con **una sola** actualización condicionada a `estado = EN_CURSO`. Después de eso **no cambia más**.
+- Se crea con `estado = IN_PROGRESS` antes del primer pedido, con condición `attribute_not_exists(consulta_id)`.
+- Se finaliza con **una sola** actualización condicionada a `estado = IN_PROGRESS`. Después de eso **no cambia más**.
 
 ### ResultadosVerificacion
 
@@ -360,7 +360,7 @@ Un ítem por **matrícula buscada** en cada Consulta. Definición: [`tablas/Resu
 
 | Índice (GSI) | PK | SK | Proyección | Para qué |
 |---|---|---|---|---|
-| `por-matricula` | `fuente_matricula` | `determinado_en` | ALL | Historial de resultados de una matrícula, incluidos `NO_ENCONTRADA` y `NO_VERIFICABLE` (que no generan Credencial). |
+| `por-matricula` | `fuente_matricula` | `determinado_en` | ALL | Historial de resultados de una matrícula, incluidos `NOT_FOUND` y `UNVERIFIABLE` (que no generan Credencial). |
 
 | Campo | Tipo | Oblig. | Descripción |
 |---|---|---|---|
@@ -368,9 +368,9 @@ Un ítem por **matrícula buscada** en cada Consulta. Definición: [`tablas/Resu
 | `matricula` | S | ✔ | Matrícula buscada, normalizada. |
 | `fuente_id` | S | ✔ | FK → `Fuentes`. |
 | `fuente_matricula` | S | ✔ | `<fuente_id>#<matricula>`. |
-| `resultado` | S | ✔ | `ENCONTRADA` \| `NO_ENCONTRADA` \| `NO_VERIFICABLE`. |
+| `resultado` | S | ✔ | `FOUND` \| `NOT_FOUND` \| `UNVERIFIABLE`. |
 | `determinado_en` | S | ✔ | Igual a `finalizada_en` de la Consulta. |
-| `credencial_evidencia_id` | S \| NULL | | Si es `ENCONTRADA`: FK → `Credenciales` (junto con `fuente_matricula`). |
+| `credencial_evidencia_id` | S \| NULL | | Si es `FOUND`: FK → `Credenciales` (junto con `fuente_matricula`). |
 
 ### Credenciales
 
@@ -415,7 +415,7 @@ Cada **pedido** de un Cliente, o del propio sistema en P1 y P2: agrupa la Consul
 |---|---|---|---|
 | `verificacion_id` | S | ✔ | ULID. |
 | `solicitada_en` | S | ✔ | |
-| `origen` | S | ✔ | `CONSULTA_DIRECTA` (P0) \| `BUSQUEDA` (P1) \| `CONTRATACION` (P2). |
+| `origen` | S | ✔ | `DIRECT` (P0) \| `SEARCH` (P1) \| `HIRING` (P2). |
 | `solicitante_id` | S \| NULL | | FK → `Usuarios` (P2). Nulo en el P0, donde la consulta es anónima. |
 | `fuente_id` | S | ✔ | FK → `Fuentes`. |
 | `matricula` | S | ✔ | |
@@ -424,11 +424,11 @@ Cada **pedido** de un Cliente, o del propio sistema en P1 y P2: agrupa la Consul
 | `tipo_trabajo_version` | N | ✔ | FK → `TiposTrabajo` (versión vigente al pedir). |
 | `provincia_trabajo` | S | ✔ | Código de provincia donde se hará el trabajo. |
 | `consulta_id` | S | ✔ | FK → `Consultas`. |
-| `resultado_verificacion` | S | ✔ | `ENCONTRADA` \| `NO_ENCONTRADA` \| `NO_VERIFICABLE`. |
-| `credencial_ref` | M \| NULL | | `fuente_matricula` y `evidencia_id` de la Credencial nueva. Solo si es `ENCONTRADA`. |
+| `resultado_verificacion` | S | ✔ | `FOUND` \| `NOT_FOUND` \| `UNVERIFIABLE`. |
+| `credencial_ref` | M \| NULL | | `fuente_matricula` y `evidencia_id` de la Credencial nueva. Solo si es `FOUND`. |
 | `evaluacion_id` | S \| NULL | | FK → `Evaluaciones`. Solo si hay Credencial. |
 | `resultado_evaluacion` | S \| NULL | | Copia del resultado, para listar sin leer la Evaluación. |
-| `credencial_previa_ref` | M \| NULL | | Si es `NO_VERIFICABLE`: la última Credencial anterior, como contexto. |
+| `credencial_previa_ref` | M \| NULL | | Si es `UNVERIFIABLE`: la última Credencial anterior, como contexto. |
 | `mensaje` | S | ✔ | Texto principal que se mostró al Cliente. |
 
 ### Evaluaciones
@@ -452,8 +452,8 @@ Resultado de aplicar un Tipo de trabajo a una Credencial, con **copia de la regl
 | `regla_aplicada` | M | ✔ | **Copia**: `categorias_admitidas` (SS), `condiciones` (L\<S\>), `fundamento` (L\<M\>). |
 | `provincia_trabajo` | S | ✔ | |
 | `area_concesion_aplicada` | L\<S\> | ✔ | **Copia** del Área de concesión usada. |
-| `criterios` | M | ✔ | `categoria`: {`resultado`, `categoria_informada`, `fundamento`}; `zona`: {`resultado`, `fundamento`}. Resultado: `CUMPLE` \| `NO_CUMPLE` \| `INDETERMINADO`. |
-| `resultado` | S | ✔ | `COMPATIBLE` \| `NO_COMPATIBLE` \| `INDETERMINADA`. |
+| `criterios` | M | ✔ | `categoria`: {`resultado`, `categoria_informada`, `fundamento`}; `zona`: {`resultado`, `fundamento`}. Resultado: `MET` \| `NOT_MET` \| `INDETERMINATE`. |
+| `resultado` | S | ✔ | `COMPATIBLE` \| `INCOMPATIBLE` \| `INDETERMINATE`. |
 | `limitaciones` | L\<S\> | ✔ | Textos finales, incluida siempre la de Vigencia. |
 | `evaluada_en` | S | ✔ | |
 
@@ -478,7 +478,7 @@ GSI `por-usuario`: PK `usuario_id` → el perfil de un usuario.
 | `nombre_visible` | S | ✔ | Nombre que ve el Cliente. |
 | `descripcion` | S | | Presentación libre. |
 | `tipos_trabajo_ofrecidos` | SS | ✔ | FK → `TiposTrabajo`. |
-| `estado_perfil` | S | ✔ | `ACTIVO` \| `PAUSADO`. |
+| `estado_perfil` | S | ✔ | `ACTIVE` \| `PAUSED`. |
 | `puntaje_promedio` | N \| NULL | | Se actualiza al crear una Reseña (P2). |
 | `cantidad_resenas` | N | ✔ | |
 | `creado_en`, `actualizado_en` | S | ✔ | |
@@ -496,8 +496,8 @@ GSI `por-matricula`: PK `fuente_matricula`, SK `estado` → listar quiénes decl
 |---|---|---|---|
 | `profesional_id` | S | ✔ | FK → `Profesionales`. |
 | `fuente_matricula` | S | ✔ | Matrícula declarada (referencia lógica a `Credenciales`). |
-| `estado` | S | ✔ | `NO_VERIFICADO` \| `VERIFICADO`. |
-| `metodo` | S | ✔ | `CODIGO_EMAIL_FUENTE`. |
+| `estado` | S | ✔ | `UNVERIFIED` \| `VERIFIED`. |
+| `metodo` | S | ✔ | `SOURCE_EMAIL_CODE`. |
 | `codigo_hash` | S \| NULL | | Hash del código enviado. **Nunca** el código en claro ni el email. |
 | `codigo_vence_en` | S \| NULL | | |
 | `intentos_codigo` | N | ✔ | Para limitar intentos de adivinar el código. |
@@ -506,7 +506,7 @@ GSI `por-matricula`: PK `fuente_matricula`, SK `estado` → listar quiénes decl
 
 ### TitularesMatricula
 
-Garantiza que una matrícula tenga **a lo sumo un** Vínculo `VERIFICADO`. Al confirmar un código, una misma transacción (`TransactWriteItems`) pasa el Vínculo a `VERIFICADO` y escribe este ítem con la condición `attribute_not_exists(fuente_matricula)`. Si otro Profesional ya verificó esa matrícula, la transacción entera falla y el Vínculo sigue `NO_VERIFICADO`.
+Garantiza que una matrícula tenga **a lo sumo un** Vínculo `VERIFIED`. Al confirmar un código, una misma transacción (`TransactWriteItems`) pasa el Vínculo a `VERIFIED` y escribe este ítem con la condición `attribute_not_exists(fuente_matricula)`. Si otro Profesional ya verificó esa matrícula, la transacción entera falla y el Vínculo sigue `UNVERIFIED`.
 
 | Clave | Atributo | Tipo |
 |---|---|---|
@@ -548,7 +548,7 @@ Tabla de **búsqueda**: un ítem por provincia y Profesional. Resuelve la búsqu
 | Campo | Tipo | Oblig. | Descripción |
 |---|---|---|---|
 | `usuario_id` | S | ✔ | Identificador de Cognito. **Las contraseñas no se guardan en la base**: las administra Cognito. |
-| `roles` | SS | ✔ | `CLIENTE`, `PROFESIONAL`. |
+| `roles` | SS | ✔ | `CLIENT`, `PROFESSIONAL`. |
 | `nombre` | S | ✔ | |
 | `email` | S | ✔ | Email de la cuenta (dato propio del usuario, que él mismo carga). |
 | `creado_en` | S | ✔ | |
@@ -573,9 +573,9 @@ Tabla de **búsqueda**: un ítem por provincia y Profesional. Resuelve la búsqu
 | `provincia_trabajo`, `localidad_trabajo` | S | ✔ | |
 | `descripcion` | S | ✔ | Qué necesita el Cliente. |
 | `verificacion_id` | S | ✔ | FK → `Verificaciones`: la Verificación hecha al crearla. |
-| `resultado_al_crear` | S | ✔ | Copia del resultado: `COMPATIBLE`, `INDETERMINADA`, `NO_ENCONTRADA` o `NO_VERIFICABLE`. (`NO_COMPATIBLE` no llega a crear la Contratación.) |
+| `resultado_al_crear` | S | ✔ | Copia del resultado: `COMPATIBLE`, `INDETERMINATE`, `NOT_FOUND` o `UNVERIFIABLE`. (`INCOMPATIBLE` no llega a crear la Contratación.) |
 | `advertencia_aceptada` | BOOL | ✔ | Si el Cliente confirmó pese a una advertencia. |
-| `estado` | S | ✔ | `SOLICITADA` \| `ACEPTADA` \| `REALIZADA` \| `CALIFICADA` \| `CANCELADA`. |
+| `estado` | S | ✔ | `REQUESTED` \| `ACCEPTED` \| `COMPLETED` \| `RATED` \| `CANCELLED`. |
 | `historial` | L\<M\> | ✔ | Cada transición: `estado`, `en`, `actor_id`, `motivo`. |
 | `creada_en`, `actualizada_en` | S | ✔ | |
 
@@ -611,7 +611,7 @@ Todas las lecturas del sistema, con la tabla o el índice que las resuelve. **Ni
 | AP-03 | P0 | Listar Categorías | `Categorias` | `Scan` (3 ítems) |
 | AP-04 | P0 | Versión vigente de un Tipo de trabajo | `TiposTrabajo` | `Query` PK=`tipo_trabajo_id`, descendente, `Limit 1` |
 | AP-05 | P0 | Listar Tipos de trabajo activos | `TiposTrabajo` | `Scan` (tabla de configuración) y filtrar |
-| AP-06 | P0 | Registrar una Consulta `EN_CURSO` | `Consultas` | `PutItem` condicional |
+| AP-06 | P0 | Registrar una Consulta `IN_PROGRESS` | `Consultas` | `PutItem` condicional |
 | AP-07 | P0 | Última Consulta exitosa de una Fuente (V5) | GSI `exitosas-por-fuente` | `Query` PK=`exito_fuente_id`, descendente, `Limit 1` |
 | AP-08 | P0 | Finalizar una Consulta y guardar resultados, Credencial, Evaluación y Verificación | varias | `TransactWriteItems` ([§ 10](#10-integridad-referencial-y-escrituras-atómicas)) |
 | AP-09 | P0 | Última Credencial de una matrícula | `Credenciales` | `Query` PK=`fuente_matricula`, descendente, `Limit 1` |
@@ -639,13 +639,13 @@ Como DynamoDB no tiene claves foráneas, la integridad la garantiza la aplicaci�
 
 1. **Validación previa.** Antes de crear una Verificación se leen la Fuente y el Tipo de trabajo vigentes (AP-01 y AP-04). Si no existen, el pedido se rechaza con `404`; si existen pero no están activos, con `400`. En los dos casos no se escribe nada.
 2. **Transacción al finalizar.** Una vez leída la Fuente, se escribe todo junto con `TransactWriteItems`, sin que puedan quedar estados intermedios:
-   - `UpdateItem` sobre `Consultas`: finalizar, con la condición `estado = EN_CURSO`;
+   - `UpdateItem` sobre `Consultas`: finalizar, con la condición `estado = IN_PROGRESS`;
    - `PutItem` sobre `ResultadosVerificacion`, uno por matrícula;
-   - `PutItem` sobre `Credenciales`, si es `ENCONTRADA`, con `attribute_not_exists`;
+   - `PutItem` sobre `Credenciales`, si es `FOUND`, con `attribute_not_exists`;
    - `PutItem` sobre `Evaluaciones`, si hay Credencial, con `attribute_not_exists`;
    - `PutItem` sobre `Verificaciones`, con `attribute_not_exists`.
 
-   Si la transacción falla, no queda ninguna de esas escrituras. La Consulta queda `EN_CURSO` y, al vencer su plazo, se lee como `FALLIDA` con motivo `INTERRUMPIDA`, así el intento sigue registrado.
+   Si la transacción falla, no queda ninguna de esas escrituras. La Consulta queda `IN_PROGRESS` y, al vencer su plazo, se lee como `FAILED` con motivo `INTERRUPTED`, así el intento sigue registrado.
 3. **Escrituras condicionales.** Las condiciones `attribute_not_exists` hacen que la evidencia sea **inmutable** y que un reintento del mismo paso sea **idempotente**: no pisa lo que ya estaba escrito.
 
 En la revalidación de P3, con muchas matrículas por Consulta, los Resultados se escriben en lotes (`BatchWriteItem`), cada uno idempotente. La Consulta se finaliza al final.
