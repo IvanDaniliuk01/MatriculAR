@@ -129,7 +129,7 @@ erDiagram
         S verificacion_id FK
         M credencial_ref FK
         M regla_aplicada "copia de la regla"
-        M criterios "categoría y zona"
+        M criterios "categoría"
         S resultado "COMPATIBLE, INCOMPATIBLE, INDETERMINATE"
         L limitaciones
     }
@@ -253,7 +253,7 @@ Configuración **versionada** de cada padrón. Definición: [`tablas/Fuentes.jso
 | `distribuidora` | S | ✔ | Distribuidora que publica el padrón. |
 | `licenciatarias` | L\<S\> | ✔ | Licenciatarias que agrupa: "Distribuidora de Gas del Centro", "Distribuidora de Gas Cuyana". |
 | `area_concesion` | L\<S\> | ✔ | Códigos de las provincias donde la Distribuidora opera en **todo** el territorio. |
-| `area_concesion_parcial` | L\<S\> | ✔ | Provincias donde opera solo en **parte** (por ejemplo, MetroGAS en Buenos Aires). Ahí el Criterio de zona es `INDETERMINATE`, porque el P0 modela la zona por provincia. Puede ser una lista vacía. |
+| `area_concesion_parcial` | L\<S\> | ✔ | Provincias donde opera solo en **parte** (por ejemplo, MetroGAS en Buenos Aires). Ahí la Evaluación agrega la Limitación de que la Fuente no opera por completo en esa provincia (la zona no es un Criterio, ver ADR-0005). Puede ser una lista vacía. |
 | `modo_acceso` | S | ✔ | `AUTOMATED` \| `NOT_AUTOMATABLE`. |
 | `adaptador` | S | ✔ | `ECOGAS_NEXT_RESOURCE` \| `NOT_AUTOMATABLE`. |
 | `url_pagina` | S \| NULL | | Página donde el adaptador descubre el recurso. |
@@ -452,7 +452,7 @@ Resultado de aplicar un Tipo de trabajo a una Credencial, con **copia de la regl
 | `regla_aplicada` | M | ✔ | **Copia**: `categorias_admitidas` (SS), `condiciones` (L\<S\>), `fundamento` (L\<M\>). |
 | `provincia_trabajo` | S | ✔ | |
 | `area_concesion_aplicada` | L\<S\> | ✔ | **Copia** del Área de concesión usada. |
-| `criterios` | M | ✔ | `categoria`: {`resultado`, `categoria_informada`, `fundamento`}; `zona`: {`resultado`, `fundamento`}. Resultado: `MET` \| `NOT_MET` \| `INDETERMINATE`. |
+| `criterios` | M | ✔ | `categoria`: {`resultado`, `categoria_informada`, `fundamento`}. Hoy es el único Criterio; la zona se informa como Limitación. Resultado: `MET` \| `NOT_MET` \| `INDETERMINATE`. |
 | `resultado` | S | ✔ | `COMPATIBLE` \| `INCOMPATIBLE` \| `INDETERMINATE`. |
 | `limitaciones` | L\<S\> | ✔ | Textos finales, incluida siempre la de Vigencia. |
 | `evaluada_en` | S | ✔ | |

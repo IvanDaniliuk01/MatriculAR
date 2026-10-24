@@ -15,7 +15,7 @@ La primera entrega le daba al Profesional un estado de habilitación (`verificad
 
 ## Por qué "compatible" y no "apta" o "habilitada"
 
-Figurar en el padrón no prueba que la matrícula esté renovada: la NAG-200 mantiene hasta tres años en el registro a quien no renovó. "Apta" o "habilitada" prometerían más de lo que el sistema sabe. "Compatible" dice exactamente lo que se puede afirmar: la categoría informada y la zona son compatibles con el trabajo, según la evidencia de una fecha concreta.
+Figurar en el padrón no prueba que la matrícula esté renovada: la NAG-200 mantiene hasta tres años en el registro a quien no renovó. "Apta" o "habilitada" prometerían más de lo que el sistema sabe. "Compatible" dice exactamente lo que se puede afirmar: la categoría informada es compatible con el trabajo, según la evidencia de una fecha concreta.
 
 ## Consecuencias
 

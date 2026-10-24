@@ -44,8 +44,8 @@ Es la "interfaz mínima" que pidió el tutor para recorrer el flujo completo.
 ┌─────────────────────────────────────────────────────────────────┐
 │  ● COMPATIBLE con este trabajo                                  │
 │  La matrícula 99001 figura en el padrón de Ecogas (consulta del │
-│  26/09/2026 15:40) con categoría 2ª, que puede realizar este    │
-│  trabajo.                                                       │
+│  26/09/2026 15:40) con categoría 2ª, que la NAG-200 admite para   │
+│  este tipo de trabajo.                                          │
 │                                                                 │
 │  QUÉ SABEMOS · evidencia                                        │
 │   Nombre informado     PERSONA FICTICIA UNO                     │
@@ -55,11 +55,12 @@ Es la "interfaz mínima" que pidió el tutor para recorrer el flujo completo.
 │                                                                 │
 │  QUÉ CONCLUIMOS · criterios                                     │
 │   ✔ Categoría  2ª admitida para este trabajo (NAG-200, 8.3.1)   │
-│   ✔ Zona       Córdoba está en el área de Ecogas                │
 │                                                                 │
 │  QUÉ NO PODEMOS AFIRMAR · limitaciones                          │
 │   ! La Fuente no informa la vigencia. Pedile el carné con la    │
 │     matrícula actualizada (NAG-200, 8.6.1).                     │
+│   ! La Fuente no informa en qué zonas está habilitado; no lo    │
+│     verificamos.                                                │
 │   ! Se supone que el trabajo cumple las condiciones del tipo A1.│
 │                                                                 │
 │  ▸ Detalle técnico (Consulta, intentos, huella del recurso)     │

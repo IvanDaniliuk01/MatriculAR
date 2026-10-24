@@ -100,7 +100,7 @@ La forma es **siempre la misma**. Los campos que no aplican al resultado vienen 
     "provincia_trabajo": { "codigo": "CORDOBA", "nombre": "Córdoba" }
   },
   "resultado_verificacion": "FOUND",
-  "mensaje": "La matrícula 99001 figura en el padrón de Ecogas (consulta del 26/09/2026 15:40) con categoría 2ª, que puede realizar este trabajo.",
+  "mensaje": "La matrícula 99001 figura en el padrón de Ecogas (consulta del 26/09/2026 15:40) con categoría 2ª, que la NAG-200 admite para este tipo de trabajo.",
   "consulta": {
     "consulta_id": "01M3FG90YX2CPVTY9M7AM85DXW",
     "estado": "SUCCEEDED",
@@ -125,12 +125,11 @@ La forma es **siempre la misma**. Los campos que no aplican al resultado vienen 
     "evaluacion_id": "01M3FG9331HHQC18K52PVWXD4Y",
     "resultado": "COMPATIBLE",
     "criterios": {
-      "categoria": { "resultado": "MET", "categoria_informada": "2", "fundamento": "La categoría 2ª está admitida para este tipo de trabajo (NAG-200, 8.3.1)." },
-      "zona": { "resultado": "MET", "fundamento": "La provincia del trabajo está dentro del Área de concesión de Ecogas." }
+      "categoria": { "resultado": "MET", "categoria_informada": "2", "fundamento": "La categoría 2ª está admitida para este tipo de trabajo (NAG-200, 8.3.1)." }
     },
     "limitaciones": [
-      "La Fuente no informa la vigencia de la matrícula. Según la NAG-200 la matrícula se renueva todos los años y vence el 31 de marzo; figurar en el padrón no prueba que esté renovada. Para confirmarlo, pedile al gasista su carné con la matrícula actualizada (NAG-200, 8.6.1).",
-      "La provincia que publica Ecogas corresponde al domicilio del matriculado, no a la zona donde puede trabajar.",
+      "La Fuente no informa la vigencia de la matrícula. Según la NAG-200 (8.5.1) la matrícula se renueva todos los años, entre el 2 de enero y el 31 de marzo; figurar en el padrón no prueba que esté renovada. Para confirmarlo, pedile al gasista su carné con la matrícula actualizada (NAG-200, 8.6.1).",
+      "La Fuente no informa en qué zonas está habilitado el matriculado: la provincia que publica corresponde a su domicilio. MatriculAR no verifica el alcance territorial de la habilitación.",
       "El padrón de Ecogas es una publicación web sin fecha de actualización: esta evidencia refleja lo publicado en el momento de la consulta.",
       "Esta evaluación supone que el trabajo cumple las condiciones del tipo elegido: …"
     ],
@@ -195,17 +194,20 @@ La forma es **siempre la misma**. Los campos que no aplican al resultado vienen 
 }
 ```
 
-**S5: `INDETERMINATE` porque el trabajo está fuera del Área de concesión** (fragmento)
+**S5: `COMPATIBLE` con una Limitación adicional porque el trabajo está fuera del Área de concesión** (fragmento)
 
 ```json
 {
   "resultado_verificacion": "FOUND",
   "evaluacion": {
-    "resultado": "INDETERMINATE",
+    "resultado": "COMPATIBLE",
     "criterios": {
-      "categoria": { "resultado": "MET", "categoria_informada": "3" },
-      "zona": { "resultado": "INDETERMINATE", "fundamento": "La provincia del trabajo está fuera del Área de concesión de Ecogas: el gasista podría estar registrado en la distribuidora de esa zona, que no se consultó." }
-    }
+      "categoria": { "resultado": "MET", "categoria_informada": "3" }
+    },
+    "limitaciones": [
+      "La Fuente no informa en qué zonas está habilitado el matriculado: la provincia que publica corresponde a su domicilio. MatriculAR no verifica el alcance territorial de la habilitación.",
+      "El trabajo es en una provincia donde la Fuente consultada no opera por completo. El gasista podría estar registrado en la distribuidora local, que no consultamos."
+    ]
   }
 }
 ```
@@ -324,7 +326,7 @@ sequenceDiagram
     L->>E: GET archivo 3182-*.js
     E-->>L: 200 JavaScript (1,1 MB)
     L->>L: V1 a V5 OK, normaliza y busca la matrícula
-    L->>L: Evaluación (categoría y zona) y Limitaciones
+    L->>L: Evaluación (categoría) y Limitaciones, incluida la de alcance territorial
     L->>D: TransactWriteItems (Consulta SUCCEEDED, Resultado, Credencial, Evaluación, Verificación)
     L-->>A: 201 Verificación FOUND y COMPATIBLE
     A-->>F: 201

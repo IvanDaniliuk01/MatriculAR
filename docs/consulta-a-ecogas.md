@@ -32,8 +32,8 @@
 |---|---|---|---|
 | 1. Criterio de inclusión | Figurar en el listado **no prueba vigencia** (incertidumbre I1). La Vigencia es una Limitación. | "Solo figuran matrículas renovadas" | La Vigencia puede pasar a ser un Criterio para Ecogas: nueva versión de la regla y un ADR que modifica el [ADR-0003](adr/0003-credencial-separada-de-evaluacion-sin-afirmar-vigencia.md). |
 | 2. Frecuencia de actualización | Cada Credencial lleva la fecha de la Consulta, no la del padrón (I2). | Una frecuencia concreta, por ejemplo mensual | Se agrega una Limitación que la explicite: "el padrón se actualiza cada N". |
-| 3. Campo "provincia" | Es el domicilio y no se usa para evaluar (I3). | "Es la zona habilitada" | Se revisa el [Criterio de zona](reglas-de-categoria.md#4-criterio-de-zona). La regla actual no cambia hasta tener una respuesta formal. |
-| 4. Centro y Cuyana | El Área de concesión de Ecogas se trata como una sola (I4). | "Hace falta registrarse en cada una" | El Área se divide en dos y el Criterio de zona pasa a `INDETERMINATE` entre licenciatarias. |
+| 3. Campo "provincia" | Es el domicilio y no se usa para evaluar (I3). | "Es la zona habilitada" | Se revisa la [Limitación de zona](reglas-de-categoria.md#4-zona-por-qué-no-es-un-criterio). Si el campo fuera la zona habilitada, la zona podría pasar a ser un Criterio (ADR nuevo). Hasta tener una respuesta formal, no cambia. |
+| 4. Centro y Cuyana | El Área de concesión de Ecogas se trata como una sola (I4). | "Hace falta registrarse en cada una" | El Área se divide en dos y se agregaría una Limitación específica entre licenciatarias. |
 | 5. Condiciones de uso | La fuente resultó técnicamente accesible en las condiciones ensayadas, pero es una fuente web no contractual. La identificación del adaptador está pendiente ([P-1](fuentes-y-adaptadores.md#9-puntos-pendientes)). | Condiciones explícitas | Se ajustan el adaptador (identificación, frecuencia) y el límite de uso. Si prohibieran el uso automatizado, Ecogas pasa a `NOT_AUTOMATABLE`, igual que MetroGAS. |
 
 Cuando llegue la respuesta, se registra en este archivo (texto y fecha) y se actualizan los documentos afectados en un PR.

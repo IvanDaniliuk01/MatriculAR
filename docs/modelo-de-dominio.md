@@ -184,7 +184,7 @@ flowchart TD
     I --> K{¿La matrícula<br/>figura?}
     K -- no --> L[Resultado NOT_FOUND]
     K -- sí --> M[Resultado FOUND<br/>+ Credencial nueva e inmutable]
-    M --> N[Evaluación: Criterio de categoría,<br/>Criterio de zona, Limitaciones]
+    M --> N[Evaluación: Criterio de categoría<br/>+ Limitaciones, entre ellas la de zona]
     J --> O[Adjuntar la última Credencial previa,<br/>si existe, solo como contexto]
     L --> P[(Guardar Verificación)]
     O --> P
@@ -216,32 +216,33 @@ Para MetroGAS, el mensaje es: *"MetroGAS no permite consultas automáticas: su b
 
 ## 6. Cómo se calcula una Evaluación
 
-Una Evaluación se calcula **solo** cuando la Verificación tiene una Credencial nueva. El algoritmo es **fijo en el código**. Las reglas que usa (categorías admitidas, áreas de concesión, Limitaciones) son **datos versionados**.
+Una Evaluación se calcula **solo** cuando la Verificación tiene una Credencial nueva. El algoritmo es **fijo en el código**. Las reglas que usa (categorías admitidas, Limitaciones, áreas de concesión) son **datos versionados**.
 
 ### 6.1 Criterios
 
 | Criterio | Entrada | `MET` | `NOT_MET` | `INDETERMINATE` |
 |---|---|---|---|---|
 | **Categoría** | Categoría informada por la Credencial y Categorías admitidas del Tipo de trabajo | La categoría está en la lista. | Es una categoría conocida del catálogo que no está en la lista. | La categoría está vacía o no figura en el catálogo. |
-| **Zona** | Provincia del trabajo y Área de concesión de la Fuente | La provincia está en el Área de concesión. | *Nunca.* | La provincia está fuera del Área de concesión, o en una provincia donde la Distribuidora opera solo en parte. |
+
+La **zona no es un Criterio** ([reglas § 4](reglas-de-categoria.md#4-zona-por-qué-no-es-un-criterio), [ADR-0005](adr/0005-zona-como-limitacion-no-como-criterio.md)): ninguna Fuente informa dónde está habilitado el matriculado, así que el alcance territorial se informa siempre como Limitación y no se infiere.
 
 La **Vigencia no es un Criterio** (ver [reglas § 5](reglas-de-categoria.md#5-vigencia-por-qué-no-es-un-criterio)): se informa siempre como Limitación.
 
 ### 6.2 Resultado global
 
 ```
-si algún Criterio es NOT_MET      → INCOMPATIBLE
-si no, si alguno es INDETERMINATE   → INDETERMINATE
-si no (todos MET)                → COMPATIBLE
+si el Criterio de categoría es NOT_MET        → INCOMPATIBLE
+si no, si es INDETERMINATE (categoría desconocida) → INDETERMINATE
+si no (MET)                                      → COMPATIBLE
 ```
 
-`NOT_MET` tiene prioridad sobre `INDETERMINATE`. Si la categoría no alcanza, no importa que la zona sea incierta: el trabajo no es compatible.
+Hoy hay un único Criterio, así que el resultado global es el de la categoría. El algoritmo conserva la regla general (`NOT_MET` tiene prioridad sobre `INDETERMINATE`) para cuando se agregue otro Criterio. Las Limitaciones **no** modifican el resultado.
 
 ### 6.3 Limitaciones
 
 Cada Evaluación lleva la unión de:
 
-1. **Las Limitaciones de la Fuente**, por ejemplo: *"La Fuente no informa la vigencia de la matrícula…"* y *"La provincia informada corresponde al domicilio del matriculado, no a la zona donde puede trabajar"*.
+1. **Las Limitaciones de la Fuente**, por ejemplo: *"La Fuente no informa la vigencia de la matrícula…"* y *"La Fuente no informa en qué zonas está habilitado el matriculado: la provincia que publica corresponde a su domicilio. MatriculAR no verifica el alcance territorial de la habilitación"* y, si la provincia del trabajo está fuera del Área de concesión de la Fuente o solo en parte dentro, *"El trabajo es en una provincia donde la Fuente consultada no opera por completo. El gasista podría estar registrado en la distribuidora local, que no consultamos"*.
 2. **Las Limitaciones del Tipo de trabajo**, por ejemplo, en B, la excepción de la NAG-200 8.3.1.
 3. **Las Limitaciones de las condiciones asumidas:** *"Esta evaluación supone que el trabajo cumple las condiciones del tipo elegido: [lista]"*.
 
@@ -328,7 +329,7 @@ Regla de creación (ver [módulos](modulos.md)): si la Verificación da `INCOMPA
 | INV-3 | `NOT_FOUND` **solo** puede salir de una Consulta `SUCCEEDED`. Una falla **nunca** produce `NOT_FOUND`. | Distinción entre un resultado negativo e incertidumbre. |
 | INV-4 | Una extracción vacía, parcial o con una caída brusca de registros es `EXTRACTION_FAILED`, **nunca** "0 matriculados". | Devolución v2: el adaptador no debe interpretar "se encontraron cero matriculados". |
 | INV-5 | El sistema **nunca afirma la Vigencia**. Se informa siempre como Limitación. | Ninguna Fuente la informa y figurar en el padrón no la prueba. |
-| INV-6 | El Criterio de zona **nunca es `NOT_MET`**. | Ninguna evidencia disponible permite afirmar que alguien no puede trabajar en una zona. |
+| INV-6 | El alcance territorial **nunca se afirma ni se descarta**: se informa siempre como Limitación y no es un Criterio. | Ninguna Fuente informa dónde está habilitado el matriculado; si no hay evidencia suficiente, el sistema expresa incertidumbre y no infiere. |
 | INV-7 | Las categorías **no se comparan por orden**. | Son alcances técnicos, no niveles (errata E2). |
 | INV-8 | Una Evaluación **conserva una copia** de la regla que aplicó y **nunca se recalcula**. | Las normas están en revisión; una Evaluación vieja tiene que seguir siendo explicable. |
 | INV-9 | Los **datos de contacto** que publica la Fuente (email, teléfono, barrio) **nunca se persisten**. | Minimización de datos personales. |
@@ -344,11 +345,11 @@ Todos los datos de estos escenarios son **ficticios** (matrículas de la serie 9
 
 | # | Pedido | Resultado de la Consulta | Resultado de verificación | Evaluación | Qué muestra el sistema |
 |---|---|---|---|---|---|
-| S1 | Ecogas, matrícula 99001, **A1**, Córdoba | `SUCCEEDED` | `FOUND` (2ª, Córdoba) | **`COMPATIBLE`**: categoría `MET` (2ª admitida, 8.3.1) · zona `MET` (Córdoba ∈ área) | Compatible, con la fecha de la Consulta y las Limitaciones (vigencia y condiciones asumidas). |
+| S1 | Ecogas, matrícula 99001, **A1**, Córdoba | `SUCCEEDED` | `FOUND` (2ª, Córdoba) | **`COMPATIBLE`**: categoría `MET` (2ª admitida, 8.3.1) | Compatible, con la fecha de la Consulta y las Limitaciones (vigencia, alcance territorial y condiciones asumidas). |
 | S2 | La misma matrícula 99001, pero tipo **B** | `SUCCEEDED` | `FOUND` (2ª) | **`INCOMPATIBLE`**: categoría `NOT_MET` (B solo admite 1ª, 8.3.1) | No compatible, con la cita y la Limitación de la excepción 8.3.1. **La misma evidencia (categoría 2ª) da otro resultado con otro trabajo.** |
 | S3 | Ecogas, matrícula 99002 (**1ª**), **A2**, Mendoza | `SUCCEEDED` | `FOUND` (1ª) | **`COMPATIBLE`** | Corrige el caso "categoría insuficiente" de la investigación (E2): la 1ª puede hacer este trabajo. |
-| S4 | Ecogas, matrícula 99001 (provincia informada **Córdoba**), A1, **San Luis** | `SUCCEEDED` | `FOUND` | **`COMPATIBLE`**: zona `MET` (San Luis ∈ área de Ecogas) | Corrige el caso "jurisdicción incorrecta" (E1): la provincia informada no se usa para evaluar. |
-| S5 | Ecogas, matrícula 99003 (3ª), A1, **Buenos Aires** | `SUCCEEDED` | `FOUND` | **`INDETERMINATE`**: categoría `MET` · zona `INDETERMINATE` | "El trabajo es en Buenos Aires, fuera del área de Ecogas: no sabemos si está registrado en la distribuidora de esa zona." |
+| S4 | Ecogas, matrícula 99001 (provincia informada **Córdoba**), A1, **San Luis** | `SUCCEEDED` | `FOUND` | **`COMPATIBLE`**: categoría `MET` (2ª admitida para A1) | Corrige el caso "jurisdicción incorrecta" (E1): la provincia informada no se usa para evaluar. Muestra la Limitación de alcance territorial. |
+| S5 | Ecogas, matrícula 99003 (3ª), A1, **Buenos Aires** | `SUCCEEDED` | `FOUND` | **`COMPATIBLE`**: categoría `MET` (3ª admitida para A1), con **dos Limitaciones de zona** | "El trabajo es en una provincia donde la Fuente consultada no opera por completo. El gasista podría estar registrado en la distribuidora local, que no consultamos." El sistema no decide por el usuario: informa lo que no verificó. |
 | S6 | Ecogas, matrícula 99004, A1, Córdoba | `SUCCEEDED` (5.031 registros) | **`NOT_FOUND`** | — | "No figura en el padrón de Ecogas según la consulta exitosa del [fecha]." |
 | S7 | Ecogas, matrícula 99001, A1, Córdoba, **con el recurso cambiado** | `FAILED` · `EXTRACTION_FAILED` (1 Intento, sin reintento) | **`UNVERIFIABLE`** | — | "No pudimos consultar Ecogas." Se muestra la Credencial del 20/09 como contexto, sin concluir nada. |
 | S8 | Ecogas, **sin conexión** durante los 3 Intentos | `FAILED` · `SOURCE_UNAVAILABLE` (3 Intentos registrados) | **`UNVERIFIABLE`** | — | Igual que S7, con motivo "la fuente no respondió". |
@@ -366,7 +367,7 @@ Los ejemplos concretos de estos ítems, en el formato en que se guardan, están 
 | Máquina de estados del **Profesional**: `pendiente_verificación → verificado / rechazado`, `verificado → vencido → verificado` | El Profesional **no tiene estado de habilitación**. La evidencia vive en las Credenciales (inmutables, con historial) y la conclusión en las Evaluaciones (una por trabajo). | Credencial ≠ Evaluación (devolución v2). |
 | Estado `vencido` y degradación automática por vencimiento | **Eliminado.** La Vigencia es una Limitación. | Ninguna Fuente informa vencimientos; no se modelan fechas ficticias. |
 | "Verificado" como sello de confianza | Resultado de verificación **por Fuente y por fecha**, más una Evaluación **por Tipo de trabajo**. | Una misma matrícula puede ser adecuada para un trabajo y no para otro. |
-| Estados de credencial de la investigación (`fuera_de_jurisdiccion`, `categoria_insuficiente`, `no_encontrado`, `no_verificable`) | Criterios de la Evaluación (categoría, zona) y Resultados de verificación (`FOUND`, `NOT_FOUND`, `UNVERIFIABLE`). | La misma separación. |
-| Jurisdicción = provincia del padrón | Se separa en **Provincia informada**, **Área de concesión** y **provincia del trabajo**. | Errata E1. |
+| Estados de credencial de la investigación (`fuera_de_jurisdiccion`, `categoria_insuficiente`, `no_encontrado`, `no_verificable`) | Criterio de categoría de la Evaluación y Resultados de verificación (`FOUND`, `NOT_FOUND`, `UNVERIFIABLE`). | La misma separación. |
+| Jurisdicción = provincia del padrón | Se separa en **Provincia informada**, **Área de concesión** y **provincia del trabajo**; ninguna de las tres decide un Criterio. | Errata E1. |
 | Carga de un documento de credencial a S3 | **Eliminada.** La evidencia es la Fuente, y la titularidad se prueba con el Vínculo (código al email de la Fuente). | Una foto del carné no prueba nada que el sistema pueda chequear. |
 | Contratación: solicitada → aceptada → realizada → calificada (con cancelación) | **Se mantiene**, y además cada Contratación queda asociada a una Verificación. | — |
