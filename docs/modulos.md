@@ -34,7 +34,7 @@ Regla de recorte: si el plan se atrasa, **se recorta de abajo hacia arriba** (pr
 |---|---|---|---|---|
 | **M01** | Fuentes y adaptadores | **P0** | Lee el padrón de cada Distribuidora mediante un adaptador: Ecogas (automatizable) y MetroGAS (no automatizable). Descubre el recurso, aplica las cinco validaciones, clasifica las fallas y descarta los datos de contacto. | `λ verificacion` · [`backend/verificacion/`](../backend/verificacion/) |
 | **M02** | Consultas y evidencia | **P0** | Registra cada Consulta con sus Intentos, sus Resultados de verificación y la huella del recurso. Crea Credenciales inmutables con historial. | `λ verificacion` |
-| **M03** | Reglas y evaluación | **P0** | Mantiene el catálogo de Categorías y los Tipos de trabajo versionados. Calcula la Evaluación (Criterios de categoría y zona, resultado global y Limitaciones). | `λ verificacion` · [`backend/compartido/`](../backend/compartido/) |
+| **M03** | Reglas y evaluación | **P0** | Mantiene el catálogo de Categorías y los Tipos de trabajo versionados. Calcula la Evaluación (Criterio de categoría, resultado global y Limitaciones, incluida la de alcance territorial). | `λ verificacion` · [`backend/compartido/`](../backend/compartido/) |
 | **M04** | Verificación y API | **P0** | Caso de uso *Verificar* de punta a punta y los endpoints públicos del P0 (verificación, historial, salud de la Fuente y catálogos). | `λ verificacion` |
 | **M05** | Interfaz de verificación | **P0** | Pantalla web: formulario y resultado con evidencia, Criterios, Limitaciones e historial. | [`frontend/`](../frontend/) |
 | **M06** | Infraestructura y entorno | **P0** | Terraform para todos los recursos, entorno LocalStack reproducible, carga de datos semilla y scripts de desarrollo. | [`infra/`](../infra/) · [`database/`](../database/) |
@@ -130,7 +130,7 @@ Para cada módulo: qué hace, con qué datos trabaja, qué expone y cómo se dem
 
 | | |
 |---|---|
-| **Responsabilidades** | Cargar y servir las versiones vigentes de Categorías y Tipos de trabajo. Calcular los Criterios de categoría (por lista explícita, sin orden) y de zona (por Área de concesión, nunca `NOT_MET`), el resultado global y las Limitaciones. Guardar la Evaluación con una copia de la regla aplicada. |
+| **Responsabilidades** | Cargar y servir las versiones vigentes de Categorías y Tipos de trabajo. Calcular el Criterio de categoría (por lista explícita, sin orden), el resultado global y las Limitaciones (la zona se informa como Limitación, no como Criterio; el Área de concesión solo decide si se agrega la de "fuera del área"). Guardar la Evaluación con una copia de la regla aplicada. |
 | **Datos** | `Categorias`, `TiposTrabajo` y `Evaluaciones`. |
 | **Diseño** | [`reglas-de-categoria.md`](reglas-de-categoria.md) · [modelo § 6](modelo-de-dominio.md#6-cómo-se-calcula-una-evaluación) |
 | **Terminado cuando** | Los escenarios S1 a S10 pasan como pruebas unitarias del dominio (sin AWS). Cada Tipo de trabajo tiene su cita normativa. |
@@ -243,7 +243,7 @@ Documentado para la **fase 2**, fuera del proyecto final:
 | **Otras distribuidoras de gas** (Naturgy BAN, Camuzzi, Litoral Gas, …) | Cada una requiere investigación y, si es automatizable, un adaptador. La arquitectura ya lo permite (M01). |
 | Pagos y facturación | No hacen al problema central. |
 | Chat en tiempo real | Idem. |
-| Geolocalización fina (la zona se modela por provincia) | La precisión de la zona está limitada por las Fuentes, que informan provincia y localidad. |
+| Geolocalización fina (la zona se modela por provincia) | Las Fuentes informan domicilio (provincia y localidad), no alcance territorial; por eso la zona es una Limitación y no se evalúa. |
 | Panel de administración (back-office) | Las reglas y Fuentes se administran con archivos versionados y revisión por PR. |
 | Apps móviles nativas | El frontend web es responsive. |
 | Resolución de disputas por un mismo Vínculo | Requiere un proceso manual. |

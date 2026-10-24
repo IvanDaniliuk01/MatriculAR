@@ -51,8 +51,8 @@
       "piso_registros": 1000
     },
     "limitaciones": [
-      "La Fuente no informa la vigencia de la matrícula. Según la NAG-200 la matrícula se renueva todos los años y vence el 31 de marzo; figurar en el padrón no prueba que esté renovada. Para confirmarlo, pedile al gasista su carné con la matrícula actualizada (NAG-200, 8.6.1).",
-      "La provincia que publica Ecogas corresponde al domicilio del matriculado, no a la zona donde puede trabajar.",
+      "La Fuente no informa la vigencia de la matrícula. Según la NAG-200 (8.5.1) la matrícula se renueva todos los años, entre el 2 de enero y el 31 de marzo; figurar en el padrón no prueba que esté renovada. Para confirmarlo, pedile al gasista su carné con la matrícula actualizada (NAG-200, 8.6.1).",
+      "La Fuente no informa en qué zonas está habilitado el matriculado: la provincia que publica corresponde a su domicilio. MatriculAR no verifica el alcance territorial de la habilitación.",
       "El padrón de Ecogas es una publicación web sin fecha de actualización: esta evidencia refleja lo publicado en el momento de la consulta."
     ],
     "activa": true,

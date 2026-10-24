@@ -1,0 +1,24 @@
+{
+  "name": "matriculando-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Núcleo de verificación de MatriculAR (P0): adaptador de Ecogas, dominio, caso de uso Verificar y servidor HTTP mínimo.",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "dev": "tsx verificacion/src/handlers/servidor.ts",
+    "demo": "tsx verificacion/src/handlers/demo.ts"
+  },
+  "dependencies": {
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

@@ -162,7 +162,7 @@ flowchart LR
     end
     subgraph dom [Dominio · puro]
         ent[Entidades y valores<br/>Consulta · Credencial · Evaluación]
-        reg[Reglas<br/>Criterio de categoría · Criterio de zona<br/>resultado global · Limitaciones]
+        reg[Reglas<br/>Criterio de categoría<br/>resultado global · Limitaciones (incluida la de zona)]
     end
     subgraph puertos [Puertos · interfaces]
         pf[PuertoFuente]
@@ -250,7 +250,7 @@ La lectura U1-A2 de la cátedra propone justificar el stack respondiendo cinco p
 | **D5** | DynamoDB como almacenamiento. | **Vigente**, con [ADR-0004](adr/0004-una-tabla-dynamodb-por-entidad.md) | Una tabla por entidad. |
 | **D6** | Infraestructura 100 % como código con Terraform. | **Vigente** | En local se usa `lstk terraform` en lugar de `tflocal`, que está deprecado. |
 
-Decisiones nuevas de esta entrega: [ADR-0001](adr/0001-sin-colas-reintentos-sincronicos.md) (sin colas), [ADR-0002](adr/0002-consulta-bajo-demanda-sin-copia-del-padron.md) (consulta bajo demanda), [ADR-0003](adr/0003-credencial-separada-de-evaluacion-sin-afirmar-vigencia.md) (Credencial separada de Evaluación y vigencia no afirmada) y [ADR-0004](adr/0004-una-tabla-dynamodb-por-entidad.md) (una tabla por entidad).
+Decisiones nuevas de esta entrega: [ADR-0001](adr/0001-sin-colas-reintentos-sincronicos.md) (sin colas), [ADR-0002](adr/0002-consulta-bajo-demanda-sin-copia-del-padron.md) (consulta bajo demanda), [ADR-0003](adr/0003-credencial-separada-de-evaluacion-sin-afirmar-vigencia.md) (Credencial separada de Evaluación y vigencia no afirmada), [ADR-0004](adr/0004-una-tabla-dynamodb-por-entidad.md) (una tabla por entidad) y [ADR-0005](adr/0005-zona-como-limitacion-no-como-criterio.md) (la zona es una Limitación, no un Criterio).
 
 ---
 

@@ -22,7 +22,7 @@
         "admitida": true,
         "norma": "NAG-200",
         "articulo": "8.2.1",
-        "cita": "cualquier tipo de instalaciones domiciliarias domésticas, comerciales o industriales en todo el territorio del país, ya sea para gas distribuido por redes o envasado",
+        "cita": "cualquier tipo de instalaciones domiciliarias, domésticas, comerciales o industriales en todo el territorio del país, ya sea para gas distribuido por redes o envasado",
         "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf"
       },
       {
@@ -69,7 +69,7 @@
         "admitida": true,
         "norma": "NAG-200",
         "articulo": "8.2.1",
-        "cita": "cualquier tipo de instalaciones domiciliarias domésticas, comerciales o industriales en todo el territorio del país, ya sea para gas distribuido por redes o envasado",
+        "cita": "cualquier tipo de instalaciones domiciliarias, domésticas, comerciales o industriales en todo el territorio del país, ya sea para gas distribuido por redes o envasado",
         "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf"
       },
       {
@@ -118,7 +118,7 @@
         "admitida": true,
         "norma": "NAG-200",
         "articulo": "8.2.1",
-        "cita": "cualquier tipo de instalaciones domiciliarias domésticas, comerciales o industriales en todo el territorio del país, ya sea para gas distribuido por redes o envasado",
+        "cita": "cualquier tipo de instalaciones domiciliarias, domésticas, comerciales o industriales en todo el territorio del país, ya sea para gas distribuido por redes o envasado",
         "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf"
       },
       {
@@ -141,7 +141,7 @@
       }
     ],
     "limitaciones": [
-      "Por excepción (NAG-200, 8.3.1), un instalador de 2ª categoría puede hacer este trabajo con autorización expresa de la distribuidora cuando no hay matriculados de 1ª en la zona. MatriculAR no puede verificar esa autorización."
+      "Por excepción (NAG-200, 8.3.1), un instalador de 2ª categoría puede hacer este trabajo con autorización expresa de los Sectores Técnicos, cuando no hay matriculados de 1ª en la zona y median razones justificadas. MatriculAR no puede verificar esa autorización."
     ],
     "tipo_recomendado_si_duda": null,
     "activo": true,

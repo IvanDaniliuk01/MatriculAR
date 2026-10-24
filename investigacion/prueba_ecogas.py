@@ -1,4 +1,16 @@
 """
+OBSOLETO como evaluación - conservado solo como evidencia de la investigación.
+
+  * El bloque de EVALUACIÓN (más abajo) automatiza dos reglas que la devolución
+    descartó: provincia del padrón == jurisdicción, y comparación numérica de
+    categorías. Ver fe de erratas E1 y E2 en
+    investigacion/MatriculAR_investigacion_fuentes_gas.md y docs/reglas-de-categoria.md.
+    No debe usarse ni copiarse como lógica del sistema.
+  * Sobre los datos: el script PROCESA la fuente completa (hace falta bajar el
+    recurso entero para leerlo), pero solo PERSISTE una muestra reducida
+    (10 registros, ignorada por git). Fe de erratas E4.
+  * La implementación real es el adaptador del backend (ver docs/fuentes-y-adaptadores.md).
+
 Prueba técnica mínima - MatriculAR
 Fuente: Ecogas (gasistas matriculados, provincias Córdoba/Catamarca/La Rioja/Mendoza/San Juan/San Luis)
 
@@ -73,17 +85,17 @@ if __name__ == "__main__":
     registros = extraer_registros(contenido)
 
     print(f"\nRegistros detectados: {len(registros)}")
-    print("\nMuestra de los primeros 5 (para no bajar el padrón completo):")
+    print("\nMuestra de los primeros 5 (se procesó la fuente completa; solo se muestra y guarda una muestra reducida):")
     for r in registros[:5]:
         print(r)
 
-    # Guardar solo una muestra chica, no el padrón completo, por las
-    # consideraciones éticas mencionadas arriba.
+    # Se procesó la fuente completa, pero se persiste solo una muestra reducida
+    # (minimización de datos; la muestra está ignorada por git).
     with open("muestra_ecogas.json", "w", encoding="utf-8") as f:
         json.dump(registros[:10], f, ensure_ascii=False, indent=2)
     print("\nMuestra guardada en muestra_ecogas.json")
 
-    # --- Paso de EVALUACIÓN (no solo obtención) ---
+    # --- Paso de EVALUACIÓN: OBSOLETO (reglas descartadas, ver el encabezado) ---
     # Oscar pidió explícitamente "obtener Y EVALUAR" la situación de una
     # credencial. Acá se toma un registro real ya obtenido y se evalúa
     # contra un caso de uso ficticio de contratación.

@@ -50,7 +50,7 @@ Provincia que la Fuente publica junto a la Matrícula; corresponde al domicilio 
 _Avoid_: Jurisdicción, provincia habilitada
 
 **Vigencia**:
-Condición de una Matrícula renovada para el período en curso (renovación anual, vence el 31/03). Ninguna Fuente conocida la informa, así que MatriculAR nunca la afirma.
+Condición de una Matrícula renovada para el período en curso (renovación anual entre el 2 de enero y el 31 de marzo, NAG-200 8.5.1). Ninguna Fuente conocida la informa, así que MatriculAR nunca la afirma.
 _Avoid_: Vigente, vencida, verificado (como estados del sistema)
 
 ## Evaluación
@@ -72,7 +72,7 @@ Resultado de aplicar las reglas de un Tipo de trabajo a una Credencial: `COMPATI
 _Avoid_: Apta, habilitado, verificado
 
 **Criterio**:
-Cada aspecto que una Evaluación juzga por separado: categoría (cumple, no cumple o indeterminado) y zona (cumple o indeterminado). La Vigencia no es un Criterio: se informa siempre como Limitación y no participa del resultado.
+Cada aspecto que una Evaluación juzga por separado: categoría (cumple, no cumple o indeterminado). Hoy es el único. La zona y la Vigencia no son Criterios: se informan siempre como Limitaciones y no participan del resultado.
 
 **Limitación**:
 Declaración explícita, incluida en cada Evaluación, de lo que la evidencia no permite afirmar (por ejemplo, que la Fuente no informa Vigencia).
@@ -106,7 +106,7 @@ _Avoid_: Calificación (como entidad), review
 - Un Resultado `FOUND` produce una **Credencial**, y solo entonces se hace una **Evaluación**. `NOT_FOUND` y `UNVERIFIABLE` son respuestas distintas y ninguna produce Evaluación.
 - Una **Evaluación** aplica un **Tipo de trabajo** a una **Credencial**; nunca modifica la Credencial.
 - Una **Contratación** con Evaluación `INCOMPATIBLE` no puede crearse; cualquier otro resultado sin `COMPATIBLE` se muestra como advertencia al Cliente.
-- La zona se evalúa contra el **Área de concesión** de la Distribuidora de la Fuente, nunca contra la **Provincia informada**. Fuera del Área de concesión, el Criterio de zona es indeterminado, no incumplido.
+- La zona **no se evalúa**: ninguna Fuente informa dónde está habilitado el matriculado. El alcance territorial se informa siempre como Limitación. El **Área de concesión** solo decide si se agrega la Limitación de "fuera del área"; la **Provincia informada** no decide nada.
 - Una **Consulta** tiene uno o más **Intentos**.
 - La ausencia de evidencia nunca se convierte en certeza: si una Fuente no pudo consultarse, el resultado es `UNVERIFIABLE` y no hay Evaluación, aunque exista una Credencial anterior; esa Credencial se muestra con su fecha, pero no se usa para concluir.
 - Una **Evaluación** conserva la versión de las **Categorías admitidas** que aplicó; nunca se recalcula con reglas posteriores.

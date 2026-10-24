@@ -32,7 +32,7 @@ Plataforma que responde, **con evidencia fechada y citable**, si la matrícula d
 | [**Informe de avance, entrega 2**](docs/informe-avance-entrega-2.md) | Qué se hizo, checklist de la consigna, respuesta a la devolución v2, hallazgos y preguntas para el tutor. |
 | [Glosario (`CONTEXT.md`)](CONTEXT.md) | Vocabulario del dominio: Fuente, Consulta, Credencial, Evaluación, Verificación… |
 | [Modelo de dominio](docs/modelo-de-dominio.md) | Credencial frente a Evaluación, recorrido de una Verificación, estados, invariantes y escenarios. |
-| [Reglas de categoría y de zona](docs/reglas-de-categoria.md) | Qué habilita cada categoría según la NAG-200, Tipos de trabajo, criterio de zona y vigencia, con citas. |
+| [Reglas de categoría](docs/reglas-de-categoria.md) | Qué habilita cada categoría según la NAG-200, Tipos de trabajo, y por qué la zona y la vigencia son Limitaciones y no Criterios, con citas. |
 | [Fuentes y adaptadores](docs/fuentes-y-adaptadores.md) | Cómo se lee el padrón de Ecogas, las cinco validaciones, fallas, reintentos y MetroGAS. |
 | [**Esquema de base de datos**](database/README.md) | 15 tablas de DynamoDB: campos, tipos, claves, relaciones, índices y patrones de acceso. |
 | [**Módulos**](docs/modulos.md) | 15 módulos con prioridad, dependencias y plan tentativo. |
@@ -98,8 +98,8 @@ flowchart LR
     C -->|la lectura falla| NV([UNVERIFIABLE<br/>muestra la última evidencia<br/>con su fecha, sin concluir])
     C -->|la matrícula no figura| NE([NOT_FOUND<br/>en Ecogas, en esta fecha])
     C -->|la matrícula figura| CR[Credencial nueva<br/>categoría 2ª · Córdoba · 26/09 15:40]
-    CR --> EV[Evaluación<br/>categoría: 2ª admitida · NAG-200 8.3.1<br/>zona: Córdoba en el área de Ecogas]
-    EV --> R([COMPATIBLE<br/>más las Limitaciones:<br/>la vigencia no se puede afirmar])
+    CR --> EV[Evaluación<br/>categoría: 2ª admitida · NAG-200 8.3.1]
+    EV --> R([COMPATIBLE<br/>más las Limitaciones:<br/>vigencia y alcance territorial no se pueden afirmar])
 ```
 
 Detalle: [modelo de dominio](docs/modelo-de-dominio.md#4-el-recorrido-de-una-verificación) · [API](docs/api.md#6-secuencias).

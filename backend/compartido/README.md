@@ -4,7 +4,7 @@ Paquete interno que contiene **todo lo que no depende de cómo se invoca una fun
 
 | Carpeta | Contenido | Módulo | Depende de |
 |---|---|---|---|
-| `src/dominio/` | Tipos del glosario ([`CONTEXT.md`](../../CONTEXT.md)): Consulta, Credencial, Evaluación, Criterios y resultados. Cálculo de los Criterios de categoría y zona, del resultado global y de las Limitaciones. **Funciones puras.** | M02, M03 | Nada |
+| `src/dominio/` | Tipos del glosario ([`CONTEXT.md`](../../CONTEXT.md)): Consulta, Credencial, Evaluación, Criterios y resultados. Cálculo del Criterio de categoría, del resultado global y de las Limitaciones (la de zona incluida). **Funciones puras.** | M02, M03 | Nada |
 | `src/aplicacion/` | Casos de uso: *Verificar* (P0), *ConsultarHistorial* (P0), *Buscar* (P1), *Revalidar* (P3). | M04, M10, M14 | `dominio/`, `puertos/` |
 | `src/puertos/` | Interfaces que necesita la aplicación: `PuertoFuente`, repositorios, reloj e identificadores. | — | `dominio/` |
 | `src/adaptadores/fuentes/` | `EcogasRecursoNext` y `NoAutomatizable` ([diseño](../../docs/fuentes-y-adaptadores.md)). | M01 | `puertos/` |

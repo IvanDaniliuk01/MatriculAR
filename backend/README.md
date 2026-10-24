@@ -1,6 +1,28 @@
 # Backend
 
-> **Todavía no hay código.** Esta carpeta tiene la estructura acordada en el diseño (segunda entrega). La implementación empieza cuando el tutor apruebe el diseño.
+> **Estado:** primera vertical del P0 implementada (sin AWS todavía): dominio, adaptador de Ecogas, caso de uso *Verificar*, repositorio en memoria y un servidor HTTP mínimo. Faltan el adaptador de DynamoDB, el empaquetado Lambda y la infraestructura. Ver [`docs/seguimiento-devolucion.md`](../docs/seguimiento-devolucion.md).
+
+## Cómo correrlo
+
+Requiere Node.js 22 o superior (el diseño apunta a Node 24).
+
+```bash
+cd backend
+npm install
+npm test            # 83 pruebas: dominio, adaptador de Ecogas con fixtures, caso de uso y HTTP
+npm run typecheck
+npm run demo        # recorre los casos contra un Ecogas FICTICIO local (no toca el sitio real)
+npm run dev         # servidor en :3000; consulta el Ecogas REAL con pedidos mínimos
+```
+
+`npm run demo -- --servir` deja el servidor y el Ecogas ficticio levantados para probar a mano:
+
+```bash
+curl -s -X POST localhost:3000/verificaciones -H 'content-type: application/json' \
+  -d '{"fuente_id":"ecogas","matricula":"99001","tipo_trabajo_id":"artefacto-vivienda-unifamiliar","provincia_trabajo":"CORDOBA"}'
+```
+
+En el demo las matrículas 99001–99007 son ficticias. La persistencia es **en memoria**: se pierde al reiniciar.
 
 Backend **serverless** en **TypeScript 7** sobre **Node.js 24** (`nodejs24.x` en AWS Lambda), con arquitectura **hexagonal**: el dominio en el centro, sin dependencias de AWS ni de las Fuentes. Ver [`docs/arquitectura.md`](../docs/arquitectura.md).
 
