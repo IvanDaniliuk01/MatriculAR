@@ -1,0 +1,21 @@
+name: Probar Ecogas desde la nube
+
+# Prueba pedida por el tutor: ¿Ecogas responde a un cliente que se identifica honestamente desde
+# una IP de datacenter? Los runners de GitHub corren en Azure: no es AWS, pero responde si la Fuente
+# bloquea IPs de nube. La prueba desde AWS real se repite al desplegar.
+# Hace una sola lectura por ejecución; no se programa con cron para no cargar a la Fuente.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - scripts/probar-ecogas.sh
+      - .github/workflows/probar-ecogas.yml
+
+jobs:
+  probar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Leer la página de Ecogas con un User-Agent identificado
+        run: bash scripts/probar-ecogas.sh "https://github.com/${{ github.repository }}"

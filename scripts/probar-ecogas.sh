@@ -2,13 +2,14 @@
 # Prueba temprana pedida por el tutor (devolución de la entrega 2): ¿Ecogas responde a un cliente
 # que se identifica honestamente, desde el entorno donde vamos a desplegar (AWS)?
 #
-# Uso (por ejemplo, en AWS CloudShell):  bash probar-ecogas.sh tu-mail@ejemplo.com
+# Uso:  bash probar-ecogas.sh <contacto>   (un mail o la URL del repositorio)
+# Corre en GitHub Actions (.github/workflows/probar-ecogas.yml) y se repite en AWS al desplegar.
 #
 # No imprime datos personales: solo códigos HTTP, tamaños, la huella del recurso y un conteo.
 # Hace una sola lectura de la página y de sus chunks; no lo corras en bucle.
 set -u
 
-CONTACTO="${1:?Pasá un mail de contacto como primer argumento}"
+CONTACTO="${1:?Pasá un contacto (mail o URL) como primer argumento}"
 UA="MatriculAR/0.1 (proyecto final UTN; contacto: ${CONTACTO})"
 BASE="https://www.ecogas.com.ar"
 PAGINA="${BASE}/hogares-comercios/tramites-y-servicios/listado-de-gasistas-matriculados"
