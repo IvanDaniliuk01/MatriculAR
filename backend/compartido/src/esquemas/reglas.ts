@@ -37,6 +37,24 @@ export const fuenteSeed = z.object({
   nombre: z.string().min(1),
   area_concesion: z.array(z.string()),
   area_concesion_parcial: z.array(z.string()),
+  modo_acceso: z.enum(["AUTOMATED", "NOT_AUTOMATABLE"]),
+  url_pagina: z.string().nullable(),
+  url_buscador_oficial: z.string(),
+  config_extraccion: z
+    .object({ marcador_v2: z.string(), prefijo_preferido: z.string(), max_candidatos: z.number() })
+    .nullable(),
+  config_reintentos: z
+    .object({
+      max_intentos: z.number().int().positive(),
+      esperas_ms: z.array(z.number()),
+      timeout_pedido_ms: z.number().positive(),
+      timeout_consulta_ms: z.number().positive(),
+    })
+    .nullable(),
+  config_validacion: z.object({ umbral_caida: z.number(), piso_registros: z.number() }).nullable(),
+  config_proteccion: z
+    .object({ ventana_reutilizacion_s: z.number(), espera_tras_falla_s: z.number() })
+    .nullable(),
   limitaciones: z.array(z.string()),
   activa: z.boolean(),
 });

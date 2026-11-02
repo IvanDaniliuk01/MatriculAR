@@ -46,6 +46,10 @@ export interface Fuente {
   nombre: string;
   areaConcesion: readonly string[];
   areaConcesionParcial: readonly string[];
+  modoAcceso: "AUTOMATED" | "NOT_AUTOMATABLE";
+  urlBuscadorOficial: string;
+  /** Protección de la Fuente (ADR-0006). Nula si la Fuente no se lee automáticamente. */
+  proteccion: { ventanaReutilizacionS: number; esperaTrasFallaS: number } | null;
   limitaciones: readonly string[];
 }
 

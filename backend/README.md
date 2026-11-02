@@ -5,7 +5,10 @@
 > - la **búsqueda del gasista** por nombre y localidad ([ADR-0007](../docs/adr/0007-identificacion-por-nombre-y-localidad.md));
 > - el **extractor de Ecogas**, que reconoce los dos formatos conocidos del recurso y aplica las validaciones V2 a V5.
 >
-> Lo próximo es el acceso HTTP con reintentos, la Consulta y la Credencial persistidas, y el recorrido completo por CLI ([plan](../docs/modulos.md#6-plan-tentativo)).
+> - el **lector HTTP de Ecogas**, con reintentos, descubrimiento del recurso y clasificación de fallas;
+> - el **caso de uso Verificar**, con Protección de la Fuente, repositorios en memoria y en archivo, y un **CLI** que recorre todo contra la Ecogas real.
+>
+> Lo próximo es DynamoDB en LocalStack, la Lambda y la API ([plan](../docs/modulos.md#6-plan-tentativo)).
 
 ## Cómo correrlo
 
@@ -16,12 +19,22 @@ cd backend
 npm install
 npm test            # pruebas (Vitest)
 npm run check       # lint (Biome) + tipos (tsc) + pruebas: lo mismo que corre la CI
+
+# Recorrido completo contra la Fuente real (ver --ayuda)
+npm run verificar -- --nombre "Nombre Apellido" --provincia "Córdoba" \
+  --condicion comercio_o_industria=NO --condicion unica_vivienda=NO_SE \
+  --condicion consumo_total_hasta_5m3h=NO_SE --condicion artefacto_mas_de_50000=NO \
+  --condicion gas_natural_red_baja_presion=SI
 ```
+
+El CLI guarda las Consultas, Lecturas minimizadas y Credenciales en `backend/.datos-locales/`, que no se versiona. Así respeta la Ventana de reutilización de 15 minutos entre corridas. Desde una IP de nube Ecogas responde 403, así que el CLI se corre desde una conexión residencial.
 
 | Pruebas | Qué demuestran |
 |---|---|
 | [`compartido/test/dominio/`](compartido/test/dominio/) | Categoría desconocida, "No sé" en una Condición decisiva, Limitación de zona, trabajo no cubierto, el texto de `COMPATIBLE`, la búsqueda con homónimos y la coherencia de las reglas del seed. |
 | [`compartido/test/adaptadores/`](compartido/test/adaptadores/) | Los dos formatos de Ecogas, cambio de estructura, extracción incompleta y caída brusca. Siempre `EXTRACTION_FAILED`, nunca "0 matriculados". Los fixtures son sintéticos, con la estructura exacta del recurso real. |
+| [`compartido/test/adaptadores/lector-ecogas.test.ts`](compartido/test/adaptadores/lector-ecogas.test.ts) | Lector HTTP: cambio de URL del recurso, 403, 404, 5xx con reintento, presupuesto de tiempo y V5. |
+| [`compartido/test/aplicacion/`](compartido/test/aplicacion/) | Caso de uso Verificar: FOUND, homónimos, NOT_FOUND, TOO_MANY_MATCHES, Ventana de reutilización, espera tras una falla, UNVERIFIABLE con la evidencia anterior, MetroGAS y rechazos antes de leer la Fuente. |
 | [`compartido/test/recorrido.test.ts`](compartido/test/recorrido.test.ts) | El recorrido página → extracción → gasista → trabajo → Evaluación → explicación. |
 | [`compartido/test/fuente-real/`](compartido/test/fuente-real/) | Lectura de la Ecogas real. Solo corre a mano (`npm run test:fuente-real`) y nunca en CI: el padrón tiene datos personales y no hay que cargar a la Fuente. |
 

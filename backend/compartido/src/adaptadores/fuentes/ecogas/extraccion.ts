@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { normalizarTexto, type RegistroFuente } from "../../../dominio/busqueda";
+import type { RegistroLeido } from "../../../dominio/consulta";
 
 /**
  * Extracción del padrón de Ecogas a partir de los recursos ya descargados (sin HTTP).
@@ -13,11 +14,7 @@ export type FormatoEcogas = "PAGINA_RSC" | "CHUNK_JSON_PARSE";
 /** Validación que falló: V2 marcador, V3 lectura del contenido, V4 registros, V5 cantidad. */
 export type Validacion = "V2" | "V3" | "V4" | "V5";
 
-export interface RegistroExtraido {
-  registro: RegistroFuente;
-  /** Campos mínimos tal como los publicó la Fuente, sin datos de contacto. */
-  valoresFuente: Readonly<Record<string, unknown>>;
-}
+export type RegistroExtraido = RegistroLeido;
 
 export type ResultadoExtraccion =
   | {

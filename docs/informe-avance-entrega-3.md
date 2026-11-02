@@ -17,7 +17,7 @@
 
 ## 1. Resumen
 
-- **Empezó la implementación.** El dominio de la Evaluación, la búsqueda del gasista y el extractor de Ecogas están en TypeScript, con **62 pruebas** en Vitest y CI en GitHub Actions (lint, tipos y pruebas en cada push). Instrucciones en [`backend/README.md`](../backend/README.md).
+- **Empezó la implementación, y el recorrido del P0 ya corre completo contra la Ecogas real** desde la línea de comandos: lectura con reintentos, evidencia, Evaluación y respuesta explicable. Todo en TypeScript, con **91 pruebas** en Vitest y CI en GitHub Actions (lint, tipos y pruebas en cada push). Instrucciones en [`backend/README.md`](../backend/README.md).
 - **Aplicamos la regla de la devolución a todas las reglas:** si la evidencia no permite afirmar algo, el software tampoco lo afirma. La zona pasó a ser una Limitación, un "No sé" nunca se toma como "Sí" y `COMPATIBLE` ya no promete habilitación.
 - **Al probar el adaptador contra la Ecogas real apareció un hallazgo que cambia el núcleo:** el padrón **no publica el número de matrícula**. El campo `id`, que tomamos como matrícula en la primera entrega, es una numeración interna. Ahora el gasista se identifica por nombre y localidad ([§ 2](#2-hallazgo-principal-ecogas-no-publica-el-número-de-matrícula)).
 - **La prueba que pidió desde el entorno de nube dio un resultado decisivo:** con el mismo User-Agent identificado, Ecogas responde desde una IP residencial y **rechaza (403) desde una IP de datacenter**. Planteamos cómo seguir en la [pregunta 1](#6-preguntas-para-el-tutor).
@@ -69,14 +69,30 @@ Otros datos de esa lectura: el padrón bajó de 5.031 a 4.836 registros (−3,9 
 
 ## 4. Qué demuestran hoy el código y los tests
 
-Recorrido pedido: *Fuente actual de Ecogas → extracción válida → gasista → trabajo → evaluación → respuesta explicable*. Hoy corre completo sobre un fixture con la estructura exacta de la página actual ([`recorrido.test.ts`](../backend/compartido/test/recorrido.test.ts)), y el extractor está probado contra la página real (`npm run test:fuente-real`, a mano y nunca en CI, porque el padrón tiene datos personales). Faltan la evidencia persistida (Consulta, Credencial y huella), el acceso HTTP con reintentos y la API.
+Recorrido pedido: *Fuente actual de Ecogas → extracción válida → gasista → evidencia → trabajo → evaluación → respuesta explicable*. **Hoy corre completo contra la Ecogas real** desde la línea de comandos:
+
+```bash
+cd backend && npm run verificar -- --nombre "Juan Gonzalez" --provincia "San Luis" \
+  --condicion comercio_o_industria=NO --condicion unica_vivienda=NO_SE \
+  --condicion consumo_total_hasta_5m3h=NO_SE --condicion artefacto_mas_de_50000=NO \
+  --condicion gas_natural_red_baja_presion=SI
+```
+
+- **Lectura:** descarga y valida el padrón (4.836 registros, formato v2, con su huella SHA-256), con reintentos y la clasificación de fallas.
+- **Evidencia:** guarda la Consulta, la Lectura minimizada y una Credencial por Coincidencia, con los valores tal como vinieron.
+- **Evaluación:** responde con su explicación y sus Limitaciones.
+- **Protección de la Fuente:** una segunda búsqueda dentro de los 15 minutos **reutiliza la lectura** (0,5 s en lugar de 5 s) e informa la fecha real.
+
+La persistencia es un archivo local que no se versiona. DynamoDB y la API vienen después, sobre los mismos puertos. El caso de uso está cubierto por pruebas con un lector falso ([`verificar.test.ts`](../backend/compartido/test/aplicacion/verificar.test.ts)), y el lector HTTP con un cliente HTTP falso ([`lector-ecogas.test.ts`](../backend/compartido/test/adaptadores/lector-ecogas.test.ts)). En total son **91 pruebas**.
 
 Los casos que pidió el tutor:
 
 | Caso | Qué responde el sistema | Prueba |
 |---|---|---|
 | **Cambio de estructura** | `EXTRACTION_FAILED` (V2 o V3), y en el recorrido `UNVERIFIABLE`, nunca "no encontrado" | [`extraccion-ecogas.test.ts`](../backend/compartido/test/adaptadores/extraccion-ecogas.test.ts): *"la propiedad del padrón cambió de nombre"*, *"la página ya no trae el payload"*. Además, los dos formatos reales (septiembre y noviembre) se reconocen. |
-| **Cambio de URL** | Pendiente: lo resuelve la capa HTTP (descubrir el recurso desde la página), del 3 al 8/11 | — |
+| **Cambio de URL** | El recurso se descubre desde la página en cada lectura: si el archivo con los datos cambia de nombre, se encuentra igual. Si la página del listado desaparece (404), `EXTRACTION_FAILED` sin reintentar | [`lector-ecogas.test.ts`](../backend/compartido/test/adaptadores/lector-ecogas.test.ts): cambio de URL del recurso, prefijo ausente, página 404 |
+| **La Fuente bloquea o falla** | 403 → `SOURCE_UNAVAILABLE` sin reintentar (el caso real desde la nube). 5xx o timeout → reintenta dentro del presupuesto. En la respuesta: `UNVERIFIABLE`, con la evidencia anterior como contexto y sin concluir | `lector-ecogas.test.ts` y [`verificar.test.ts`](../backend/compartido/test/aplicacion/verificar.test.ts) |
+| **Protección de la Fuente** | Reutiliza la lectura 15 minutos. Después de una falla espera 1 minuto (`SOURCE_RATE_LIMITED`) | `verificar.test.ts`: *"Protección de la Fuente"* |
 | **Extracción incompleta** | `EXTRACTION_FAILED` (V4): padrón vacío, registro sin clave obligatoria o identificadores repetidos. V5: caída brusca de la cantidad | *"el padrón viene vacío"*, *"a un registro le falta una clave obligatoria"*, *"V5: caída brusca"* |
 | **Categoría desconocida** | La Credencial la conserva tal como vino y la Evaluación da `INDETERMINATE`: *"La Fuente informa la categoría «4», que MatriculAR no reconoce"* | [`evaluacion.test.ts`](../backend/compartido/test/dominio/evaluacion.test.ts) y el recorrido con homónimos |
 | **Incertidumbre de zona** | Limitación en toda Evaluación, con un texto dentro del Área de concesión y otro fuera | *"S4: matrícula de Ecogas y trabajo en San Luis"*, *"fuera del Área de concesión"* |
@@ -112,7 +128,7 @@ Los casos que pidió el tutor:
 | Fechas | Trabajo |
 |---|---|
 | 02/11 | Enviar la consulta a Ecogas, que ahora incluye el pedido de autorización para leer desde la nube. |
-| 03 al 08/11 | Acceso HTTP al recurso con reintentos y descubrimiento de la URL, Consulta y Credencial con su huella (repositorios en memoria) y recorrido completo por línea de comandos. |
+| ~~03 al 08/11~~ | ~~Acceso HTTP con reintentos, Consulta y Credencial con su huella, y recorrido completo por línea de comandos.~~ **Hecho el 02/11.** |
 | 09 al 13/11 | DynamoDB en LocalStack (con las claves rediseñadas por ADR-0007), Lambda y API. |
 | 14 al 17/11 | Terraform en AWS (con la prueba de acceso a Ecogas desde AWS) y una pantalla mínima en React. |
 | 18 al 21/11 | Informe final y video. |

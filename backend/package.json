@@ -12,11 +12,13 @@
     "typecheck": "tsc --noEmit -p .",
     "lint": "biome check .",
     "format": "biome check --write .",
-    "check": "npm run lint && npm run typecheck && npm test"
+    "check": "npm run lint && npm run typecheck && npm test",
+    "verificar": "tsx verificacion/src/cli.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.6.4",
     "@types/node": "^24.19.2",
+    "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vitest": "^5.0.5"
   },

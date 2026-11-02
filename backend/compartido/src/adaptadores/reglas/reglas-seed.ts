@@ -11,6 +11,7 @@ import {
   provinciaSeed,
   tipoTrabajoSeed,
 } from "../../esquemas/reglas";
+import type { ConfigLectura } from "../../puertos/lector-fuente";
 
 /**
  * Carga las reglas desde `database/seed/`, la única fuente de verdad. Si un archivo no pasa el
@@ -52,6 +53,12 @@ export function reglasDelSeed(): Reglas {
         nombre: f.nombre,
         areaConcesion: f.area_concesion,
         areaConcesionParcial: f.area_concesion_parcial,
+        modoAcceso: f.modo_acceso,
+        urlBuscadorOficial: f.url_buscador_oficial,
+        proteccion: f.config_proteccion && {
+          ventanaReutilizacionS: f.config_proteccion.ventana_reutilizacion_s,
+          esperaTrasFallaS: f.config_proteccion.espera_tras_falla_s,
+        },
         limitaciones: f.limitaciones,
       })),
     provincias: provinciaSeed.array().parse(provinciasJson),
@@ -62,4 +69,35 @@ export function reglasDelSeed(): Reglas {
     throw new Error(`Las reglas del seed no son coherentes:\n${errores.join("\n")}`);
   }
   return reglas;
+}
+
+/** Configuración de lectura de cada Fuente automatizable, por `fuente_id`. */
+export function configsLecturaDelSeed(): ReadonlyMap<string, ConfigLectura> {
+  const configs = new Map<string, ConfigLectura>();
+  for (const f of fuenteSeed.array().parse(fuentesJson)) {
+    const { url_pagina, config_extraccion, config_reintentos, config_validacion } = f;
+    if (f.modo_acceso !== "AUTOMATED" || !f.activa) continue;
+    if (!url_pagina || !config_extraccion || !config_reintentos || !config_validacion) {
+      throw new Error(
+        `La Fuente automatizada ${f.fuente_id} no tiene configuración de lectura completa.`,
+      );
+    }
+    configs.set(f.fuente_id, {
+      urlPagina: url_pagina,
+      marcadorV2: config_extraccion.marcador_v2,
+      prefijoPreferido: config_extraccion.prefijo_preferido,
+      maxCandidatos: config_extraccion.max_candidatos,
+      reintentos: {
+        maxIntentos: config_reintentos.max_intentos,
+        esperasMs: config_reintentos.esperas_ms,
+        timeoutPedidoMs: config_reintentos.timeout_pedido_ms,
+        timeoutConsultaMs: config_reintentos.timeout_consulta_ms,
+      },
+      validacion: {
+        umbralCaida: config_validacion.umbral_caida,
+        pisoRegistros: config_validacion.piso_registros,
+      },
+    });
+  }
+  return configs;
 }

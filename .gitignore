@@ -33,3 +33,5 @@ Thumbs.db
 skills-lock.json
 
 *:Zone.Identifier
+# Estado local del CLI (Lecturas minimizadas con nombres de personas)
+backend/.datos-locales/

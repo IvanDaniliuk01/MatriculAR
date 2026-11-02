@@ -75,6 +75,15 @@ export function paginaConPayload(payload: string): string {
   ].join("");
 }
 
+/** Página como la de septiembre (formato 1): sin payload con datos, solo referencias a chunks. */
+export function paginaV1(chunks: string[]): string {
+  return [
+    '<!DOCTYPE html><html lang="es"><head>',
+    ...chunks.map((ruta) => `<script src="${ruta}" async=""></script>`),
+    "</head><body><main><h1>GASISTAS MATRICULADOS</h1></main></body></html>",
+  ].join("");
+}
+
 /** Escapa como un literal de JavaScript entre comillas simples, igual que el chunk de septiembre. */
 function literalJs(texto: string): string {
   return texto.replace(/[\\'\u0080-￿]/g, (c) => {
