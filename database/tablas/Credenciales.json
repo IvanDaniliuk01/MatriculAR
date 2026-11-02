@@ -3,7 +3,7 @@
   "BillingMode": "PAY_PER_REQUEST",
   "AttributeDefinitions": [
     {
-      "AttributeName": "fuente_matricula",
+      "AttributeName": "fuente_gasista",
       "AttributeType": "S"
     },
     {
@@ -13,7 +13,7 @@
   ],
   "KeySchema": [
     {
-      "AttributeName": "fuente_matricula",
+      "AttributeName": "fuente_gasista",
       "KeyType": "HASH"
     },
     {

@@ -31,3 +31,5 @@ Thumbs.db
 # Herramientas locales de asistentes de IA (skills y su lock): no forman parte del proyecto
 .claude/
 skills-lock.json
+
+*:Zone.Identifier

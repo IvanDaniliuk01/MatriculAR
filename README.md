@@ -2,11 +2,11 @@
 
 **Trabajo final · Tecnicatura Universitaria en Programación (UTN)**
 
-Plataforma que responde, **con evidencia fechada y citable**, si la matrícula de un gasista es compatible con un trabajo concreto: qué sabemos, de qué fuente, cuándo lo consultamos y qué no podemos afirmar. Sobre ese núcleo se monta la búsqueda y la contratación de profesionales.
+Plataforma que responde, **con evidencia fechada y citable**, si la categoría de un gasista que figura en el padrón de una distribuidora es compatible con un trabajo concreto: qué sabemos, de qué fuente, cuándo lo consultamos y qué no podemos afirmar. Sobre ese núcleo se monta la búsqueda y la contratación de profesionales.
 
-> **Estado del proyecto:** etapa 3 de la hoja de ruta, **Arquitectura y Módulos** (segunda entrega, 27/09/2026). Es una etapa de **análisis y diseño: todavía no hay código del sistema.** La implementación empieza cuando el tutor apruebe este diseño.
+> **Estado del proyecto:** etapa 4 de la hoja de ruta, **implementación** (diseño aprobado con correcciones). Ya están el dominio de la Evaluación, la búsqueda del gasista y el extractor de Ecogas, con pruebas automáticas y CI. Ver [`backend/`](backend/).
 >
-> 👉 **Para revisar la entrega, empezar por el [informe de avance](docs/informe-avance-entrega-2.md)**, que incluye la respuesta punto por punto a la devolución v2.
+> 👉 **Para revisar el avance, empezar por el [informe de avance del 02/11](docs/informe-avance-entrega-3.md)**, que responde punto por punto a la devolución de la segunda entrega e incluye el hallazgo principal: **Ecogas no publica el número de matrícula**.
 
 ---
 
@@ -29,7 +29,8 @@ Plataforma que responde, **con evidencia fechada y citable**, si la matrícula d
 
 | Documento | Qué contiene |
 |---|---|
-| [**Informe de avance, entrega 2**](docs/informe-avance-entrega-2.md) | Qué se hizo, checklist de la consigna, respuesta a la devolución v2, hallazgos y preguntas para el tutor. |
+| [**Informe de avance, 02/11**](docs/informe-avance-entrega-3.md) | Respuesta a la devolución de la segunda entrega, hallazgo sobre la identidad en Ecogas, qué demuestran los tests y plan hasta el 21/11. |
+| [Informe de avance, entrega 2](docs/informe-avance-entrega-2.md) | Histórico: checklist de la segunda entrega y respuesta a la devolución v2. |
 | [Glosario (`CONTEXT.md`)](CONTEXT.md) | Vocabulario del dominio: Fuente, Consulta, Credencial, Evaluación, Verificación… |
 | [Modelo de dominio](docs/modelo-de-dominio.md) | Credencial frente a Evaluación, recorrido de una Verificación, estados, invariantes y escenarios. |
 | [Reglas de categoría y de zona](docs/reglas-de-categoria.md) | Qué habilita cada categoría según la NAG-200, Tipos de trabajo, criterio de zona y vigencia, con citas. |
@@ -38,7 +39,7 @@ Plataforma que responde, **con evidencia fechada y citable**, si la matrícula d
 | [**Módulos**](docs/modulos.md) | 15 módulos con prioridad, dependencias y plan tentativo. |
 | [**Arquitectura**](docs/arquitectura.md) | Estilo, capas, tecnologías definitivas y justificación, entornos, seguridad y riesgos. |
 | [API](docs/api.md) | Contrato de endpoints, ejemplos por resultado y diagramas de secuencia. |
-| [Decisiones (ADR)](docs/adr/) | 0001 sin colas · 0002 consulta bajo demanda · 0003 Credencial separada de Evaluación · 0004 una tabla por entidad. |
+| [Decisiones (ADR)](docs/adr/) | 0001 sin colas · 0002 consulta bajo demanda · 0003 Credencial separada de Evaluación · 0004 una tabla por entidad · 0005 zona como Limitación · 0006 Lectura minimizada y Protección de la Fuente · 0007 identificación por nombre y localidad. |
 | [Consulta a Ecogas](docs/consulta-a-ecogas.md) | Preguntas enviadas a la distribuidora y cómo cambia el diseño según la respuesta. |
 | [Investigación de fuentes](investigacion/) | Prueba técnica de la etapa anterior (MetroGAS y Ecogas), con fe de erratas. |
 
@@ -66,11 +67,11 @@ Un marketplace de gasistas cuyo núcleo **no es el listado de profesionales, sin
 
 | Pregunta | Cómo la responde MatriculAR |
 |---|---|
-| ¿Qué sabemos? | La **Credencial**: matrícula, nombre, categoría y provincia que informa el padrón. |
+| ¿Qué sabemos? | La **Credencial**: nombre, categoría, provincia y localidad que informa el padrón, tal como los publicó. Ecogas no publica el número de matrícula: el gasista se identifica por nombre. |
 | ¿De dónde lo sabemos? | La **Fuente**: el padrón de una distribuidora concreta. |
 | ¿Cuándo lo verificamos? | La **Consulta**: fecha, intentos y huella del recurso leído. |
 | ¿Qué podemos concluir? | La **Evaluación** para un tipo de trabajo: `COMPATIBLE`, `INCOMPATIBLE` o `INDETERMINATE`, con su fundamento normativo. |
-| ¿Qué no podemos afirmar? | Las **Limitaciones** (por ejemplo, la vigencia) y los resultados `UNVERIFIABLE`. |
+| ¿Qué no podemos afirmar? | Las **Limitaciones** (la vigencia, la zona, el número de matrícula) y los resultados `UNVERIFIABLE`. |
 
 Sobre ese núcleo se montan el perfil de los profesionales, la búsqueda por tipo de trabajo y zona, y el ciclo de contratación con reseñas.
 
@@ -80,7 +81,7 @@ Sobre ese núcleo se montan el perfil de los profesionales, la búsqueda por tip
 
 | Principio | Qué significa en la práctica |
 |---|---|
-| **La confianza se verifica, no se declara** | Ningún gasista figura como compatible con un trabajo sin evidencia de una Fuente real, y la titularidad de una matrícula se prueba con un código enviado al email que publica la propia Fuente. |
+| **La confianza se verifica, no se declara** | Ningún gasista figura como compatible con un trabajo sin evidencia de una Fuente real. Lo que la Fuente no publica (la matrícula, la vigencia, la zona) se informa como Limitación. |
 | **La ausencia de evidencia no se convierte en certeza** | Si una Fuente no se pudo consultar, el resultado es `UNVERIFIABLE`, no "no encontrado". Nunca se dice "no aparece en ningún padrón" si alguna Fuente no se consultó. |
 | **Validar la regla antes de automatizarla** | Ninguna regla entra al sistema sin una cita normativa que la respalde. Lo que no tiene respaldo se informa como `INDETERMINATE`. |
 | **La evidencia es inmutable y fechada** | Cada Credencial queda asociada a una Consulta con fecha. Nunca se modifica ni se borra, y una falla nunca pisa la evidencia anterior. |
@@ -94,12 +95,12 @@ Sobre ese núcleo se montan el perfil de los profesionales, la búsqueda por tip
 
 ```mermaid
 flowchart LR
-    P([Cliente: ¿el gasista con matrícula 99001<br/>de Ecogas puede conectar un calefón<br/>en una casa de Córdoba?]) --> C[Consulta a Ecogas<br/>descarga, extrae y valida]
+    P([Cliente: ¿Persona Ficticia Uno, de Ecogas,<br/>puede conectar un calefón en una casa de Córdoba?<br/>responde las Condiciones decisivas]) --> C[Consulta a Ecogas<br/>descarga, extrae y valida,<br/>o reutiliza una lectura de hace menos de 15 min]
     C -->|la lectura falla| NV([UNVERIFIABLE<br/>muestra la última evidencia<br/>con su fecha, sin concluir])
-    C -->|la matrícula no figura| NE([NOT_FOUND<br/>en Ecogas, en esta fecha])
-    C -->|la matrícula figura| CR[Credencial nueva<br/>categoría 2ª · Córdoba · 26/09 15:40]
-    CR --> EV[Evaluación<br/>categoría: 2ª admitida · NAG-200 8.3.1<br/>zona: Córdoba en el área de Ecogas]
-    EV --> R([COMPATIBLE<br/>más las Limitaciones:<br/>la vigencia no se puede afirmar])
+    C -->|nadie coincide| NE([NOT_FOUND<br/>en Ecogas, en esta fecha])
+    C -->|una o más Coincidencias| CR[Credencial por Coincidencia<br/>categoría 2ª · Villa María · 02/11 15:40]
+    CR --> EV[Evaluación<br/>categoría: 2ª admitida · NAG-200 8.3.1]
+    EV --> R([COMPATIBLE según la regla aplicada<br/>más las Limitaciones: vigencia,<br/>zona y número de matrícula no verificables])
 ```
 
 Detalle: [modelo de dominio](docs/modelo-de-dominio.md#4-el-recorrido-de-una-verificación) · [API](docs/api.md#6-secuencias).
@@ -111,9 +112,9 @@ Detalle: [modelo de dominio](docs/modelo-de-dominio.md#4-el-recorrido-de-una-ver
 | Prioridad | Módulos | Compromiso |
 |---|---|---|
 | **P0 · núcleo** | Fuentes y adaptadores · Consultas y evidencia · Reglas y evaluación · Verificación y API · Interfaz de verificación · Infraestructura · Despliegue en la nube | **Se entrega completo.** |
-| **P1 · marketplace** | Profesionales · Vínculos (titularidad de la matrícula) · Búsqueda | Si el P0 está cerrado. |
-| **P2 · contratación** | Usuarios y autenticación · Contratación · Reseñas | Si el tiempo alcanza. |
-| **P3 · continuidad** | Revalidación programada · Notificaciones | Fase 2 si no alcanza. |
+| **P1 · marketplace** | Profesionales · Vínculos (verificados mediante el email publicado por la Fuente) · Búsqueda | Fuera del alcance de la entrega final. |
+| **P2 · contratación** | Usuarios y autenticación · Contratación · Reseñas | Fuera del alcance de la entrega final. |
+| **P3 · continuidad** | Revalidación programada · Notificaciones | Fuera del alcance de la entrega final. |
 
 **Fuentes del P0:** Ecogas (Córdoba, Catamarca, La Rioja, Mendoza, San Juan y San Luis; se consulta automáticamente) y MetroGAS (CABA; protegida con captcha, así que **no se consulta automáticamente** y el sistema lo informa como `UNVERIFIABLE`).
 
@@ -132,8 +133,7 @@ Detalle: [modelo de dominio](docs/modelo-de-dominio.md#4-el-recorrido-de-una-ver
 | API | **Amazon API Gateway** (REST) |
 | Base de datos | **Amazon DynamoDB**, una tabla por entidad |
 | Frontend | **React + Vite** |
-| Autenticación (P1 y P2) | **Amazon Cognito** |
-| Tareas programadas y notificaciones (P3) | **EventBridge Scheduler** · **SNS** |
+| Fase 2 (fuera de la entrega final) | Amazon Cognito · EventBridge Scheduler · SNS |
 | Infraestructura como código | **Terraform** (`lstk terraform` en local) |
 | Entorno local | **LocalStack** + Docker |
 | Nube (etapa 4) | **AWS** (Free plan) |
@@ -154,16 +154,14 @@ MatriculAR/
 ├── database/                  esquema de colecciones (DynamoDB)
 │   ├── tablas/                definición de cada tabla (equivalente al DDL)
 │   └── seed/                  datos iniciales (equivalente al DML) y ejemplos ficticios
-├── backend/                   estructura del backend, sin código todavía
-│   ├── compartido/            núcleo: dominio, casos de uso, puertos, adaptadores
-│   ├── verificacion/          λ P0
-│   ├── profesionales/         λ P1
-│   ├── contrataciones/        λ P2
-│   ├── revalidacion/          λ P3
-│   └── notificaciones/        λ P3
+├── .github/workflows/         CI: lint, tipos y pruebas del backend en cada push
+├── backend/                   TypeScript · Vitest · Biome
+│   ├── compartido/            núcleo: dominio (Evaluación, búsqueda), adaptadores (Ecogas, reglas del seed)
+│   ├── verificacion/          λ P0 (próximamente)
+│   └── …                      λ de P1 a P3, fuera de la entrega final
 ├── frontend/                  estructura del frontend (React), sin código todavía
 ├── infra/                     estructura de Terraform, sin código todavía
-├── scripts/                   scripts previstos (levantar, seed, desplegar)
+├── scripts/                   probar-ecogas.sh (prueba de acceso identificado); después, levantar, seed y desplegar
 └── investigacion/             prueba técnica de la etapa anterior (exploración aislada)
 ```
 
@@ -171,7 +169,15 @@ MatriculAR/
 
 ## Puesta en marcha
 
-> Se completa en la etapa de implementación. Este es el flujo previsto ([arquitectura § 7](docs/arquitectura.md#7-entornos-y-costos)).
+**Hoy:** el backend se prueba con Node.js 24.
+
+```bash
+cd backend && npm install
+npm run check                 # lint + tipos + pruebas (igual que la CI)
+npm run test:fuente-real      # a mano: lee la Ecogas real (MATRICULAR_CONTACTO=<mail>)
+```
+
+**Flujo previsto** con la infraestructura ([arquitectura § 7](docs/arquitectura.md#7-entornos-y-costos)).
 
 **Requisitos:** Docker, una cuenta gratuita de LocalStack (plan Student u Hobby) con `LOCALSTACK_AUTH_TOKEN`, Terraform 1.x con `lstk`, y Node.js 24.
 

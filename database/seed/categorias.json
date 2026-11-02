@@ -2,7 +2,6 @@
   {
     "categoria_id": "1",
     "nombre": "Primera categoría",
-    "version": 1,
     "alcance": "Cualquier instalación de gas: doméstica, comercial o industrial, por red o envasado.",
     "fundamento": {
       "norma": "NAG-200",
@@ -14,7 +13,6 @@
   {
     "categoria_id": "2",
     "nombre": "Segunda categoría",
-    "version": 1,
     "alcance": "Instalaciones domésticas, comerciales o industriales con artefactos de hasta 50.000 kcal/h cada uno y presión interna de hasta 200 mm de columna de agua; no instalaciones alimentadas por tanques a granel ni con presión de distribución mayor a 2 kg/cm².",
     "fundamento": {
       "norma": "NAG-200",
@@ -26,7 +24,6 @@
   {
     "categoria_id": "3",
     "nombre": "Tercera categoría",
-    "version": 1,
     "alcance": "Instalaciones domésticas en viviendas unifamiliares con consumo total de hasta 5 m³/h de gas natural por red (presión menor de 2 kg/cm²); en gas envasado, un solo equipo de dos cilindros.",
     "fundamento": {
       "norma": "NAG-200",

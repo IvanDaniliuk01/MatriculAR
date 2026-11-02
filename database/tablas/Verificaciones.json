@@ -7,7 +7,7 @@
       "AttributeType": "S"
     },
     {
-      "AttributeName": "fuente_matricula",
+      "AttributeName": "fuente_gasista",
       "AttributeType": "S"
     },
     {
@@ -23,10 +23,10 @@
   ],
   "GlobalSecondaryIndexes": [
     {
-      "IndexName": "por-matricula",
+      "IndexName": "por-gasista",
       "KeySchema": [
         {
-          "AttributeName": "fuente_matricula",
+          "AttributeName": "fuente_gasista",
           "KeyType": "HASH"
         },
         {

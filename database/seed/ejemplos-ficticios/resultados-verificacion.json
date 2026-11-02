@@ -1,56 +1,122 @@
 [
   {
     "consulta_id": "01M2ZEQ030KDF2QM9Z2CK5XYT0",
-    "matricula": "99001",
+    "verificacion_id": "01M2ZEQ030YMQY4YY3P5N1QQSF",
     "fuente_id": "ecogas",
-    "fuente_matricula": "ecogas#99001",
+    "gasista_buscado": {
+      "nombre_apellido": "PERSONA FICTICIA UNO",
+      "localidad": "RIO CUARTO"
+    },
+    "fuente_gasista": "ecogas#PERSONA FICTICIA UNO#RIO CUARTO",
     "resultado": "FOUND",
+    "cantidad_coincidencias": 1,
     "determinado_en": "2026-09-20T13:05:02.140Z",
-    "credencial_evidencia_id": "2026-09-20T13:05:02.140Z#01M2ZEQ030KDF2QM9Z2CK5XYT0"
+    "credenciales_ref": [
+      {
+        "fuente_gasista": "ecogas#PERSONA FICTICIA UNO#RIO CUARTO",
+        "evidencia_id": "2026-09-20T13:05:02.140Z#01M2ZEQ030KDF2QM9Z2CK5XYT0#1203"
+      }
+    ]
   },
   {
     "consulta_id": "01M3FFPJ2054EHQKZK0AN2P9E0",
-    "matricula": "99001",
+    "verificacion_id": "01M3FFPJ20JK99702A1QYD86CM",
     "fuente_id": "ecogas",
-    "fuente_matricula": "ecogas#99001",
+    "gasista_buscado": {
+      "nombre_apellido": "PERSONA FICTICIA UNO",
+      "localidad": "RIO CUARTO"
+    },
+    "fuente_gasista": "ecogas#PERSONA FICTICIA UNO#RIO CUARTO",
     "resultado": "UNVERIFIABLE",
+    "cantidad_coincidencias": null,
     "determinado_en": "2026-09-26T18:30:06.950Z",
-    "credencial_evidencia_id": null
+    "credenciales_ref": []
   },
   {
     "consulta_id": "01M3FG90YX2CPVTY9M7AM85DXW",
-    "matricula": "99001",
+    "verificacion_id": "01M3FG90YXY7272A3GE1EMHHVQ",
     "fuente_id": "ecogas",
-    "fuente_matricula": "ecogas#99001",
+    "gasista_buscado": {
+      "nombre_apellido": "PERSONA FICTICIA UNO",
+      "localidad": "RIO CUARTO"
+    },
+    "fuente_gasista": "ecogas#PERSONA FICTICIA UNO#RIO CUARTO",
     "resultado": "FOUND",
+    "cantidad_coincidencias": 1,
     "determinado_en": "2026-09-26T18:40:12.345Z",
-    "credencial_evidencia_id": "2026-09-26T18:40:12.345Z#01M3FG90YX2CPVTY9M7AM85DXW"
+    "credenciales_ref": [
+      {
+        "fuente_gasista": "ecogas#PERSONA FICTICIA UNO#RIO CUARTO",
+        "evidencia_id": "2026-09-26T18:40:12.345Z#01M3FG90YX2CPVTY9M7AM85DXW#1203"
+      }
+    ]
   },
   {
-    "consulta_id": "01M3FGD9JMAJNXQJNYRE157YSR",
-    "matricula": "99001",
+    "consulta_id": "01M3FG90YX2CPVTY9M7AM85DXW",
+    "verificacion_id": "01M3FGD9JMGCYBB0HXGTGB6K0C",
     "fuente_id": "ecogas",
-    "fuente_matricula": "ecogas#99001",
+    "gasista_buscado": {
+      "nombre_apellido": "PERSONA FICTICIA UNO",
+      "localidad": "RIO CUARTO"
+    },
+    "fuente_gasista": "ecogas#PERSONA FICTICIA UNO#RIO CUARTO",
     "resultado": "FOUND",
-    "determinado_en": "2026-09-26T18:42:32.240Z",
-    "credencial_evidencia_id": "2026-09-26T18:42:32.240Z#01M3FGD9JMAJNXQJNYRE157YSR"
+    "cantidad_coincidencias": 1,
+    "determinado_en": "2026-09-26T18:40:12.345Z",
+    "credenciales_ref": [
+      {
+        "fuente_gasista": "ecogas#PERSONA FICTICIA UNO#RIO CUARTO",
+        "evidencia_id": "2026-09-26T18:40:12.345Z#01M3FG90YX2CPVTY9M7AM85DXW#1203"
+      }
+    ]
   },
   {
-    "consulta_id": "01M3FGHVZ054179B3MBQF1VMBM",
-    "matricula": "99004",
+    "consulta_id": "01M3FG90YX2CPVTY9M7AM85DXW",
+    "verificacion_id": "01M3FGHVZ09SQANWB20K2XEQN9",
     "fuente_id": "ecogas",
-    "fuente_matricula": "ecogas#99004",
+    "gasista_buscado": {
+      "nombre_apellido": "PERSONA FICTICIA CUATRO",
+      "localidad": "CORDOBA"
+    },
+    "fuente_gasista": "ecogas#PERSONA FICTICIA CUATRO#CORDOBA",
     "resultado": "NOT_FOUND",
-    "determinado_en": "2026-09-26T18:45:02.140Z",
-    "credencial_evidencia_id": null
+    "cantidad_coincidencias": 0,
+    "determinado_en": "2026-09-26T18:40:12.345Z",
+    "credenciales_ref": []
   },
   {
     "consulta_id": "01M3FGQBR0KGEFMNB9DZ4BW2FS",
-    "matricula": "99005",
+    "verificacion_id": "01M3FGQBR0TQ9XRA1HXJ367DCV",
     "fuente_id": "metrogas",
-    "fuente_matricula": "metrogas#99005",
+    "gasista_buscado": {
+      "nombre_apellido": "PERSONA FICTICIA CINCO",
+      "localidad": null
+    },
     "resultado": "UNVERIFIABLE",
+    "cantidad_coincidencias": null,
     "determinado_en": "2026-09-26T18:48:00.000Z",
-    "credencial_evidencia_id": null
+    "credenciales_ref": []
+  },
+  {
+    "consulta_id": "01M3FG90YX2CPVTY9M7AM85DXW",
+    "verificacion_id": "01M3FGZ7X0V2W3X4Y5Z6A7B8C9",
+    "fuente_id": "ecogas",
+    "gasista_buscado": {
+      "nombre_apellido": "PERSONA FICTICIA SIETE",
+      "localidad": null
+    },
+    "resultado": "FOUND",
+    "cantidad_coincidencias": 2,
+    "determinado_en": "2026-09-26T18:40:12.345Z",
+    "credenciales_ref": [
+      {
+        "fuente_gasista": "ecogas#PERSONA FICTICIA SIETE#VILLA MARIA",
+        "evidencia_id": "2026-09-26T18:40:12.345Z#01M3FG90YX2CPVTY9M7AM85DXW#2311"
+      },
+      {
+        "fuente_gasista": "ecogas#PERSONA FICTICIA SIETE#RIO TERCERO",
+        "evidencia_id": "2026-09-26T18:40:12.345Z#01M3FG90YX2CPVTY9M7AM85DXW#3020"
+      }
+    ]
   }
 ]

@@ -11,28 +11,32 @@ frontend/
 ├── public/
 └── src/
     ├── pantallas/     Verificar (P0), Verificación compartida (P0), Historial (P0), Perfil y Búsqueda (P1), Contrataciones (P2)
-    ├── componentes/   Resultado, Criterio, Evidencia, Limitaciones, DetalleConsulta, SelectorTipoTrabajo
+    ├── componentes/   Resultado, Coincidencia, Criterio, Evidencia, Limitaciones, CondicionesDecisivas, DetalleConsulta
     └── api/           cliente HTTP tipado con los esquemas compartidos
 ```
 
-## Pantalla del P0: Verificar una matrícula (M05)
+## Pantalla del P0: Verificar a un gasista (M05)
 
-Es la "interfaz mínima" que pidió el tutor para recorrer el flujo completo.
+Es la "interfaz mínima" que pidió el tutor para recorrer el flujo completo. Ecogas no publica el número de matrícula, así que el gasista se busca por nombre ([ADR-0007](../docs/adr/0007-identificacion-por-nombre-y-localidad.md)). El Cliente no elige un Tipo de trabajo: responde las Condiciones decisivas, con la opción "No sé".
 
 ### Formulario
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  Verificar la matrícula de un gasista                           │
+│  Verificar a un gasista                                         │
 │                                                                 │
-│  Distribuidora   [ Ecogas                            ▼ ]        │
-│  Matrícula       [ 99001                               ]        │
-│  Trabajo         [ A1 · Artefacto en vivienda unifamiliar ▼ ]   │
-│                  Este tipo de trabajo supone:                   │
-│                  · Vivienda unifamiliar (no edificio, PH…)      │
-│                  · Consumo total de hasta 5 m³/h                │
-│                  ¿No estás seguro? Elegí A2.                    │
-│  Provincia       [ Córdoba                           ▼ ]        │
+│  Distribuidora       [ Ecogas                          ▼ ]      │
+│  Nombre y apellido   [ Persona Ficticia Uno              ]      │
+│  Localidad (opcional)[ Villa María                       ]      │
+│  Provincia del trabajo [ Córdoba                       ▼ ]      │
+│                                                                 │
+│  Contanos sobre el trabajo                   Sí   No   No sé    │
+│  ¿Es en un comercio o una industria?         ○    ●    ○        │
+│  ¿El terreno tiene una única vivienda?       ○    ○    ●        │
+│  ¿El consumo total es de hasta 5 m³/h?       ○    ○    ●        │
+│  ¿Algún artefacto supera 50.000 kcal/h?      ○    ●    ○        │
+│  ¿Gas natural por red, menos de 2 kg/cm²?    ●    ○    ○        │
+│   (cada pregunta tiene una ayuda y su cita normativa)           │
 │                                                                 │
 │                                  [ Verificar ]                  │
 └─────────────────────────────────────────────────────────────────┘
@@ -42,40 +46,49 @@ Es la "interfaz mínima" que pidió el tutor para recorrer el flujo completo.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  ● COMPATIBLE con este trabajo                                  │
-│  La matrícula 99001 figura en el padrón de Ecogas (consulta del │
-│  26/09/2026 15:40) con categoría 2ª, que puede realizar este    │
-│  trabajo.                                                       │
+│  Encontramos 1 gasista con ese nombre en el padrón de Ecogas    │
+│  (lectura del 02/11/2026 15:40). Confirmalo con su carné.       │
+│                                                                 │
+│  ● COMPATIBLE según la regla aplicada                           │
+│  La categoría informada (2ª) es compatible con este tipo de     │
+│  trabajo, cualquiera sea la respuesta que no sabés, según la    │
+│  regla aplicada (NAG-200, 8.3.1). La vigencia de la matrícula   │
+│  no pudo verificarse.                                           │
 │                                                                 │
 │  QUÉ SABEMOS · evidencia                                        │
 │   Nombre informado     PERSONA FICTICIA UNO                     │
 │   Categoría informada  2ª                                       │
-│   Provincia informada  Córdoba (domicilio del matriculado)      │
-│   Fuente · fecha       Ecogas · 26/09/2026 15:40                │
+│   Localidad informada  Villa María (domicilio del matriculado)  │
+│   Fuente · fecha       Ecogas · 02/11/2026 15:40                │
 │                                                                 │
-│  QUÉ CONCLUIMOS · criterios                                     │
-│   ✔ Categoría  2ª admitida para este trabajo (NAG-200, 8.3.1)   │
-│   ✔ Zona       Córdoba está en el área de Ecogas                │
+│  QUÉ CONCLUIMOS · criterio                                      │
+│   ✔ Categoría  2ª admitida en todos los trabajos posibles       │
+│                según tus respuestas (A1 y A2)                   │
 │                                                                 │
 │  QUÉ NO PODEMOS AFIRMAR · limitaciones                          │
 │   ! La Fuente no informa la vigencia. Pedile el carné con la    │
 │     matrícula actualizada (NAG-200, 8.6.1).                     │
-│   ! Se supone que el trabajo cumple las condiciones del tipo A1.│
+│   ! Ecogas no publica el número de matrícula: la identificación │
+│     es por nombre y localidad.                                  │
+│   ! La Fuente no permite determinar si la matrícula habilita a  │
+│     trabajar en Córdoba.                                        │
 │                                                                 │
 │  ▸ Detalle técnico (Consulta, intentos, huella del recurso)     │
-│  ▸ Historial de esta matrícula                                  │
 │  [ Copiar enlace ]                                              │
 └─────────────────────────────────────────────────────────────────┘
 ```
+
+Si hay homónimos, se muestra una tarjeta por Coincidencia, cada una con su Evaluación, bajo el título *"Encontramos N gasistas con ese nombre: elegí el que coincide con su carné"*. MatriculAR nunca elige por el Cliente.
 
 ### Cómo se muestra cada resultado
 
 | Resultado | Encabezado | Color / ícono | Qué se muestra además |
 |---|---|---|---|
-| `COMPATIBLE` | "Compatible con este trabajo" | Verde · ✔ | Evidencia, Criterios y Limitaciones |
+| `COMPATIBLE` | "Compatible según la regla aplicada" | Verde · ✔ | Evidencia, Criterio y Limitaciones |
 | `INCOMPATIBLE` | "No compatible con este trabajo" | Rojo · ✖ | Qué Criterio no se cumple y su cita |
-| `INDETERMINATE` | "No podemos determinarlo" | Ámbar · ? | Qué Criterio quedó indeterminado y por qué |
-| `NOT_FOUND` | "No figura en el padrón de Ecogas" | Gris · — | La fecha de la Consulta exitosa y la aclaración "no dice nada sobre otras distribuidoras" |
+| `INDETERMINATE` | "No podemos determinarlo" | Ámbar · ? | Por qué, y qué Condición decisiva lo resolvería |
+| `NOT_FOUND` | "Nadie con ese nombre figura en el padrón de Ecogas" | Gris · — | La fecha de la Consulta exitosa y la aclaración "no dice nada sobre otras distribuidoras" |
+| `TOO_MANY_MATCHES` | "Hay demasiados gasistas con ese nombre" | Gris · ⓘ | Pedido de agregar la localidad o el nombre completo |
 | `UNVERIFIABLE` (falla) | "No pudimos consultar la Fuente" | Ámbar · ⚠ | El motivo, la **última evidencia con su fecha como contexto** y el link al buscador oficial |
 | `UNVERIFIABLE` (MetroGAS) | "Esta Fuente no permite consultas automáticas" | Gris · ⓘ | El link al buscador oficial |
 

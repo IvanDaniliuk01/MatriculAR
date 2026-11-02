@@ -1,7 +1,7 @@
 # Reglas de categoría y de zona
 
-> Documento de diseño · Segunda entrega · Última revisión: 26/09/2026
-> Responde al punto 3 de la devolución v2 ("reglas reales de categoría documentadas") y al punto 2 ("eliminación de la comparación directa provincia = jurisdicción").
+> Documento de diseño · Segunda entrega, corregido según la devolución v3 · Última revisión: 01/11/2026
+> Responde al punto 3 de la devolución v2 ("reglas reales de categoría documentadas") y al punto 2 ("eliminación de la comparación directa provincia = jurisdicción"). Incorpora de la devolución v3 la zona como Limitación ([ADR-0005](adr/0005-zona-como-limitacion-en-el-p0.md)) y las Condiciones decisivas ([§3.5](#35-condiciones-decisivas-cómo-se-describe-el-trabajo)).
 > Vocabulario: [`CONTEXT.md`](../CONTEXT.md).
 
 ## Índice
@@ -9,7 +9,7 @@
 1. [Para qué sirve este documento](#1-para-qué-sirve-este-documento)
 2. [Marco normativo](#2-marco-normativo)
 3. [Criterio de categoría](#3-criterio-de-categoría)
-4. [Criterio de zona](#4-criterio-de-zona)
+4. [Zona: por qué es una Limitación](#4-zona-por-qué-es-una-limitación)
 5. [Vigencia: por qué no es un Criterio](#5-vigencia-por-qué-no-es-un-criterio)
 6. [Discrepancias entre fuentes](#6-discrepancias-entre-fuentes)
 7. [Incertidumbres abiertas y cómo se tratan](#7-incertidumbres-abiertas-y-cómo-se-tratan)
@@ -106,7 +106,7 @@ Siguiendo la indicación del tutor ("seleccionen uno o dos casos de trabajo sufi
 | Campo | Valor |
 |---|---|
 | Identificador | `artefacto-vivienda-general` |
-| Descripción para el Cliente | Lo mismo que A1, pero en un departamento, PH, dúplex, o en una casa cuyo consumo total supera 5 m³/h. **También es el tipo recomendado si el Cliente no sabe si su vivienda cumple las condiciones de A1.** |
+| Descripción para el Cliente | Lo mismo que A1, pero en un departamento, PH, dúplex, o en una casa cuyo consumo total supera 5 m³/h. |
 | Condiciones que asume | 1. Gas natural por red, con presión de suministro de hasta 2 kg/cm²; no se alimenta con tanque a granel. 2. Ningún artefacto supera 50.000 kcal/h y la presión interna no supera 200 mm de columna de agua. |
 | **Categorías admitidas** | **1ª y 2ª** |
 
@@ -143,11 +143,53 @@ Limitación propia de B, que se muestra siempre: *"Por excepción (NAG-200, 8.3.
 | A2 · Artefacto en otras viviendas | ✅ | ✅ | ❌ |
 | B · Comercio con artefacto de alto consumo | ✅ | ❌ | ❌ |
 
-Cómo elige el Cliente el Tipo de trabajo: la interfaz muestra las **condiciones que asume** cada tipo. Si el Cliente no está seguro de cumplir las condiciones de A1, se le recomienda A2, que es más restrictivo y por lo tanto seguro.
+### 3.5 Condiciones decisivas: cómo se describe el trabajo
+
+La devolución v3 señaló que, si el Cliente elige A1 sin saber si su casa cumple las condiciones de A1, el sistema calcula una respuesta correcta sobre una premisa falsa. Por eso **el Cliente ya no elige el Tipo de trabajo**. Responde cinco **Condiciones decisivas**, cada una con Sí, No o No sé, y el sistema deduce qué Tipos de trabajo son posibles.
+
+| Identificador | Pregunta al Cliente | Qué distingue |
+|---|---|---|
+| `comercio_o_industria` | ¿El trabajo es en un comercio o una industria? | Vivienda (A1, A2) frente a comercio (B). |
+| `unica_vivienda` | ¿El terreno tiene una única vivienda: casa sola, no departamento, PH ni dúplex? | A1 frente a A2 (NAG-200 8.4.1 y FAQ de MetroGAS). |
+| `consumo_total_hasta_5m3h` | ¿El consumo total de la vivienda es de hasta 5 m³/h? | A1 frente a A2 (NAG-200 8.4.1). |
+| `artefacto_mas_de_50000` | ¿Algún artefacto supera las 50.000 kcal/h? | A1 y A2 frente a B (NAG-200 8.3.1). |
+| `gas_natural_red_baja_presion` | ¿Es gas natural por red con presión menor a 2 kg/cm²? | Trabajos cubiertos frente a no cubiertos (gas envasado, a granel o de alta presión). |
+
+Cada combinación de respuestas cae en un Tipo de trabajo o en ninguno:
+
+| Tipo de trabajo | Combinación que lo define |
+|---|---|
+| A1 | No es comercio, única vivienda, consumo total de hasta 5 m³/h, ningún artefacto supera 50.000 kcal/h, gas natural por red de baja presión. |
+| A2 | No es comercio, **no** es única vivienda **o** el consumo total supera 5 m³/h, ningún artefacto supera 50.000 kcal/h, gas natural por red de baja presión. |
+| B | Comercio o industria, algún artefacto supera 50.000 kcal/h, gas natural por red de baja presión. |
+| No cubierto | Cualquier otra combinación: por ejemplo, un comercio sin artefactos de alto consumo, una vivienda con un artefacto de más de 50.000 kcal/h o gas envasado. |
+
+**Regla para el No sé.** Un No sé nunca se toma como Sí. El sistema recorre todas las combinaciones posibles de las respuestas No sé:
+
+1. Cada combinación que cae en un Tipo de trabajo da `COMPATIBLE` si ese tipo admite la Categoría informada y `INCOMPATIBLE` si no. Cada combinación no cubierta da `INDETERMINATE`, porque no hay regla documentada para ella.
+2. Si todas las combinaciones dan el mismo resultado, ese es el resultado de la Evaluación.
+3. Si no, la Evaluación es `INDETERMINATE` e informa **qué Condiciones decisivas lo resolverían**: las respondidas No sé cuyo valor cambia el resultado.
+4. Si **ninguna** combinación cae en un Tipo de trabajo, el trabajo no está cubierto y la Verificación se rechaza **antes de consultar la Fuente** (código `WORK_NOT_COVERED`). No hay regla, así que no hay nada que evaluar, y se evita un pedido inútil a la Fuente.
+
+Ejemplos. El Cliente responde: no es comercio, consumo de hasta 5 m³/h, ningún artefacto supera 50.000 kcal/h, gas natural por red de baja presión, y **No sé** a `unica_vivienda`. Los Tipos de trabajo posibles son A1 y A2.
+
+| Categoría informada | A1 | A2 | Evaluación |
+|---|---|---|---|
+| 1ª | `COMPATIBLE` | `COMPATIBLE` | `COMPATIBLE` |
+| 2ª | `COMPATIBLE` | `COMPATIBLE` | `COMPATIBLE`: el dato desconocido no cambia la respuesta. |
+| 3ª | `COMPATIBLE` | `INCOMPATIBLE` | `INDETERMINATE`, con el mensaje "Si el terreno tiene una única vivienda, la categoría informada sería compatible". Resuelve: `unica_vivienda`. |
+
+Así se cumple lo que pidió la devolución v3: cuando una condición necesaria es desconocida, no se convierte en verdadera. Y cuando el dato desconocido no cambia la respuesta, el Cliente no queda castigado con un `INDETERMINATE` innecesario.
+
+**Límite de B.** La condición "ningún artefacto supera 150.000 kcal/h" (incertidumbre I5) no es una Condición decisiva del P0. Se informa como Limitación propia de B: *"MatriculAR no pregunta si algún artefacto supera 150.000 kcal/h. Este Tipo de trabajo no cubre ese caso: si es así, la Evaluación no aplica."*
+
+En [`database/seed/tipos-trabajo.json`](../database/seed/tipos-trabajo.json), cada Tipo de trabajo declara su combinación en el campo `aplica_si`: una lista de mapas de Condición decisiva a `SI` o `NO`, donde el tipo aplica si las respuestas cumplen alguno de los mapas.
 
 ---
 
-## 4. Criterio de zona
+<a id="4-criterio-de-zona"></a>
+
+## 4. Zona: por qué es una Limitación
 
 ### 4.1 Qué se eliminó
 
@@ -165,17 +207,27 @@ Se retira del modelo la regla `provincia del padrón != provincia del trabajo �
    - Litoral Gas pide al matriculado de otra distribuidora "constancia de matrícula habilitada y certificado de libre deuda".
    - El listado de Naturgy BAN tiene una columna "Org Emisor de Matricula".
 
-### 4.2 Regla adoptada
+### 4.2 Por qué la zona no puede ser un Criterio en el P0
 
-La zona se evalúa comparando la **provincia del trabajo** con el **Área de concesión** de la Distribuidora que publica la Fuente:
+En la segunda entrega la zona era un Criterio: `MET` si la provincia del trabajo estaba dentro del Área de concesión de la Fuente. La devolución v3 señaló que esa conclusión no está respaldada. Ecogas son dos licenciatarias, Distribuidora de Gas del Centro y Distribuidora de Gas Cuyana, y todavía no sabemos si un matriculado de una puede trabajar en la zona de la otra sin registrarse aparte (incertidumbre I4, preguntada a Ecogas). Además, **el padrón de Ecogas no informa en qué licenciataria está registrado cada gasista**: solo publica la Provincia informada, que es el domicilio y nunca se usa para concluir sobre la zona.
 
-| Provincia del trabajo | Qué sabemos | Criterio de zona |
-|---|---|---|
-| Dentro del Área de concesión de la Fuente | La matrícula figura en el padrón de la distribuidora de esa zona. | `MET` |
-| En una provincia donde la Distribuidora opera solo en parte (`area_concesion_parcial`) | El P0 modela la zona por provincia, así que no sabemos si la localidad del trabajo está dentro de la concesión. | `INDETERMINATE` |
-| Fuera del Área de concesión de la Fuente | El gasista podría estar registrado en la distribuidora de esa zona, pero no la consultamos. | `INDETERMINATE` |
+Con esa evidencia, ninguna provincia puede afirmarse como `MET` sin inventar una regla. Regla del proyecto: **una pregunta que todavía tenemos pendiente hacia la Fuente no puede convertirse mientras tanto en una afirmación positiva del sistema.**
 
-**El Criterio de zona nunca da `NOT_MET`.** Ninguna evidencia disponible permite afirmar que un gasista *no* puede trabajar en una zona: a lo sumo, no sabemos si puede.
+### 4.3 Regla adoptada: la zona es una Limitación
+
+Decisión ([ADR-0005](adr/0005-zona-como-limitacion-en-el-p0.md)): en el P0 **la zona no es un Criterio** y no participa del resultado de la Evaluación, que juzga solo la categoría. Toda Evaluación lleva una **Limitación de zona**, cuyo texto depende de la provincia del trabajo:
+
+| Provincia del trabajo | Limitación de zona |
+|---|---|
+| Dentro del Área de concesión de la Fuente | *"La Fuente no permite determinar si la matrícula habilita a trabajar en <provincia>."* |
+| Fuera del Área de concesión de la Fuente | *"<provincia> está fuera del área de concesión de Ecogas; el gasista podría estar registrado en otra distribuidora que MatriculAR no consultó."* |
+
+Se descartaron dos alternativas:
+
+- **`MET` si la provincia del trabajo es de la misma licenciataria que la Provincia informada.** Supone que el gasista está registrado donde vive, y esa regla no tiene respaldo.
+- **Criterio de zona `INDETERMINATE` siempre.** Toda Evaluación con Ecogas terminaría `INDETERMINATE` y borraría lo que sí se sabe de la categoría. La Limitación expresa la misma incertidumbre sin perder esa información.
+
+Si Ecogas confirma que una matrícula de cualquiera de sus licenciatarias habilita en toda su área, la zona vuelve a ser un Criterio, como una nueva versión de la regla.
 
 Área de concesión de las Fuentes del P0:
 
@@ -184,13 +236,15 @@ La zona se evalúa comparando la **provincia del trabajo** con el **Área de con
 | `ecogas` | Distribuidora de Gas del Centro (Córdoba, Catamarca, La Rioja) y Distribuidora de Gas Cuyana (Mendoza, San Juan, San Luis) | Córdoba, Catamarca, La Rioja, Mendoza, San Juan, San Luis |
 | `metrogas` | MetroGAS | Ciudad Autónoma de Buenos Aires y parte del conurbano bonaerense. No interviene en la Evaluación: la Fuente no es consultable automáticamente y nunca produce Credenciales. |
 
-### 4.3 Ejemplos
+### 4.4 Ejemplos
 
-| Credencial (ficticia) | Provincia del trabajo | Criterio de zona | Por qué |
+| Credencial (ficticia) | Provincia del trabajo | Limitación de zona | Por qué |
 |---|---|---|---|
-| Ecogas, provincia informada Córdoba | San Luis | `MET` | San Luis está en el Área de concesión de Ecogas. **Este es el caso que la prueba técnica resolvió mal** (errata E1). |
-| Ecogas, provincia informada Córdoba | Córdoba | `MET` | Córdoba está en el Área de concesión. |
-| Ecogas, provincia informada Mendoza | Buenos Aires | `INDETERMINATE` | Buenos Aires está fuera del área de Ecogas. El gasista podría estar registrado en la distribuidora local, pero no la consultamos. |
+| Ecogas, provincia informada Córdoba | San Luis | "La Fuente no permite determinar si la matrícula habilita a trabajar en San Luis." | San Luis está en el Área de concesión, pero en la licenciataria Cuyana, y el padrón no dice en cuál está registrado el gasista (I4). **Este es el caso que la prueba técnica resolvió mal** (errata E1) y que la segunda entrega daba como `MET`. |
+| Ecogas, provincia informada Córdoba | Córdoba | "La Fuente no permite determinar si la matrícula habilita a trabajar en Córdoba." | La Provincia informada es el domicilio y nunca se usa para concluir sobre la zona. |
+| Ecogas, provincia informada Mendoza | Buenos Aires | "Buenos Aires está fuera del área de concesión de Ecogas; el gasista podría estar registrado en otra distribuidora que MatriculAR no consultó." | El gasista podría estar registrado en la distribuidora local, pero no la consultamos. |
+
+En los tres casos el resultado de la Evaluación lo decide solo el Criterio de categoría.
 
 ---
 
@@ -221,7 +275,7 @@ El criterio de inclusión en el padrón se preguntó a Ecogas ([`consulta-a-ecog
 |---|---|---|---|
 | Presión máxima de la 3ª categoría | NAG-200 8.4.1: "presión menor de 2 kg/cm²" | FAQ de Ecogas: "presión menor de 4 Kg/cm²" | **NAG-200**, que es la norma primaria. La discrepancia queda registrada. |
 | Gas a granel en la 2ª categoría | NAG-200 8.3.1: "No podrán […] cuando fueran alimentadas por tanques a granel" | La FAQ de Ecogas omite esa restricción | **NAG-200.** |
-| Alcance territorial de la 3ª categoría | NAG-200 8.4.1: "en toda la República" | La FAQ de Ecogas escribe "en todo el territorio del país" para la 1ª y la 2ª, pero lo omite en la 3ª | **NAG-200.** Además, no afecta al Criterio de zona, que no depende de la categoría. |
+| Alcance territorial de la 3ª categoría | NAG-200 8.4.1: "en toda la República" | La FAQ de Ecogas escribe "en todo el territorio del país" para la 1ª y la 2ª, pero lo omite en la 3ª | **NAG-200.** Además, no afecta a la Limitación de zona, que no depende de la categoría. |
 | Alcance de la 3ª categoría | NAG-200 8.4.1 (instalaciones domiciliarias en viviendas unifamiliares) | heyoficio.com: "solo reparación y mantenimiento básico" | **NAG-200.** La fuente secundaria se descarta porque contradice la norma. |
 | Matrícula en combustión (> 150.000 kcal/h) | MetroGAS sigue exigiéndola | Res. ENARGAS 468/2026, art. 4: deroga la Res. I/902/2009 (régimen de combustión) | **Sin resolver:** por eso el Tipo de trabajo B se acota a artefactos de hasta 150.000 kcal/h (I5). |
 
@@ -234,8 +288,9 @@ El criterio de inclusión en el padrón se preguntó a Ecogas ([`consulta-a-ecog
 | I1 | ¿El listado de Ecogas incluye solo matrículas renovadas? | La Vigencia se informa como Limitación y nunca se afirma. | Respuesta de Ecogas (pregunta 1). |
 | I2 | ¿Cada cuánto se actualiza el listado? | Cada Credencial lleva la fecha de la Consulta que la produjo, nunca una fecha de "actualización del padrón". | Respuesta de Ecogas (pregunta 2). |
 | I3 | ¿La provincia informada es el domicilio? | No se usa para evaluar nada. Se muestra como "provincia informada por la Fuente". | Respuesta de Ecogas (pregunta 3). |
-| I4 | ¿Un matriculado de Ecogas Centro puede trabajar en la zona de Ecogas Cuyana sin registrarse aparte? | Hoy el Área de concesión de Ecogas se trata como una sola. Si se confirmara que hacen falta registros separados, se dividiría en dos y el Criterio de zona pasaría a `INDETERMINATE` entre licenciatarias. | Respuesta de Ecogas (pregunta 4). |
-| I5 | ¿Rige todavía la matrícula en combustión para artefactos de más de 150.000 kcal/h? | El Tipo de trabajo B se limita a artefactos de hasta 150.000 kcal/h. Los trabajos por encima de ese valor quedan fuera del catálogo. | Leer el texto completo de la Res. 468/2026 y consultar a la distribuidora. |
+| I4 | ¿Un matriculado de Ecogas Centro puede trabajar en la zona de Ecogas Cuyana sin registrarse aparte? | Mientras Ecogas no responda, **la zona es una Limitación y no un Criterio** ([ADR-0005](adr/0005-zona-como-limitacion-en-el-p0.md)): ninguna Evaluación afirma que la matrícula habilita a trabajar en una provincia. | Respuesta de Ecogas (pregunta 4). Si confirma que la matrícula habilita en toda su área, la zona vuelve a ser un Criterio. |
+| I5 | ¿Rige todavía la matrícula en combustión para artefactos de más de 150.000 kcal/h? | El Tipo de trabajo B se limita a artefactos de hasta 150.000 kcal/h. Como no es una Condición decisiva del P0, se informa como Limitación propia de B ([§3.5](#35-condiciones-decisivas-cómo-se-describe-el-trabajo)). | Leer el texto completo de la Res. 468/2026 y consultar a la distribuidora. |
+| I6 | ¿Ecogas publica el número de matrícula? | **No lo publica**: el `id` del padrón es un identificador interno (relevamiento del 02/11/2026). El gasista se identifica por nombre y localidad, y toda Credencial de Ecogas lo informa como Limitación ([ADR-0007](adr/0007-identificacion-por-nombre-y-localidad.md)). No cambia ninguna regla de categoría. | Respuesta de Ecogas (pregunta 6). |
 | I6 | Anidamiento 2ª ⊇ 3ª | **No afecta:** las reglas usan listas explícitas y no dependen del orden entre categorías. | — |
 | I7 | La NAG-200 y la NAG-225 se están actualizando | Las reglas están versionadas y las Evaluaciones conservan la versión que aplicaron. | Seguimiento de las publicaciones de ENARGAS. |
 | I8 | Las citas provienen de un PDF escaneado | Revisión de ambos integrantes contra el original antes de implementar. | — |
@@ -246,8 +301,8 @@ El criterio de inclusión en el padrón se preguntó a Ecogas ([`consulta-a-ecog
 
 Las reglas son **datos, no código** ([ADR-0003](adr/0003-credencial-separada-de-evaluacion-sin-afirmar-vigencia.md) y [modelo de datos](../database/README.md)):
 
-- Cada Tipo de trabajo es un ítem de la tabla `TiposTrabajo`, con clave (`tipo_trabajo_id`, `version`). Guarda las condiciones, las categorías admitidas, el fundamento por categoría (norma, artículo, cita y URL), las Limitaciones propias, `vigente_desde`, `vigente_hasta` y `activo`.
-- El catálogo de **Categorías** (`Categorias`) guarda el texto del alcance y su cita. **No tiene ningún campo de orden o nivel**, a propósito.
+- Cada Tipo de trabajo es un ítem de la tabla `TiposTrabajo`, con clave (`tipo_trabajo_id`, `version`). Guarda las condiciones, las combinaciones de Condiciones decisivas que lo definen (`aplica_si`), las categorías admitidas, el fundamento por categoría (norma, artículo, cita y URL), las Limitaciones propias, `vigente_desde` y `activo`.
+- El catálogo de **Categorías** (`Categorias`) guarda el texto del alcance y su cita. **No tiene ningún campo de orden o nivel**, a propósito, y **no se versiona**: son tres nombres con su cita, y la regla que importa vive en `TiposTrabajo`.
 - Las reglas se cargan desde archivos JSON versionados en [`database/seed/`](../database/seed/). **Cambiar una regla es agregar una versión nueva, nunca editar la anterior.**
 - Cada Evaluación guarda una **copia de la regla aplicada** (categorías admitidas, fundamento y versión). Una Evaluación vieja nunca se recalcula con reglas posteriores.
 
@@ -255,7 +310,7 @@ Proceso para cambiar una regla:
 
 1. Se detecta el cambio normativo o el hallazgo, por ejemplo una respuesta de Ecogas o la publicación de la NAG-225.
 2. Se documenta en este archivo, con la cita nueva.
-3. Se crea el JSON de la nueva versión con `vigente_desde`, y la versión anterior recibe `vigente_hasta`.
+3. Se crea el JSON de la nueva versión con `vigente_desde`. La versión anterior **no se toca**: deja de regir cuando empieza la siguiente, así que su fin se deduce del `vigente_desde` de la versión posterior.
 4. Revisa el otro integrante del equipo, en un PR.
 5. Se aplica con el script de carga de datos.
 

@@ -3,51 +3,17 @@
     "evaluacion_id": "01M2ZEQ27R8DRDQRZQ97HGZ6QZ",
     "verificacion_id": "01M2ZEQ030YMQY4YY3P5N1QQSF",
     "credencial_ref": {
-      "fuente_matricula": "ecogas#99001",
-      "evidencia_id": "2026-09-20T13:05:02.140Z#01M2ZEQ030KDF2QM9Z2CK5XYT0"
+      "fuente_gasista": "ecogas#PERSONA FICTICIA UNO#RIO CUARTO",
+      "evidencia_id": "2026-09-20T13:05:02.140Z#01M2ZEQ030KDF2QM9Z2CK5XYT0#1203"
     },
-    "tipo_trabajo_id": "artefacto-vivienda-unifamiliar",
-    "tipo_trabajo_version": 1,
+    "condiciones": {
+      "comercio_o_industria": "NO",
+      "unica_vivienda": "SI",
+      "consumo_total_hasta_5m3h": "SI",
+      "artefacto_mas_de_50000": "NO",
+      "gas_natural_red_baja_presion": "SI"
+    },
     "fuente_version": 1,
-    "regla_aplicada": {
-      "categorias_admitidas": [
-        "1",
-        "2",
-        "3"
-      ],
-      "condiciones": [
-        "Vivienda unifamiliar: un predio con una única vivienda (no edificio, PH, dúplex ni similares).",
-        "Gas natural por red, con presión de suministro menor de 2 kg/cm².",
-        "Consumo total de la vivienda de hasta 5 m³/h.",
-        "Ningún artefacto supera 50.000 kcal/h y la presión interna no supera 200 mm de columna de agua."
-      ],
-      "fundamento": [
-        {
-          "categoria": "1",
-          "admitida": true,
-          "norma": "NAG-200",
-          "articulo": "8.2.1",
-          "cita": "cualquier tipo de instalaciones domiciliarias domésticas, comerciales o industriales en todo el territorio del país, ya sea para gas distribuido por redes o envasado",
-          "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf"
-        },
-        {
-          "categoria": "2",
-          "admitida": true,
-          "norma": "NAG-200",
-          "articulo": "8.3.1",
-          "cita": "instalaciones domiciliarias domésticas, comerciales, industriales o varias en toda la República […] siempre que las tomas correspondan a artefactos cuyos consumos individuales no excedan a 50.000 kcal/h […] y la presión interna […] no supere los 200 mm de columna de agua",
-          "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf"
-        },
-        {
-          "categoria": "3",
-          "admitida": true,
-          "norma": "NAG-200",
-          "articulo": "8.4.1",
-          "cita": "en toda la República, instalaciones domiciliarias domésticas, en viviendas unifamiliares, cuyo consumo total no exceda de 5 m³/h de gas natural, suministrado por redes a presión menor de 2 kg/cm²",
-          "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf"
-        }
-      ]
-    },
     "provincia_trabajo": "CORDOBA",
     "area_concesion_aplicada": [
       "CORDOBA",
@@ -57,23 +23,66 @@
       "SAN_JUAN",
       "SAN_LUIS"
     ],
-    "criterios": {
-      "categoria": {
-        "resultado": "MET",
-        "categoria_informada": "2",
-        "fundamento": "La categoría 2ª está admitida para este tipo de trabajo (NAG-200, 8.3.1)."
-      },
-      "zona": {
-        "resultado": "MET",
-        "fundamento": "La provincia del trabajo está dentro del Área de concesión de Ecogas."
+    "resultados_por_tipo": [
+      {
+        "tipo_trabajo_id": "artefacto-vivienda-unifamiliar",
+        "tipo_trabajo_version": 1,
+        "regla_aplicada": {
+          "categorias_admitidas": [
+            "1",
+            "2",
+            "3"
+          ],
+          "condiciones": [
+            "Vivienda unifamiliar: un predio con una única vivienda (no edificio, PH, dúplex ni similares).",
+            "Gas natural por red, con presión de suministro menor de 2 kg/cm².",
+            "Consumo total de la vivienda de hasta 5 m³/h.",
+            "Ningún artefacto supera 50.000 kcal/h y la presión interna no supera 200 mm de columna de agua."
+          ],
+          "fundamento": [
+            {
+              "categoria": "1",
+              "admitida": true,
+              "norma": "NAG-200",
+              "articulo": "8.2.1",
+              "cita": "cualquier tipo de instalaciones domiciliarias domésticas, comerciales o industriales en todo el territorio del país, ya sea para gas distribuido por redes o envasado",
+              "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf"
+            },
+            {
+              "categoria": "2",
+              "admitida": true,
+              "norma": "NAG-200",
+              "articulo": "8.3.1",
+              "cita": "instalaciones domiciliarias domésticas, comerciales, industriales o varias en toda la República […] siempre que las tomas correspondan a artefactos cuyos consumos individuales no excedan a 50.000 kcal/h […] y la presión interna […] no supere los 200 mm de columna de agua",
+              "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf"
+            },
+            {
+              "categoria": "3",
+              "admitida": true,
+              "norma": "NAG-200",
+              "articulo": "8.4.1",
+              "cita": "en toda la República, instalaciones domiciliarias domésticas, en viviendas unifamiliares, cuyo consumo total no exceda de 5 m³/h de gas natural, suministrado por redes a presión menor de 2 kg/cm²",
+              "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf"
+            }
+          ]
+        },
+        "criterio_categoria": {
+          "resultado": "MET",
+          "categoria_informada": "2",
+          "fundamento": "La categoría 2ª está admitida para este tipo de trabajo (NAG-200, 8.3.1)."
+        },
+        "resultado": "COMPATIBLE"
       }
-    },
+    ],
+    "condiciones_que_resuelven": [],
     "resultado": "COMPATIBLE",
     "limitaciones": [
       "La Fuente no informa la vigencia de la matrícula. Según la NAG-200 la matrícula se renueva todos los años y vence el 31 de marzo; figurar en el padrón no prueba que esté renovada. Para confirmarlo, pedile al gasista su carné con la matrícula actualizada (NAG-200, 8.6.1).",
+      "Ecogas no publica el número de matrícula: la identificación es por nombre y localidad. Confirmala con el carné del gasista.",
+      "La Fuente no permite determinar si la matrícula habilita a trabajar en Córdoba.",
       "La provincia que publica Ecogas corresponde al domicilio del matriculado, no a la zona donde puede trabajar.",
       "El padrón de Ecogas es una publicación web sin fecha de actualización: esta evidencia refleja lo publicado en el momento de la consulta.",
-      "Esta evaluación supone que el trabajo cumple las condiciones del tipo elegido: Vivienda unifamiliar: un predio con una única vivienda (no edificio, PH, dúplex ni similares). Gas natural por red, con presión de suministro menor de 2 kg/cm². Consumo total de la vivienda de hasta 5 m³/h. Ningún artefacto supera 50.000 kcal/h y la presión interna no supera 200 mm de columna de agua."
+      "Esta evaluación se basa en lo que respondiste sobre el trabajo: no es un comercio ni una industria; el terreno tiene una única vivienda; el consumo total es de hasta 5 m³/h; ningún artefacto supera 50.000 kcal/h; es gas natural por red con presión menor a 2 kg/cm²."
     ],
     "evaluada_en": "2026-09-20T13:05:02.200Z"
   },
@@ -81,51 +90,17 @@
     "evaluacion_id": "01M3FG9331HHQC18K52PVWXD4Y",
     "verificacion_id": "01M3FG90YXY7272A3GE1EMHHVQ",
     "credencial_ref": {
-      "fuente_matricula": "ecogas#99001",
-      "evidencia_id": "2026-09-26T18:40:12.345Z#01M3FG90YX2CPVTY9M7AM85DXW"
+      "fuente_gasista": "ecogas#PERSONA FICTICIA UNO#RIO CUARTO",
+      "evidencia_id": "2026-09-26T18:40:12.345Z#01M3FG90YX2CPVTY9M7AM85DXW#1203"
     },
-    "tipo_trabajo_id": "artefacto-vivienda-unifamiliar",
-    "tipo_trabajo_version": 1,
+    "condiciones": {
+      "comercio_o_industria": "NO",
+      "unica_vivienda": "SI",
+      "consumo_total_hasta_5m3h": "SI",
+      "artefacto_mas_de_50000": "NO",
+      "gas_natural_red_baja_presion": "SI"
+    },
     "fuente_version": 1,
-    "regla_aplicada": {
-      "categorias_admitidas": [
-        "1",
-        "2",
-        "3"
-      ],
-      "condiciones": [
-        "Vivienda unifamiliar: un predio con una única vivienda (no edificio, PH, dúplex ni similares).",
-        "Gas natural por red, con presión de suministro menor de 2 kg/cm².",
-        "Consumo total de la vivienda de hasta 5 m³/h.",
-        "Ningún artefacto supera 50.000 kcal/h y la presión interna no supera 200 mm de columna de agua."
-      ],
-      "fundamento": [
-        {
-          "categoria": "1",
-          "admitida": true,
-          "norma": "NAG-200",
-          "articulo": "8.2.1",
-          "cita": "cualquier tipo de instalaciones domiciliarias domésticas, comerciales o industriales en todo el territorio del país, ya sea para gas distribuido por redes o envasado",
-          "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf"
-        },
-        {
-          "categoria": "2",
-          "admitida": true,
-          "norma": "NAG-200",
-          "articulo": "8.3.1",
-          "cita": "instalaciones domiciliarias domésticas, comerciales, industriales o varias en toda la República […] siempre que las tomas correspondan a artefactos cuyos consumos individuales no excedan a 50.000 kcal/h […] y la presión interna […] no supere los 200 mm de columna de agua",
-          "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf"
-        },
-        {
-          "categoria": "3",
-          "admitida": true,
-          "norma": "NAG-200",
-          "articulo": "8.4.1",
-          "cita": "en toda la República, instalaciones domiciliarias domésticas, en viviendas unifamiliares, cuyo consumo total no exceda de 5 m³/h de gas natural, suministrado por redes a presión menor de 2 kg/cm²",
-          "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf"
-        }
-      ]
-    },
     "provincia_trabajo": "CORDOBA",
     "area_concesion_aplicada": [
       "CORDOBA",
@@ -135,23 +110,66 @@
       "SAN_JUAN",
       "SAN_LUIS"
     ],
-    "criterios": {
-      "categoria": {
-        "resultado": "MET",
-        "categoria_informada": "2",
-        "fundamento": "La categoría 2ª está admitida para este tipo de trabajo (NAG-200, 8.3.1)."
-      },
-      "zona": {
-        "resultado": "MET",
-        "fundamento": "La provincia del trabajo está dentro del Área de concesión de Ecogas."
+    "resultados_por_tipo": [
+      {
+        "tipo_trabajo_id": "artefacto-vivienda-unifamiliar",
+        "tipo_trabajo_version": 1,
+        "regla_aplicada": {
+          "categorias_admitidas": [
+            "1",
+            "2",
+            "3"
+          ],
+          "condiciones": [
+            "Vivienda unifamiliar: un predio con una única vivienda (no edificio, PH, dúplex ni similares).",
+            "Gas natural por red, con presión de suministro menor de 2 kg/cm².",
+            "Consumo total de la vivienda de hasta 5 m³/h.",
+            "Ningún artefacto supera 50.000 kcal/h y la presión interna no supera 200 mm de columna de agua."
+          ],
+          "fundamento": [
+            {
+              "categoria": "1",
+              "admitida": true,
+              "norma": "NAG-200",
+              "articulo": "8.2.1",
+              "cita": "cualquier tipo de instalaciones domiciliarias domésticas, comerciales o industriales en todo el territorio del país, ya sea para gas distribuido por redes o envasado",
+              "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf"
+            },
+            {
+              "categoria": "2",
+              "admitida": true,
+              "norma": "NAG-200",
+              "articulo": "8.3.1",
+              "cita": "instalaciones domiciliarias domésticas, comerciales, industriales o varias en toda la República […] siempre que las tomas correspondan a artefactos cuyos consumos individuales no excedan a 50.000 kcal/h […] y la presión interna […] no supere los 200 mm de columna de agua",
+              "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf"
+            },
+            {
+              "categoria": "3",
+              "admitida": true,
+              "norma": "NAG-200",
+              "articulo": "8.4.1",
+              "cita": "en toda la República, instalaciones domiciliarias domésticas, en viviendas unifamiliares, cuyo consumo total no exceda de 5 m³/h de gas natural, suministrado por redes a presión menor de 2 kg/cm²",
+              "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf"
+            }
+          ]
+        },
+        "criterio_categoria": {
+          "resultado": "MET",
+          "categoria_informada": "2",
+          "fundamento": "La categoría 2ª está admitida para este tipo de trabajo (NAG-200, 8.3.1)."
+        },
+        "resultado": "COMPATIBLE"
       }
-    },
+    ],
+    "condiciones_que_resuelven": [],
     "resultado": "COMPATIBLE",
     "limitaciones": [
       "La Fuente no informa la vigencia de la matrícula. Según la NAG-200 la matrícula se renueva todos los años y vence el 31 de marzo; figurar en el padrón no prueba que esté renovada. Para confirmarlo, pedile al gasista su carné con la matrícula actualizada (NAG-200, 8.6.1).",
+      "Ecogas no publica el número de matrícula: la identificación es por nombre y localidad. Confirmala con el carné del gasista.",
+      "La Fuente no permite determinar si la matrícula habilita a trabajar en Córdoba.",
       "La provincia que publica Ecogas corresponde al domicilio del matriculado, no a la zona donde puede trabajar.",
       "El padrón de Ecogas es una publicación web sin fecha de actualización: esta evidencia refleja lo publicado en el momento de la consulta.",
-      "Esta evaluación supone que el trabajo cumple las condiciones del tipo elegido: Vivienda unifamiliar: un predio con una única vivienda (no edificio, PH, dúplex ni similares). Gas natural por red, con presión de suministro menor de 2 kg/cm². Consumo total de la vivienda de hasta 5 m³/h. Ningún artefacto supera 50.000 kcal/h y la presión interna no supera 200 mm de columna de agua."
+      "Esta evaluación se basa en lo que respondiste sobre el trabajo: no es un comercio ni una industria; el terreno tiene una única vivienda; el consumo total es de hasta 5 m³/h; ningún artefacto supera 50.000 kcal/h; es gas natural por red con presión menor a 2 kg/cm²."
     ],
     "evaluada_en": "2026-09-26T18:40:12.385Z"
   },
@@ -159,51 +177,17 @@
     "evaluacion_id": "01M3FGDBPRWTD9S36KYNV2ZCEV",
     "verificacion_id": "01M3FGD9JMGCYBB0HXGTGB6K0C",
     "credencial_ref": {
-      "fuente_matricula": "ecogas#99001",
-      "evidencia_id": "2026-09-26T18:42:32.240Z#01M3FGD9JMAJNXQJNYRE157YSR"
+      "fuente_gasista": "ecogas#PERSONA FICTICIA UNO#RIO CUARTO",
+      "evidencia_id": "2026-09-26T18:40:12.345Z#01M3FG90YX2CPVTY9M7AM85DXW#1203"
     },
-    "tipo_trabajo_id": "comercio-artefacto-alto-consumo",
-    "tipo_trabajo_version": 1,
+    "condiciones": {
+      "comercio_o_industria": "SI",
+      "unica_vivienda": "NO",
+      "consumo_total_hasta_5m3h": "NO_SE",
+      "artefacto_mas_de_50000": "SI",
+      "gas_natural_red_baja_presion": "SI"
+    },
     "fuente_version": 1,
-    "regla_aplicada": {
-      "categorias_admitidas": [
-        "1"
-      ],
-      "condiciones": [
-        "Uso comercial.",
-        "Gas natural por red.",
-        "Al menos un artefacto de más de 50.000 kcal/h.",
-        "Ningún artefacto supera 150.000 kcal/h."
-      ],
-      "fundamento": [
-        {
-          "categoria": "1",
-          "admitida": true,
-          "norma": "NAG-200",
-          "articulo": "8.2.1",
-          "cita": "cualquier tipo de instalaciones domiciliarias domésticas, comerciales o industriales en todo el territorio del país, ya sea para gas distribuido por redes o envasado",
-          "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf"
-        },
-        {
-          "categoria": "2",
-          "admitida": false,
-          "norma": "NAG-200",
-          "articulo": "8.3.1",
-          "cita": "instalaciones domiciliarias domésticas, comerciales, industriales o varias en toda la República […] siempre que las tomas correspondan a artefactos cuyos consumos individuales no excedan a 50.000 kcal/h […] y la presión interna […] no supere los 200 mm de columna de agua",
-          "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf",
-          "nota": "La 2ª categoría limita cada artefacto a 50.000 kcal/h."
-        },
-        {
-          "categoria": "3",
-          "admitida": false,
-          "norma": "NAG-200",
-          "articulo": "8.4.1",
-          "cita": "en toda la República, instalaciones domiciliarias domésticas, en viviendas unifamiliares, cuyo consumo total no exceda de 5 m³/h de gas natural, suministrado por redes a presión menor de 2 kg/cm²",
-          "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf",
-          "nota": "La 3ª categoría se limita a instalaciones domésticas en viviendas unifamiliares."
-        }
-      ]
-    },
     "provincia_trabajo": "CORDOBA",
     "area_concesion_aplicada": [
       "CORDOBA",
@@ -213,25 +197,245 @@
       "SAN_JUAN",
       "SAN_LUIS"
     ],
-    "criterios": {
-      "categoria": {
-        "resultado": "NOT_MET",
-        "categoria_informada": "2",
-        "fundamento": "La categoría 2ª no está admitida para este tipo de trabajo. La 2ª categoría limita cada artefacto a 50.000 kcal/h. (NAG-200, 8.3.1)."
-      },
-      "zona": {
-        "resultado": "MET",
-        "fundamento": "La provincia del trabajo está dentro del Área de concesión de Ecogas."
+    "resultados_por_tipo": [
+      {
+        "tipo_trabajo_id": "comercio-artefacto-alto-consumo",
+        "tipo_trabajo_version": 1,
+        "regla_aplicada": {
+          "categorias_admitidas": [
+            "1"
+          ],
+          "condiciones": [
+            "Uso comercial.",
+            "Gas natural por red.",
+            "Al menos un artefacto de más de 50.000 kcal/h.",
+            "Ningún artefacto supera 150.000 kcal/h."
+          ],
+          "fundamento": [
+            {
+              "categoria": "1",
+              "admitida": true,
+              "norma": "NAG-200",
+              "articulo": "8.2.1",
+              "cita": "cualquier tipo de instalaciones domiciliarias domésticas, comerciales o industriales en todo el territorio del país, ya sea para gas distribuido por redes o envasado",
+              "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf"
+            },
+            {
+              "categoria": "2",
+              "admitida": false,
+              "norma": "NAG-200",
+              "articulo": "8.3.1",
+              "cita": "instalaciones domiciliarias domésticas, comerciales, industriales o varias en toda la República […] siempre que las tomas correspondan a artefactos cuyos consumos individuales no excedan a 50.000 kcal/h […] y la presión interna […] no supere los 200 mm de columna de agua",
+              "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf",
+              "nota": "La 2ª categoría limita cada artefacto a 50.000 kcal/h."
+            },
+            {
+              "categoria": "3",
+              "admitida": false,
+              "norma": "NAG-200",
+              "articulo": "8.4.1",
+              "cita": "en toda la República, instalaciones domiciliarias domésticas, en viviendas unifamiliares, cuyo consumo total no exceda de 5 m³/h de gas natural, suministrado por redes a presión menor de 2 kg/cm²",
+              "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf",
+              "nota": "La 3ª categoría se limita a instalaciones domésticas en viviendas unifamiliares."
+            }
+          ]
+        },
+        "criterio_categoria": {
+          "resultado": "NOT_MET",
+          "categoria_informada": "2",
+          "fundamento": "La categoría 2ª no está admitida para este tipo de trabajo. La 2ª categoría limita cada artefacto a 50.000 kcal/h. (NAG-200, 8.3.1)."
+        },
+        "resultado": "INCOMPATIBLE"
       }
-    },
+    ],
+    "condiciones_que_resuelven": [],
     "resultado": "INCOMPATIBLE",
     "limitaciones": [
       "La Fuente no informa la vigencia de la matrícula. Según la NAG-200 la matrícula se renueva todos los años y vence el 31 de marzo; figurar en el padrón no prueba que esté renovada. Para confirmarlo, pedile al gasista su carné con la matrícula actualizada (NAG-200, 8.6.1).",
+      "Ecogas no publica el número de matrícula: la identificación es por nombre y localidad. Confirmala con el carné del gasista.",
+      "La Fuente no permite determinar si la matrícula habilita a trabajar en Córdoba.",
       "La provincia que publica Ecogas corresponde al domicilio del matriculado, no a la zona donde puede trabajar.",
       "El padrón de Ecogas es una publicación web sin fecha de actualización: esta evidencia refleja lo publicado en el momento de la consulta.",
       "Por excepción (NAG-200, 8.3.1), un instalador de 2ª categoría puede hacer este trabajo con autorización expresa de la distribuidora cuando no hay matriculados de 1ª en la zona. MatriculAR no puede verificar esa autorización.",
-      "Esta evaluación supone que el trabajo cumple las condiciones del tipo elegido: Uso comercial. Gas natural por red. Al menos un artefacto de más de 50.000 kcal/h. Ningún artefacto supera 150.000 kcal/h."
+      "MatriculAR no pregunta si algún artefacto supera 150.000 kcal/h. Este Tipo de trabajo no cubre ese caso: si es así, la Evaluación no aplica.",
+      "Esta evaluación se basa en lo que respondiste sobre el trabajo: es un comercio o una industria; el terreno no tiene una única vivienda; no sabés si el consumo total es de hasta 5 m³/h; algún artefacto supera 50.000 kcal/h; es gas natural por red con presión menor a 2 kg/cm²."
     ],
     "evaluada_en": "2026-09-26T18:42:32.280Z"
+  },
+  {
+    "evaluacion_id": "01M3FGZ7X1A2B3C4D5E6F7G8H9",
+    "verificacion_id": "01M3FGZ7X0V2W3X4Y5Z6A7B8C9",
+    "credencial_ref": {
+      "fuente_gasista": "ecogas#PERSONA FICTICIA SIETE#VILLA MARIA",
+      "evidencia_id": "2026-09-26T18:40:12.345Z#01M3FG90YX2CPVTY9M7AM85DXW#2311"
+    },
+    "condiciones": {
+      "comercio_o_industria": "NO",
+      "unica_vivienda": "SI",
+      "consumo_total_hasta_5m3h": "SI",
+      "artefacto_mas_de_50000": "NO",
+      "gas_natural_red_baja_presion": "SI"
+    },
+    "fuente_version": 1,
+    "provincia_trabajo": "CORDOBA",
+    "area_concesion_aplicada": [
+      "CORDOBA",
+      "CATAMARCA",
+      "LA_RIOJA",
+      "MENDOZA",
+      "SAN_JUAN",
+      "SAN_LUIS"
+    ],
+    "resultados_por_tipo": [
+      {
+        "tipo_trabajo_id": "artefacto-vivienda-unifamiliar",
+        "tipo_trabajo_version": 1,
+        "regla_aplicada": {
+          "categorias_admitidas": [
+            "1",
+            "2",
+            "3"
+          ],
+          "condiciones": [
+            "Vivienda unifamiliar: un predio con una única vivienda (no edificio, PH, dúplex ni similares).",
+            "Gas natural por red, con presión de suministro menor de 2 kg/cm².",
+            "Consumo total de la vivienda de hasta 5 m³/h.",
+            "Ningún artefacto supera 50.000 kcal/h y la presión interna no supera 200 mm de columna de agua."
+          ],
+          "fundamento": [
+            {
+              "categoria": "1",
+              "admitida": true,
+              "norma": "NAG-200",
+              "articulo": "8.2.1",
+              "cita": "cualquier tipo de instalaciones domiciliarias domésticas, comerciales o industriales en todo el territorio del país, ya sea para gas distribuido por redes o envasado",
+              "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf"
+            },
+            {
+              "categoria": "2",
+              "admitida": true,
+              "norma": "NAG-200",
+              "articulo": "8.3.1",
+              "cita": "instalaciones domiciliarias domésticas, comerciales, industriales o varias en toda la República […] siempre que las tomas correspondan a artefactos cuyos consumos individuales no excedan a 50.000 kcal/h […] y la presión interna […] no supere los 200 mm de columna de agua",
+              "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf"
+            },
+            {
+              "categoria": "3",
+              "admitida": true,
+              "norma": "NAG-200",
+              "articulo": "8.4.1",
+              "cita": "en toda la República, instalaciones domiciliarias domésticas, en viviendas unifamiliares, cuyo consumo total no exceda de 5 m³/h de gas natural, suministrado por redes a presión menor de 2 kg/cm²",
+              "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf"
+            }
+          ]
+        },
+        "criterio_categoria": {
+          "resultado": "MET",
+          "categoria_informada": "2",
+          "fundamento": "La categoría 2ª está admitida para este tipo de trabajo (NAG-200, 8.3.1)."
+        },
+        "resultado": "COMPATIBLE"
+      }
+    ],
+    "condiciones_que_resuelven": [],
+    "resultado": "COMPATIBLE",
+    "limitaciones": [
+      "La Fuente no informa la vigencia de la matrícula. Según la NAG-200 la matrícula se renueva todos los años y vence el 31 de marzo; figurar en el padrón no prueba que esté renovada. Para confirmarlo, pedile al gasista su carné con la matrícula actualizada (NAG-200, 8.6.1).",
+      "Ecogas no publica el número de matrícula: la identificación es por nombre y localidad. Confirmala con el carné del gasista.",
+      "La Fuente no permite determinar si la matrícula habilita a trabajar en Córdoba.",
+      "La provincia que publica Ecogas corresponde al domicilio del matriculado, no a la zona donde puede trabajar.",
+      "El padrón de Ecogas es una publicación web sin fecha de actualización: esta evidencia refleja lo publicado en el momento de la consulta.",
+      "Esta evaluación se basa en lo que respondiste sobre el trabajo: no es un comercio ni una industria; el terreno tiene una única vivienda; el consumo total es de hasta 5 m³/h; ningún artefacto supera 50.000 kcal/h; es gas natural por red con presión menor a 2 kg/cm².",
+      "Hay 2 gasistas que coinciden con lo que buscaste. Elegí el que corresponde con su carné."
+    ],
+    "evaluada_en": "2026-09-26T18:50:00.450Z"
+  },
+  {
+    "evaluacion_id": "01M3FGZ7X1J2K3M4N5P6Q7R8S9",
+    "verificacion_id": "01M3FGZ7X0V2W3X4Y5Z6A7B8C9",
+    "credencial_ref": {
+      "fuente_gasista": "ecogas#PERSONA FICTICIA SIETE#RIO TERCERO",
+      "evidencia_id": "2026-09-26T18:40:12.345Z#01M3FG90YX2CPVTY9M7AM85DXW#3020"
+    },
+    "condiciones": {
+      "comercio_o_industria": "NO",
+      "unica_vivienda": "SI",
+      "consumo_total_hasta_5m3h": "SI",
+      "artefacto_mas_de_50000": "NO",
+      "gas_natural_red_baja_presion": "SI"
+    },
+    "fuente_version": 1,
+    "provincia_trabajo": "CORDOBA",
+    "area_concesion_aplicada": [
+      "CORDOBA",
+      "CATAMARCA",
+      "LA_RIOJA",
+      "MENDOZA",
+      "SAN_JUAN",
+      "SAN_LUIS"
+    ],
+    "resultados_por_tipo": [
+      {
+        "tipo_trabajo_id": "artefacto-vivienda-unifamiliar",
+        "tipo_trabajo_version": 1,
+        "regla_aplicada": {
+          "categorias_admitidas": [
+            "1",
+            "2",
+            "3"
+          ],
+          "condiciones": [
+            "Vivienda unifamiliar: un predio con una única vivienda (no edificio, PH, dúplex ni similares).",
+            "Gas natural por red, con presión de suministro menor de 2 kg/cm².",
+            "Consumo total de la vivienda de hasta 5 m³/h.",
+            "Ningún artefacto supera 50.000 kcal/h y la presión interna no supera 200 mm de columna de agua."
+          ],
+          "fundamento": [
+            {
+              "categoria": "1",
+              "admitida": true,
+              "norma": "NAG-200",
+              "articulo": "8.2.1",
+              "cita": "cualquier tipo de instalaciones domiciliarias domésticas, comerciales o industriales en todo el territorio del país, ya sea para gas distribuido por redes o envasado",
+              "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf"
+            },
+            {
+              "categoria": "2",
+              "admitida": true,
+              "norma": "NAG-200",
+              "articulo": "8.3.1",
+              "cita": "instalaciones domiciliarias domésticas, comerciales, industriales o varias en toda la República […] siempre que las tomas correspondan a artefactos cuyos consumos individuales no excedan a 50.000 kcal/h […] y la presión interna […] no supere los 200 mm de columna de agua",
+              "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf"
+            },
+            {
+              "categoria": "3",
+              "admitida": true,
+              "norma": "NAG-200",
+              "articulo": "8.4.1",
+              "cita": "en toda la República, instalaciones domiciliarias domésticas, en viviendas unifamiliares, cuyo consumo total no exceda de 5 m³/h de gas natural, suministrado por redes a presión menor de 2 kg/cm²",
+              "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf"
+            }
+          ]
+        },
+        "criterio_categoria": {
+          "resultado": "MET",
+          "categoria_informada": "3",
+          "fundamento": "La categoría 3ª está admitida para este tipo de trabajo (NAG-200, 8.4.1)."
+        },
+        "resultado": "COMPATIBLE"
+      }
+    ],
+    "condiciones_que_resuelven": [],
+    "resultado": "COMPATIBLE",
+    "limitaciones": [
+      "La Fuente no informa la vigencia de la matrícula. Según la NAG-200 la matrícula se renueva todos los años y vence el 31 de marzo; figurar en el padrón no prueba que esté renovada. Para confirmarlo, pedile al gasista su carné con la matrícula actualizada (NAG-200, 8.6.1).",
+      "Ecogas no publica el número de matrícula: la identificación es por nombre y localidad. Confirmala con el carné del gasista.",
+      "La Fuente no permite determinar si la matrícula habilita a trabajar en Córdoba.",
+      "La provincia que publica Ecogas corresponde al domicilio del matriculado, no a la zona donde puede trabajar.",
+      "El padrón de Ecogas es una publicación web sin fecha de actualización: esta evidencia refleja lo publicado en el momento de la consulta.",
+      "Esta evaluación se basa en lo que respondiste sobre el trabajo: no es un comercio ni una industria; el terreno tiene una única vivienda; el consumo total es de hasta 5 m³/h; ningún artefacto supera 50.000 kcal/h; es gas natural por red con presión menor a 2 kg/cm².",
+      "Hay 2 gasistas que coinciden con lo que buscaste. Elegí el que corresponde con su carné."
+    ],
+    "evaluada_en": "2026-09-26T18:50:00.450Z"
   }
 ]

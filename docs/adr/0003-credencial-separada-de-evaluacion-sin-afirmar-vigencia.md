@@ -1,10 +1,13 @@
 ---
-estado: aceptada
+estado: aceptada, modificada por ADR-0005
 fecha: 2026-09-26
 reemplaza: máquina de estados del Profesional de la primera entrega (pendiente_verificación → verificado → vencido)
+modificada_por: ADR-0005 (la zona es una Limitación, no un Criterio)
 ---
 
 # Credencial separada de Evaluación, y la vigencia nunca se afirma
+
+> **Modificada por el [ADR-0005](0005-zona-como-limitacion-en-el-p0.md)** (01/11/2026): la zona tampoco es un Criterio en el P0. `COMPATIBLE` afirma solo que la categoría informada es compatible con el tipo de trabajo según la regla aplicada; la zona y la vigencia se informan como Limitaciones. El texto original se conserva abajo como registro.
 
 La primera entrega le daba al Profesional un estado de habilitación (`verificado`, `vencido`), y la investigación le agregaba a la credencial estados como `categoria_insuficiente` o `fuera_de_jurisdiccion`. El tutor señaló que esos estados dependen del trabajo y no de la credencial, y que ninguna Fuente informa vencimientos individuales. Decidimos:
 

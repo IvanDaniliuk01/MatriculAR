@@ -22,6 +22,11 @@
     "url_pagina": "https://www.ecogas.com.ar/hogares-comercios/tramites-y-servicios/listado-de-gasistas-matriculados",
     "url_buscador_oficial": "https://www.ecogas.com.ar/hogares-comercios/tramites-y-servicios/listado-de-gasistas-matriculados",
     "config_extraccion": {
+      "formatos_reconocidos": [
+        "v2",
+        "v1"
+      ],
+      "marcador_v2": "gasistasMatriculados",
       "prefijo_preferido": "3182-",
       "max_candidatos": 20,
       "claves_obligatorias": [
@@ -43,21 +48,25 @@
         1000,
         2000
       ],
-      "timeout_pedido_ms": 6000,
-      "timeout_consulta_ms": 24000
+      "timeout_pedido_ms": 20000,
+      "timeout_consulta_ms": 45000
     },
     "config_validacion": {
       "umbral_caida": 0.5,
       "piso_registros": 1000
     },
+    "config_proteccion": {
+      "ventana_reutilizacion_s": 900,
+      "espera_tras_falla_s": 60
+    },
     "limitaciones": [
       "La Fuente no informa la vigencia de la matrícula. Según la NAG-200 la matrícula se renueva todos los años y vence el 31 de marzo; figurar en el padrón no prueba que esté renovada. Para confirmarlo, pedile al gasista su carné con la matrícula actualizada (NAG-200, 8.6.1).",
+      "Ecogas no publica el número de matrícula: la identificación es por nombre y localidad. Confirmala con el carné del gasista.",
       "La provincia que publica Ecogas corresponde al domicilio del matriculado, no a la zona donde puede trabajar.",
       "El padrón de Ecogas es una publicación web sin fecha de actualización: esta evidencia refleja lo publicado en el momento de la consulta."
     ],
     "activa": true,
     "vigente_desde": "2026-09-26T00:00:00.000Z",
-    "vigente_hasta": null,
     "creada_en": "2026-09-26T00:00:00.000Z"
   },
   {
@@ -81,12 +90,12 @@
     "config_extraccion": null,
     "config_reintentos": null,
     "config_validacion": null,
+    "config_proteccion": null,
     "limitaciones": [
       "MetroGAS no permite consultas automáticas: su buscador exige un captcha. La matrícula se puede verificar manualmente en el buscador oficial."
     ],
     "activa": true,
     "vigente_desde": "2026-09-26T00:00:00.000Z",
-    "vigente_hasta": null,
     "creada_en": "2026-09-26T00:00:00.000Z"
   }
 ]

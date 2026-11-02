@@ -4,9 +4,6 @@
     "fuente_id": "ecogas",
     "fuente_version": 1,
     "origen": "VERIFICATION",
-    "matriculas_buscadas": [
-      "99001"
-    ],
     "estado": "SUCCEEDED",
     "motivo_falla": null,
     "detalle_falla": null,
@@ -43,6 +40,7 @@
       }
     ],
     "url_recurso": "https://www.ecogas.com.ar/_next/static/chunks/3182-7c1d2e3f4a5b6c7d.js",
+    "formato_recurso": "v1",
     "huella_recurso": "890d95b4ffb59dee40d98ba8e0b175b125cfbd976c9ab77bbf1f35756181ffa5",
     "bytes_recurso": 1113870,
     "registros_extraidos": 5019,
@@ -63,16 +61,14 @@
       }
     },
     "claves_no_esperadas": [],
-    "exito_fuente_id": "ecogas"
+    "exito_fuente_id": "ecogas",
+    "lectura_minimizada_ref": "lecturas-minimizadas/01M2ZEQ030KDF2QM9Z2CK5XYT0"
   },
   {
     "consulta_id": "01M3FFPJ2054EHQKZK0AN2P9E0",
     "fuente_id": "ecogas",
     "fuente_version": 1,
     "origen": "VERIFICATION",
-    "matriculas_buscadas": [
-      "99001"
-    ],
     "estado": "FAILED",
     "motivo_falla": "EXTRACTION_FAILED",
     "detalle_falla": {
@@ -141,20 +137,19 @@
       }
     ],
     "url_recurso": null,
+    "formato_recurso": null,
     "huella_recurso": null,
     "bytes_recurso": null,
     "registros_extraidos": null,
     "resumen": null,
-    "claves_no_esperadas": []
+    "claves_no_esperadas": [],
+    "lectura_minimizada_ref": null
   },
   {
     "consulta_id": "01M3FG90YX2CPVTY9M7AM85DXW",
     "fuente_id": "ecogas",
     "fuente_version": 1,
     "origen": "VERIFICATION",
-    "matriculas_buscadas": [
-      "99001"
-    ],
     "estado": "SUCCEEDED",
     "motivo_falla": null,
     "detalle_falla": null,
@@ -191,6 +186,7 @@
       }
     ],
     "url_recurso": "https://www.ecogas.com.ar/_next/static/chunks/3182-5194f519f6f9f5b0.js",
+    "formato_recurso": "v1",
     "huella_recurso": "adbdcf1273720c813b025e0e872b3e3a9d33557994ed4ae057f2fccb9f2644b6",
     "bytes_recurso": 1116256,
     "registros_extraidos": 5031,
@@ -211,148 +207,14 @@
       }
     },
     "claves_no_esperadas": [],
-    "exito_fuente_id": "ecogas"
-  },
-  {
-    "consulta_id": "01M3FGD9JMAJNXQJNYRE157YSR",
-    "fuente_id": "ecogas",
-    "fuente_version": 1,
-    "origen": "VERIFICATION",
-    "matriculas_buscadas": [
-      "99001"
-    ],
-    "estado": "SUCCEEDED",
-    "motivo_falla": null,
-    "detalle_falla": null,
-    "iniciada_en": "2026-09-26T18:42:30.100Z",
-    "plazo_maximo_en": "2026-09-26T18:42:54.100Z",
-    "finalizada_en": "2026-09-26T18:42:32.240Z",
-    "intentos": [
-      {
-        "numero": 1,
-        "iniciado_en": "2026-09-26T18:42:30.115Z",
-        "duracion_ms": 2110,
-        "resultado": "SUCCESS",
-        "reintentable": false,
-        "pedidos": [
-          {
-            "url": "https://www.ecogas.com.ar/hogares-comercios/tramites-y-servicios/listado-de-gasistas-matriculados",
-            "metodo": "GET",
-            "status": 200,
-            "content_type": "text/html; charset=utf-8",
-            "bytes": 69830,
-            "duracion_ms": 540,
-            "error": null
-          },
-          {
-            "url": "https://www.ecogas.com.ar/_next/static/chunks/3182-5194f519f6f9f5b0.js",
-            "metodo": "GET",
-            "status": 200,
-            "content_type": "application/javascript; charset=UTF-8",
-            "bytes": 1116256,
-            "duracion_ms": 1480,
-            "error": null
-          }
-        ]
-      }
-    ],
-    "url_recurso": "https://www.ecogas.com.ar/_next/static/chunks/3182-5194f519f6f9f5b0.js",
-    "huella_recurso": "adbdcf1273720c813b025e0e872b3e3a9d33557994ed4ae057f2fccb9f2644b6",
-    "bytes_recurso": 1116256,
-    "registros_extraidos": 5031,
-    "resumen": {
-      "por_categoria": {
-        "1": 1641,
-        "2": 2235,
-        "3": 1155
-      },
-      "por_provincia": {
-        "CORDOBA": 3263,
-        "MENDOZA": 1228,
-        "SAN_LUIS": 240,
-        "SAN_JUAN": 225,
-        "CATAMARCA": 38,
-        "LA_RIOJA": 36,
-        "BUENOS_AIRES": 1
-      }
-    },
-    "claves_no_esperadas": [],
-    "exito_fuente_id": "ecogas"
-  },
-  {
-    "consulta_id": "01M3FGHVZ054179B3MBQF1VMBM",
-    "fuente_id": "ecogas",
-    "fuente_version": 1,
-    "origen": "VERIFICATION",
-    "matriculas_buscadas": [
-      "99004"
-    ],
-    "estado": "SUCCEEDED",
-    "motivo_falla": null,
-    "detalle_falla": null,
-    "iniciada_en": "2026-09-26T18:45:00.000Z",
-    "plazo_maximo_en": "2026-09-26T18:45:24.000Z",
-    "finalizada_en": "2026-09-26T18:45:02.140Z",
-    "intentos": [
-      {
-        "numero": 1,
-        "iniciado_en": "2026-09-26T18:45:00.015Z",
-        "duracion_ms": 2110,
-        "resultado": "SUCCESS",
-        "reintentable": false,
-        "pedidos": [
-          {
-            "url": "https://www.ecogas.com.ar/hogares-comercios/tramites-y-servicios/listado-de-gasistas-matriculados",
-            "metodo": "GET",
-            "status": 200,
-            "content_type": "text/html; charset=utf-8",
-            "bytes": 69830,
-            "duracion_ms": 540,
-            "error": null
-          },
-          {
-            "url": "https://www.ecogas.com.ar/_next/static/chunks/3182-5194f519f6f9f5b0.js",
-            "metodo": "GET",
-            "status": 200,
-            "content_type": "application/javascript; charset=UTF-8",
-            "bytes": 1116256,
-            "duracion_ms": 1480,
-            "error": null
-          }
-        ]
-      }
-    ],
-    "url_recurso": "https://www.ecogas.com.ar/_next/static/chunks/3182-5194f519f6f9f5b0.js",
-    "huella_recurso": "adbdcf1273720c813b025e0e872b3e3a9d33557994ed4ae057f2fccb9f2644b6",
-    "bytes_recurso": 1116256,
-    "registros_extraidos": 5031,
-    "resumen": {
-      "por_categoria": {
-        "1": 1641,
-        "2": 2235,
-        "3": 1155
-      },
-      "por_provincia": {
-        "CORDOBA": 3263,
-        "MENDOZA": 1228,
-        "SAN_LUIS": 240,
-        "SAN_JUAN": 225,
-        "CATAMARCA": 38,
-        "LA_RIOJA": 36,
-        "BUENOS_AIRES": 1
-      }
-    },
-    "claves_no_esperadas": [],
-    "exito_fuente_id": "ecogas"
+    "exito_fuente_id": "ecogas",
+    "lectura_minimizada_ref": "lecturas-minimizadas/01M3FG90YX2CPVTY9M7AM85DXW"
   },
   {
     "consulta_id": "01M3FGQBR0KGEFMNB9DZ4BW2FS",
     "fuente_id": "metrogas",
     "fuente_version": 1,
     "origen": "VERIFICATION",
-    "matriculas_buscadas": [
-      "99005"
-    ],
     "estado": "NOT_ATTEMPTED",
     "motivo_falla": "SOURCE_NOT_AUTOMATABLE",
     "detalle_falla": {
@@ -366,10 +228,12 @@
     "finalizada_en": "2026-09-26T18:48:00.000Z",
     "intentos": [],
     "url_recurso": null,
+    "formato_recurso": null,
     "huella_recurso": null,
     "bytes_recurso": null,
     "registros_extraidos": null,
     "resumen": null,
-    "claves_no_esperadas": []
+    "claves_no_esperadas": [],
+    "lectura_minimizada_ref": null
   }
 ]

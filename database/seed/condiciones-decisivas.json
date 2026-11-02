@@ -1,0 +1,64 @@
+[
+  {
+    "condicion_id": "comercio_o_industria",
+    "orden": 1,
+    "pregunta": "¿El trabajo es en un comercio o una industria?",
+    "ayuda": "Respondé Sí para un restaurante, una panadería o cualquier local o planta. Respondé No para una casa o un departamento.",
+    "fundamento": {
+      "norma": "NAG-200",
+      "articulo": "8.4.1",
+      "cita": "en toda la República, instalaciones domiciliarias domésticas, en viviendas unifamiliares, cuyo consumo total no exceda de 5 m³/h de gas natural, suministrado por redes a presión menor de 2 kg/cm²",
+      "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf",
+      "nota": "La 3ª categoría se limita a instalaciones domésticas: el uso comercial o industrial la excluye."
+    }
+  },
+  {
+    "condicion_id": "unica_vivienda",
+    "orden": 2,
+    "pregunta": "¿El terreno tiene una única vivienda?",
+    "ayuda": "Respondé Sí si es una casa sola en su terreno. Respondé No si es un departamento, un PH, un dúplex o hay otra vivienda en el mismo terreno.",
+    "fundamento": {
+      "norma": "NAG-200",
+      "articulo": "8.4.1",
+      "cita": "en toda la República, instalaciones domiciliarias domésticas, en viviendas unifamiliares, cuyo consumo total no exceda de 5 m³/h de gas natural, suministrado por redes a presión menor de 2 kg/cm²",
+      "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf",
+      "nota": "La FAQ de MetroGAS para matriculados precisa que vivienda unifamiliar es \"un predio con una única vivienda (quedando excluidos los suministros que pertenecen a edificios, PH, dúplex y similares)\"."
+    }
+  },
+  {
+    "condicion_id": "consumo_total_hasta_5m3h",
+    "orden": 3,
+    "pregunta": "¿El consumo total de gas de la vivienda es de hasta 5 m³/h?",
+    "ayuda": "Es la suma de lo que consumen todos los artefactos encendidos a la vez. Una casa con cocina, calefón y dos calefactores suele estar por debajo. Si no lo sabés, respondé No sé.",
+    "fundamento": {
+      "norma": "NAG-200",
+      "articulo": "8.4.1",
+      "cita": "en toda la República, instalaciones domiciliarias domésticas, en viviendas unifamiliares, cuyo consumo total no exceda de 5 m³/h de gas natural, suministrado por redes a presión menor de 2 kg/cm²",
+      "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf"
+    }
+  },
+  {
+    "condicion_id": "artefacto_mas_de_50000",
+    "orden": 4,
+    "pregunta": "¿Algún artefacto consume más de 50.000 kcal/h?",
+    "ayuda": "Los artefactos de una casa (cocina, calefón, termotanque, calefactor) consumen menos. Superan ese valor, por ejemplo, un horno o un anafe industrial.",
+    "fundamento": {
+      "norma": "NAG-200",
+      "articulo": "8.3.1",
+      "cita": "instalaciones domiciliarias domésticas, comerciales, industriales o varias en toda la República […] siempre que las tomas correspondan a artefactos cuyos consumos individuales no excedan a 50.000 kcal/h […] y la presión interna […] no supere los 200 mm de columna de agua",
+      "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf"
+    }
+  },
+  {
+    "condicion_id": "gas_natural_red_baja_presion",
+    "orden": 5,
+    "pregunta": "¿El gas es natural, por red, con presión de suministro menor de 2 kg/cm²?",
+    "ayuda": "Respondé Sí si el gas llega por la red de la distribuidora a una casa o un local común. Respondé No si es gas envasado (garrafa o tubo) o un tanque a granel.",
+    "fundamento": {
+      "norma": "NAG-200",
+      "articulo": "8.3.1",
+      "cita": "No podrán ejecutar instalaciones […] cuando la presión de distribución sea superior a 2 kg/cm² y en gas licuado cuando fueran alimentadas por tanques a granel",
+      "url": "https://www.enargas.gob.ar/secciones/normativa/pdf/normas-tecnicas/NAG-200.pdf"
+    }
+  }
+]

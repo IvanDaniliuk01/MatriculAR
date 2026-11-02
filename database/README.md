@@ -1,8 +1,10 @@
 # Base de datos: esquema de colecciones (DynamoDB)
 
-> Documento de diseño · Segunda entrega · Última revisión: 26/09/2026
+> Documento de diseño · Segunda entrega, corregido según la devolución v3 · Última revisión: 02/11/2026
 > Cumple el ítem "Esquema de Base de Datos" de la consigna: tablas, campos, tipos de datos, claves primarias y foráneas, relaciones e índices principales. Por ser una base **no relacional**, se presenta como **esquema de colecciones (tablas) y documentos (ítems)**, más un diagrama entidad-relación lógico.
-> Responde también al punto 5 de la devolución v2 ("persistencia de fuente, fecha y resultado de consulta").
+> Responde también al punto 5 de la devolución v2 ("persistencia de fuente, fecha y resultado de consulta"). Incorpora de la devolución v3 los valores tal como los publica la Fuente en cada Credencial, la Lectura minimizada ([ADR-0006](../docs/adr/0006-lectura-minimizada-y-proteccion-de-la-fuente.md)), las Condiciones decisivas en Verificaciones y Evaluaciones, y la limpieza del versionado (`Categorias` sin versión y sin `vigente_hasta`).
+>
+> **Clave del gasista, pendiente de rediseño (ADR-0007).** El 02/11/2026 comprobamos que **Ecogas no publica el número de matrícula**: su campo `id` es un identificador interno de la publicación ([ADR-0007](../docs/adr/0007-identificacion-por-nombre-y-localidad.md)). Las tablas que usaban `fuente_matricula` (`<fuente_id>#<matricula>`) como clave pasan a identificar al gasista por **nombre y localidad normalizados**. La clave candidata es **`fuente_gasista` = `<fuente_id>#<nombre_normalizado>#<localidad_normalizada>`**, y **el diseño definitivo de las claves de `Credenciales`, `ResultadosVerificacion` y `Verificaciones` se cierra al implementar DynamoDB (9/11/2026)**. Las tablas de P1 (`Vinculos`, `TitularesMatricula`) quedan como estaban, con esta nota: si se implementaran, se vincularían al registro del gasista, no a una matrícula.
 
 ## Índice
 
@@ -53,12 +55,12 @@
 | Nombres de atributos | `snake_case`, en español, sin tildes. |
 | Tipos | Los de DynamoDB: **S** (string), **N** (número), **BOOL**, **L** (lista), **M** (mapa), **SS** (conjunto de strings, sin orden ni duplicados) y **NULL**. En los diagramas se usan esas mismas siglas. |
 | Identificadores | **ULID** (26 caracteres, ordenables por tiempo), generados por la aplicación: `consulta_id`, `verificacion_id`, `evaluacion_id`, `profesional_id` y `contratacion_id`. Las Fuentes, Categorías y Tipos de trabajo usan identificadores legibles (`ecogas`, `artefacto-vivienda-unifamiliar`). |
-| Claves compuestas | Cuando hace falta, `<fuente_id>#<matricula>` (por ejemplo `ecogas#99001`), en el atributo `fuente_matricula`. |
+| Claves compuestas | Cuando hace falta, `<fuente_id>#<nombre_normalizado>#<localidad_normalizada>` (por ejemplo `ecogas#PERSONA FICTICIA UNO#RIO CUARTO`), en el atributo `fuente_gasista`. Es la **clave candidata**: se confirma el 9/11 ([ADR-0007](../docs/adr/0007-identificacion-por-nombre-y-localidad.md)). Las tablas de P1 todavía usan `fuente_matricula`. |
 | Fechas | Strings **ISO-8601 en UTC**, con milisegundos (`2026-09-26T18:40:12.345Z`). Se ordenan bien como texto. La interfaz las muestra en hora de Argentina. |
 | Provincias | Código normalizado en mayúsculas y sin tildes, del catálogo [`seed/provincias.json`](seed/provincias.json) (`CORDOBA`, `CIUDAD_AUTONOMA_DE_BUENOS_AIRES`). |
 | "FK" | DynamoDB no tiene claves foráneas. Una **FK es un atributo que guarda la clave de un ítem de otra tabla**. La aplicación valida que el ítem exista antes de escribir ([§ 10](#10-integridad-referencial-y-escrituras-atómicas)). En los diagramas se marcan como `FK`. |
 | Inmutabilidad | Las tablas de evidencia (`Consultas` una vez finalizadas, `ResultadosVerificacion`, `Credenciales`, `Evaluaciones` y `Verificaciones`) **no se modifican nunca**. Se escriben con la condición `attribute_not_exists`. |
-| Versionado | La configuración (`Fuentes`, `TiposTrabajo`) usa `version` como clave de ordenamiento. Un cambio **agrega una versión**, no edita la anterior. |
+| Versionado | La configuración (`Fuentes`, `TiposTrabajo`) usa `version` como clave de ordenamiento. Un cambio **agrega una versión**, y la anterior **no se modifica nunca**: tiene `vigente_desde`, y su fin se deduce del `vigente_desde` de la versión siguiente (no hay `vigente_hasta`). `Categorias` **no se versiona**: es un catálogo de tres nombres con su cita, y la regla vive en `TiposTrabajo`. |
 | Enumerados | Strings en MAYÚSCULAS y **en inglés** (`SUCCEEDED`, `UNVERIFIABLE`, `COMPATIBLE`). El vocabulario del dominio sigue en español; el significado de cada código está en el [glosario](../CONTEXT.md#códigos-de-estado). |
 | Opcionales | Un atributo opcional se guarda como `NULL`, **salvo que sea clave de un índice**: en ese caso se omite, porque DynamoDB no admite `NULL` en una clave de índice (y así los índices dispersos funcionan). |
 
@@ -86,6 +88,7 @@ erDiagram
     TiposTrabajo {
         S tipo_trabajo_id PK
         N version PK "clave de ordenamiento"
+        L aplica_si "combinaciones de Condiciones decisivas"
         SS categorias_admitidas "conjunto, sin orden"
         L fundamento "cita por categoría"
         BOOL activo
@@ -97,60 +100,66 @@ erDiagram
         S estado "IN_PROGRESS, SUCCEEDED, FAILED, NOT_ATTEMPTED"
         S motivo_falla
         L intentos "con sus pedidos HTTP"
+        S formato_recurso "v1 o v2"
         S huella_recurso "SHA-256"
         N registros_extraidos
+        S lectura_minimizada_ref "si SUCCEEDED, vence al día siguiente"
     }
     ResultadosVerificacion {
         S consulta_id PK, FK
-        S matricula PK "clave de ordenamiento"
-        S fuente_matricula "índice por matrícula"
-        S resultado "FOUND, NOT_FOUND, UNVERIFIABLE"
+        S verificacion_id PK "clave de ordenamiento"
+        M gasista_buscado "nombre y localidad, normalizados"
+        S resultado "FOUND, NOT_FOUND, TOO_MANY_MATCHES, UNVERIFIABLE"
+        N cantidad_coincidencias
     }
     Credenciales {
-        S fuente_matricula PK "ecogas#99001"
+        S fuente_gasista PK "candidata: ecogas#NOMBRE#LOCALIDAD"
         S evidencia_id PK "consultada_en#consulta_id"
         S consulta_id FK
+        M valores_fuente "tal como los publicó la Fuente, con el id interno"
+        S nombre_informado
+        S localidad_informada
         S categoria_informada
         S provincia_informada
-        S nombre_informado
     }
     Verificaciones {
         S verificacion_id PK "ULID"
         S consulta_id FK
-        S tipo_trabajo_id FK
-        N tipo_trabajo_version FK
+        M gasista_buscado "nombre y localidad opcional"
+        M condiciones "Condiciones decisivas respondidas"
+        L tipos_trabajo_posibles FK "id y versión"
         S provincia_trabajo
         S resultado_verificacion
-        M credencial_ref FK "nulo si no hay Credencial"
-        S evaluacion_id FK "nulo si no hay Credencial"
+        L coincidencias FK "de 0 a 10: credencial_ref y evaluacion_id"
     }
     Evaluaciones {
         S evaluacion_id PK "ULID"
         S verificacion_id FK
         M credencial_ref FK
-        M regla_aplicada "copia de la regla"
-        M criterios "categoría y zona"
+        L resultados_por_tipo "Criterio de categoría y copia de la regla, por Tipo posible"
+        L condiciones_que_resuelven
         S resultado "COMPATIBLE, INCOMPATIBLE, INDETERMINATE"
-        L limitaciones
+        L limitaciones "incluidas vigencia y zona"
     }
 
     Fuentes ||--o{ Consultas : "es leída por"
-    Consultas ||--|{ ResultadosVerificacion : "produce uno por matrícula"
-    ResultadosVerificacion |o--o| Credenciales : "si FOUND crea"
+    Consultas ||--o{ ResultadosVerificacion : "produce uno por Verificación"
+    ResultadosVerificacion |o--o{ Credenciales : "si FOUND crea una por Coincidencia"
     Consultas ||--o{ Verificaciones : "respalda"
-    TiposTrabajo ||--o{ Verificaciones : "es pedido en"
-    Verificaciones ||--o| Evaluaciones : "solo si hay Credencial"
+    TiposTrabajo }|--o{ Verificaciones : "es posible en"
+    Verificaciones ||--o{ Evaluaciones : "una por Credencial"
     Credenciales ||--o{ Evaluaciones : "es evaluada en"
     TiposTrabajo }o--o{ Categorias : "admite"
 ```
 
 Lectura de las cardinalidades más importantes:
 
-- **Consultas → ResultadosVerificacion (1 a N):** una Consulta produce un Resultado por matrícula buscada. En el P0, N vale 1. En la búsqueda de P1 y en la revalidación de P3, una sola descarga del padrón resuelve todas las matrículas de esa Fuente.
-- **Consultas → Verificaciones (1 a 0..N):** en el P0 cada Verificación tiene su propia Consulta. En la búsqueda (P1), las Verificaciones de todos los candidatos de una Fuente comparten la misma Consulta. La revalidación (P3) hace Consultas sin Verificaciones.
-- **ResultadosVerificacion → Credenciales (0 o 1):** solo un Resultado `FOUND` crea una Credencial.
-- **Verificaciones → Evaluaciones (0 o 1):** solo hay Evaluación si hay Credencial (INV-2).
-- **Credenciales → Evaluaciones (1 a N):** la misma Credencial puede evaluarse para distintos Tipos de trabajo, y cada resultado es independiente.
+- **Consultas → ResultadosVerificacion (1 a 0..N):** una Consulta produce un Resultado por cada Verificación que se apoyó en ella. Gracias a la **Ventana de reutilización** ([ADR-0006](../docs/adr/0006-lectura-minimizada-y-proteccion-de-la-fuente.md)), una sola descarga del padrón resuelve todos los gasistas buscados durante 15 minutos, también en el P0.
+- **Consultas → Verificaciones (1 a 0..N):** una Verificación se apoya en una Consulta nueva o en una Consulta exitosa de menos de 15 minutos. Varias Verificaciones pueden compartir la misma Consulta, y la respuesta informa siempre la fecha real de esa Consulta.
+- **TiposTrabajo → Verificaciones (1..N a 0..N):** el Cliente no elige un Tipo de trabajo. Las Condiciones decisivas que responde dejan uno o más Tipos de trabajo posibles, y la Verificación guarda cuáles fueron, con su versión.
+- **ResultadosVerificacion → Credenciales (0 a 10):** solo un Resultado `FOUND` crea Credenciales, una por Coincidencia. Con homónimos hay varias, y el Cliente elige con el carné del gasista (INV-17).
+- **Verificaciones → Evaluaciones (0 a 10):** una Evaluación por Credencial; sin Credencial no hay Evaluación (INV-2).
+- **Credenciales → Evaluaciones (1 a N):** la misma Credencial puede evaluarse para distintos trabajos, y cada resultado es independiente.
 
 ---
 
@@ -228,7 +237,7 @@ erDiagram
     Contrataciones ||--o| Resenas : "calificada con"
 ```
 
-> La relación **Vínculos → Credenciales** es **lógica**, por `fuente_matricula`: un Vínculo apunta a una matrícula de una Fuente, no a una Credencial en particular. Siempre se usa la evidencia más reciente.
+> La relación **Vínculos → Credenciales** es **lógica**, por `fuente_matricula`: un Vínculo apunta a una matrícula de una Fuente, no a una Credencial en particular. Siempre se usa la evidencia más reciente. **P1 está fuera de la entrega final**: si se implementara, el Vínculo apuntaría al registro del gasista (`fuente_gasista`), porque Ecogas no publica la matrícula ([ADR-0007](../docs/adr/0007-identificacion-por-nombre-y-localidad.md)).
 
 ---
 
@@ -253,7 +262,7 @@ Configuración **versionada** de cada padrón. Definición: [`tablas/Fuentes.jso
 | `distribuidora` | S | ✔ | Distribuidora que publica el padrón. |
 | `licenciatarias` | L\<S\> | ✔ | Licenciatarias que agrupa: "Distribuidora de Gas del Centro", "Distribuidora de Gas Cuyana". |
 | `area_concesion` | L\<S\> | ✔ | Códigos de las provincias donde la Distribuidora opera en **todo** el territorio. |
-| `area_concesion_parcial` | L\<S\> | ✔ | Provincias donde opera solo en **parte** (por ejemplo, MetroGAS en Buenos Aires). Ahí el Criterio de zona es `INDETERMINATE`, porque el P0 modela la zona por provincia. Puede ser una lista vacía. |
+| `area_concesion_parcial` | L\<S\> | ✔ | Provincias donde opera solo en **parte** (por ejemplo, MetroGAS en Buenos Aires). Se usa para el texto de la Limitación de zona: la zona no es un Criterio ([ADR-0005](../docs/adr/0005-zona-como-limitacion-en-el-p0.md)). Puede ser una lista vacía. |
 | `modo_acceso` | S | ✔ | `AUTOMATED` \| `NOT_AUTOMATABLE`. |
 | `adaptador` | S | ✔ | `ECOGAS_NEXT_RESOURCE` \| `NOT_AUTOMATABLE`. |
 | `url_pagina` | S \| NULL | | Página donde el adaptador descubre el recurso. |
@@ -261,15 +270,15 @@ Configuración **versionada** de cada padrón. Definición: [`tablas/Fuentes.jso
 | `config_extraccion` | M \| NULL | | `prefijo_preferido` (S), `max_candidatos` (N), `claves_obligatorias` (L\<S\>), `claves_conocidas` (L\<S\>). |
 | `config_reintentos` | M \| NULL | | `max_intentos` (N), `esperas_ms` (L\<N\>), `timeout_pedido_ms` (N), `timeout_consulta_ms` (N). |
 | `config_validacion` | M \| NULL | | `umbral_caida` (N, 0 a 1), `piso_registros` (N). |
+| `config_proteccion` | M \| NULL | | Protección de la Fuente ([ADR-0006](../docs/adr/0006-lectura-minimizada-y-proteccion-de-la-fuente.md)): `ventana_reutilizacion_s` (N, 900 en Ecogas) y `espera_tras_falla_s` (N, 60 en Ecogas). Nulo en una Fuente no automatizable. |
 | `limitaciones` | L\<S\> | ✔ | Textos que se agregan a toda Evaluación sobre esta Fuente. |
 | `activa` | BOOL | ✔ | Si se puede usar en nuevas Verificaciones. |
-| `vigente_desde` | S | ✔ | Desde cuándo rige esta versión. |
-| `vigente_hasta` | S \| NULL | | Hasta cuándo rigió (nulo en la versión vigente). |
+| `vigente_desde` | S | ✔ | Desde cuándo rige esta versión. Deja de regir cuando empieza la versión siguiente. |
 | `creada_en` | S | ✔ | Fecha de carga. |
 
 ### Categorias
 
-Catálogo de categorías de matrícula **para mostrar**. El algoritmo no lo usa para comparar: las reglas están en `TiposTrabajo`. **No tiene ningún campo de orden o nivel, a propósito** (INV-7). Definición: [`tablas/Categorias.json`](tablas/Categorias.json). Datos: [`seed/categorias.json`](seed/categorias.json).
+Catálogo de categorías de matrícula **para mostrar**. El algoritmo no lo usa para comparar: las reglas están en `TiposTrabajo`. **No tiene ningún campo de orden o nivel, a propósito** (INV-7). **No se versiona** (devolución v3): su clave es solo `categoria_id`, así que no podrían coexistir dos versiones, y no hace falta, porque la regla que importa vive en `TiposTrabajo`. Definición: [`tablas/Categorias.json`](tablas/Categorias.json). Datos: [`seed/categorias.json`](seed/categorias.json).
 
 | Clave | Atributo | Tipo |
 |---|---|---|
@@ -281,7 +290,6 @@ Catálogo de categorías de matrícula **para mostrar**. El algoritmo no lo usa 
 | `nombre` | S | ✔ | "Primera categoría". |
 | `alcance` | S | ✔ | Resumen en lenguaje claro de lo que habilita. |
 | `fundamento` | M | ✔ | `norma` (S), `articulo` (S), `cita` (S), `url` (S). |
-| `version` | N | ✔ | Versión del texto. |
 
 ### TiposTrabajo
 
@@ -299,15 +307,16 @@ Reglas de categoría, **versionadas**. Definición: [`tablas/TiposTrabajo.json`]
 | `codigo` | S | ✔ | Código corto para la documentación: `A1`, `A2`, `B`. |
 | `nombre` | S | ✔ | Nombre para el Cliente. |
 | `descripcion` | S | ✔ | Explicación en lenguaje claro. |
-| `condiciones` | L\<S\> | ✔ | Condiciones que asume el tipo; se muestran al Cliente y se copian como Limitación. |
+| `condiciones` | L\<S\> | ✔ | Condiciones técnicas del tipo, en lenguaje claro, con su respaldo normativo. |
+| `aplica_si` | L\<M\> | ✔ | Combinaciones de Condiciones decisivas que definen el tipo ([reglas § 3.5](../docs/reglas-de-categoria.md#35-condiciones-decisivas-cómo-se-describe-el-trabajo)). Cada mapa asocia un identificador de Condición decisiva con `SI` o `NO`; el tipo aplica si las respuestas cumplen **alguno** de los mapas. Una condición que no figura en un mapa no importa para ese caso (por ejemplo, `unica_vivienda` en un comercio). [`seed/tipos-trabajo.json`](seed/tipos-trabajo.json) es la única fuente de verdad y se valida con Zod al iniciar. |
 | `categorias_admitidas` | SS | ✔ | **Conjunto** de categorías que pueden hacer el trabajo. |
 | `fundamento` | L\<M\> | ✔ | Uno por categoría del catálogo: `categoria` (S), `admitida` (BOOL), `norma` (S), `articulo` (S), `cita` (S), `url` (S) y, opcionalmente, `nota` (S) con la explicación de por qué una categoría no está admitida. |
 | `limitaciones` | L\<S\> | ✔ | Limitaciones propias del tipo (puede ser una lista vacía). |
-| `tipo_recomendado_si_duda` | S \| NULL | | Tipo más restrictivo que se sugiere si el Cliente no sabe si cumple las condiciones (A1 → A2). |
 | `activo` | BOOL | ✔ | Si se ofrece en nuevas Verificaciones. |
-| `vigente_desde` | S | ✔ | |
-| `vigente_hasta` | S \| NULL | | |
+| `vigente_desde` | S | ✔ | Deja de regir cuando empieza la versión siguiente. |
 | `creado_en` | S | ✔ | |
+
+El campo `tipo_recomendado_si_duda` de la segunda entrega se elimina: lo reemplaza la regla del No sé sobre las Condiciones decisivas, que evalúa todos los Tipos de trabajo posibles en lugar de sugerir uno.
 
 ### Consultas
 
@@ -328,76 +337,87 @@ Reglas de categoría, **versionadas**. Definición: [`tablas/TiposTrabajo.json`]
 | `fuente_id` | S | ✔ | FK → `Fuentes`. |
 | `fuente_version` | N | ✔ | FK → `Fuentes`: versión de la configuración usada. |
 | `origen` | S | ✔ | `VERIFICATION` \| `REVALIDATION` (P3) \| `SEARCH` (P1). |
-| `matriculas_buscadas` | L\<S\> | ✔ | Matrículas que se buscaron. |
 | `estado` | S | ✔ | `IN_PROGRESS` \| `SUCCEEDED` \| `FAILED` \| `NOT_ATTEMPTED`. |
-| `motivo_falla` | S \| NULL | | Para `FAILED`: `SOURCE_UNAVAILABLE` \| `EXTRACTION_FAILED` \| `INTERRUPTED` (falla de MatriculAR, que no cuenta en la salud de la Fuente). Para `NOT_ATTEMPTED`: `SOURCE_NOT_AUTOMATABLE`. |
+| `motivo_falla` | S \| NULL | | Para `FAILED`: `SOURCE_UNAVAILABLE` \| `EXTRACTION_FAILED` \| `INTERRUPTED` (falla de MatriculAR, que no cuenta en la salud de la Fuente). Para `NOT_ATTEMPTED`: `SOURCE_NOT_AUTOMATABLE` \| `SOURCE_RATE_LIMITED` (rige la Protección de la Fuente después de una falla reciente; tampoco cuenta en la salud de la Fuente). |
 | `detalle_falla` | M \| NULL | | `validacion` (S: `V1`…`V5` o nulo), `descripcion` (S), `esperado` (S), `obtenido` (S). |
 | `iniciada_en` | S | ✔ | Momento del registro, **antes** del primer pedido. |
 | `plazo_maximo_en` | S | ✔ | Si la Consulta sigue `IN_PROGRESS` después de este momento, se lee como `FAILED` con motivo `INTERRUPTED`. |
 | `finalizada_en` | S \| ausente | | Momento en que terminó. **Se omite mientras la Consulta está `IN_PROGRESS`**, porque es clave del índice `exitosas-por-fuente` y DynamoDB no admite `NULL` en una clave de índice. |
 | `intentos` | L\<M\> | ✔ | Cada Intento: `numero` (N), `iniciado_en` (S), `duracion_ms` (N), `resultado` (S: `SUCCESS` o un motivo), `reintentable` (BOOL), `pedidos` (L\<M\>: `url`, `metodo`, `status`, `content_type`, `bytes`, `duracion_ms`, `error`). **Nunca el cuerpo de la respuesta.** Lista vacía si la Consulta es `NOT_ATTEMPTED`. |
 | `url_recurso` | S \| NULL | | URL del recurso efectivamente leído. |
-| `huella_recurso` | S \| NULL | | SHA-256 del recurso leído: identifica *qué versión* del padrón se leyó sin guardarlo. |
+| `formato_recurso` | S \| NULL | | Formato que reconoció el adaptador: `v2` (padrón embebido en el HTML, desde el 02/11/2026) o `v1` (archivo JavaScript, hasta el 26/09/2026). Nulo si la lectura falló. |
+| `huella_recurso` | S \| NULL | | SHA-256 del recurso leído. Permite **reconocer** si dos Consultas leyeron el mismo contenido o si el recurso cambió. **No permite reconstruirlo**: por eso cada Credencial guarda además sus `valores_fuente`. |
 | `bytes_recurso` | N \| NULL | | Tamaño del recurso. |
 | `registros_extraidos` | N \| NULL | | Cantidad de registros válidos. |
 | `resumen` | M \| NULL | | `por_categoria` (M), `por_provincia` (M): conteos sin datos personales. |
 | `claves_no_esperadas` | L\<S\> | ✔ | Claves nuevas detectadas en los registros (vacía si no hay). |
 | `exito_fuente_id` | S \| ausente | | Copia de `fuente_id` **solo** si `estado = SUCCEEDED`. Es la clave del índice disperso. |
+| `lectura_minimizada_ref` | S \| NULL | | Solo si `estado = SUCCEEDED`: referencia a la **Lectura minimizada** de esta Consulta. |
 
 Reglas de escritura:
 
 - Se crea con `estado = IN_PROGRESS` antes del primer pedido, con condición `attribute_not_exists(consulta_id)`.
 - Se finaliza con **una sola** actualización condicionada a `estado = IN_PROGRESS`. Después de eso **no cambia más**.
 
+**Lectura minimizada** ([ADR-0006](../docs/adr/0006-lectura-minimizada-y-proteccion-de-la-fuente.md)). Una Consulta exitosa conserva, por cada registro de la Fuente, los campos que forman una Credencial (Identificador interno de la Fuente, nombre, categoría, provincia y localidad), tal como vinieron y normalizados, **sin email, teléfono ni barrio**. Sirve para responder otras Verificaciones durante la Ventana de reutilización (15 minutos) sin volver a descargar el padrón, y **se descarta al día siguiente**. No es evidencia: la evidencia sigue siendo la Credencial de cada gasista verificado. Con unos 5.000 registros ocupa del orden de 1 MB, **más que el límite de 400 KB de un ítem de DynamoDB**, así que no puede ser un atributo de `Consultas`. En el recorrido local vive en memoria; dónde se guarda en AWS (por ejemplo, un objeto en S3 con vencimiento automático) se decide al implementar la persistencia (09/11).
+
+**Ventana de reutilización y Protección de la Fuente.** Antes de leer la Fuente, el caso de uso busca la última Consulta de la Fuente (AP-25): si es `SUCCEEDED` y tiene menos de 15 minutos, la reutiliza; si es `FAILED` y tiene menos de un minuto, registra una Consulta `NOT_ATTEMPTED` con motivo `SOURCE_RATE_LIMITED`, sin Intentos.
+
 ### ResultadosVerificacion
 
-Un ítem por **matrícula buscada** en cada Consulta. Definición: [`tablas/ResultadosVerificacion.json`](tablas/ResultadosVerificacion.json). Ejemplos: [`seed/ejemplos-ficticios/resultados-verificacion.json`](seed/ejemplos-ficticios/resultados-verificacion.json).
+Un ítem por **Verificación** que se apoyó en cada Consulta: qué permitió afirmar esa lectura sobre el Gasista buscado. Definición: [`tablas/ResultadosVerificacion.json`](tablas/ResultadosVerificacion.json). Ejemplos: [`seed/ejemplos-ficticios/resultados-verificacion.json`](seed/ejemplos-ficticios/resultados-verificacion.json).
+
+> **Clave pendiente de rediseño (ADR-0007).** Antes la clave era (`consulta_id`, `matricula`). Como la Fuente no publica la matrícula, la clave candidata es (`consulta_id`, `verificacion_id`), con un índice por `fuente_gasista`. Se confirma el 9/11.
 
 | Clave | Atributo | Tipo |
 |---|---|---|
 | PK | `consulta_id` | S |
-| SK | `matricula` | S |
+| SK | `verificacion_id` | S (candidata) |
 
 | Índice (GSI) | PK | SK | Proyección | Para qué |
 |---|---|---|---|---|
-| `por-matricula` | `fuente_matricula` | `determinado_en` | ALL | Historial de resultados de una matrícula, incluidos `NOT_FOUND` y `UNVERIFIABLE` (que no generan Credencial). |
+| `por-gasista` | `fuente_gasista` | `determinado_en` | ALL | Historial de resultados de un gasista buscado por nombre y localidad, incluidos `NOT_FOUND`, `TOO_MANY_MATCHES` y `UNVERIFIABLE` (que no generan Credencial). Solo tiene ítems si la búsqueda incluyó la localidad. |
 
 | Campo | Tipo | Oblig. | Descripción |
 |---|---|---|---|
 | `consulta_id` | S | ✔ | FK → `Consultas`. |
-| `matricula` | S | ✔ | Matrícula buscada, normalizada. |
+| `verificacion_id` | S | ✔ | FK → `Verificaciones`. |
 | `fuente_id` | S | ✔ | FK → `Fuentes`. |
-| `fuente_matricula` | S | ✔ | `<fuente_id>#<matricula>`. |
-| `resultado` | S | ✔ | `FOUND` \| `NOT_FOUND` \| `UNVERIFIABLE`. |
+| `gasista_buscado` | M | ✔ | `nombre_apellido` (S) y `localidad` (S \| NULL), normalizados. |
+| `fuente_gasista` | S \| ausente | | `<fuente_id>#<nombre>#<localidad>`, solo si la búsqueda incluyó la localidad (clave del índice). |
+| `resultado` | S | ✔ | `FOUND` \| `NOT_FOUND` \| `TOO_MANY_MATCHES` \| `UNVERIFIABLE`. |
+| `cantidad_coincidencias` | N \| NULL | | Si la Consulta fue exitosa: cuántos registros coincidieron (en `TOO_MANY_MATCHES`, más de 10). |
 | `determinado_en` | S | ✔ | Igual a `finalizada_en` de la Consulta. |
-| `credencial_evidencia_id` | S \| NULL | | Si es `FOUND`: FK → `Credenciales` (junto con `fuente_matricula`). |
+| `credenciales_ref` | L\<M\> | ✔ | Si es `FOUND`: de 1 a 10 referencias a `Credenciales` (`fuente_gasista` y `evidencia_id`). Vacía en los demás casos. |
 
 ### Credenciales
 
-**Evidencia inmutable** de que una matrícula figura en una Fuente. El historial de una matrícula se lee con la clave de partición. Definición: [`tablas/Credenciales.json`](tablas/Credenciales.json). Ejemplos: [`seed/ejemplos-ficticios/credenciales.json`](seed/ejemplos-ficticios/credenciales.json).
+**Evidencia inmutable** de que un gasista figura en una Fuente. El historial de un gasista (mismo nombre y localidad) se lee con la clave de partición. Definición: [`tablas/Credenciales.json`](tablas/Credenciales.json). Ejemplos: [`seed/ejemplos-ficticios/credenciales.json`](seed/ejemplos-ficticios/credenciales.json).
+
+> **Clave pendiente de rediseño (ADR-0007).** Antes la partición era `fuente_matricula` (`ecogas#99001`). La candidata es `fuente_gasista` = `<fuente_id>#<nombre_normalizado>#<localidad_normalizada>`. Dos homónimos de la misma localidad (4 casos en la lectura del 02/11) compartirían partición, y se distinguen por `valores_fuente`. Se confirma el 9/11.
 
 | Clave | Atributo | Tipo |
 |---|---|---|
-| PK | `fuente_matricula` | S (`ecogas#99001`) |
-| SK | `evidencia_id` | S (`<consultada_en>#<consulta_id>`: se ordena por fecha y es única aunque haya dos Consultas en el mismo milisegundo) |
+| PK | `fuente_gasista` | S (`ecogas#PERSONA FICTICIA UNO#RIO CUARTO`, candidata) |
+| SK | `evidencia_id` | S (`<consultada_en>#<consulta_id>#<id_fuente>`: se ordena por fecha y es única aunque haya dos Consultas en el mismo milisegundo o dos homónimos en la misma localidad) |
 
-Índices secundarios: ninguno. La última evidencia se obtiene con `Query` en orden descendente y `Limit 1`.
+Índices secundarios: ninguno. La última evidencia se obtiene con `Query` en orden descendente.
 
 | Campo | Tipo | Oblig. | Descripción |
 |---|---|---|---|
-| `fuente_matricula` | S | ✔ | Clave de partición. |
+| `fuente_gasista` | S | ✔ | Clave de partición (candidata). |
 | `evidencia_id` | S | ✔ | Clave de ordenamiento. |
 | `fuente_id` | S | ✔ | FK → `Fuentes`. |
-| `matricula` | S | ✔ | Matrícula normalizada. |
 | `consulta_id` | S | ✔ | FK → `Consultas`: la Consulta que la produjo. |
 | `consultada_en` | S | ✔ | Momento en que se obtuvo el recurso. |
-| `nombre_informado` | S | ✔ | Nombre y apellido tal como los publica la Fuente, normalizados. Se guarda para que el Cliente confirme la identidad del gasista. |
+| `valores_fuente` | M | ✔ | Los campos `id`, `nombre_apellido`, `categoria`, `provincia` y `localidad` **tal como los publicó la Fuente**, antes de normalizar (en el formato v2, `categoria`, `provincia` y `localidad` son mapas). El `id` es el **Identificador interno de la Fuente**: se conserva, pero nunca se presenta como matrícula (INV-16). Permite reconstruir exactamente qué dato leyó el adaptador sin guardar el padrón (devolución v3). **Nunca** incluye email, teléfono ni barrio. |
+| `nombre_informado` | S | ✔ | Nombre y apellido tal como los publica la Fuente, normalizados. Identifica al gasista junto con la localidad, y el Cliente lo confirma con el carné. |
 | `categoria_informada` | S | ✔ | Tal como la publica la Fuente (`"1"`, `"2"`, `"3"`, o vacío). |
 | `provincia_informada` | S | ✔ | Código de provincia (el domicilio del matriculado). |
-| `localidad_informada` | S | ✔ | |
+| `localidad_informada` | S | ✔ | Normalizada. Forma parte de la identificación. |
 | `creada_en` | S | ✔ | |
 
-Reglas: se escribe **una sola vez**, con la condición `attribute_not_exists(fuente_matricula)`. Nunca se actualiza ni se borra (INV-1). **No existe ningún atributo de contacto** (INV-9).
+Reglas: se escribe **una sola vez**, con la condición `attribute_not_exists(evidencia_id)`. Nunca se actualiza ni se borra (INV-1). **No existe ningún atributo de contacto** (INV-9).
 
 ### Verificaciones
 
@@ -409,7 +429,7 @@ Cada **pedido** de un Cliente, o del propio sistema en P1 y P2: agrupa la Consul
 
 | Índice (GSI) | PK | SK | Proyección | Para qué |
 |---|---|---|---|---|
-| `por-matricula` | `fuente_matricula` | `solicitada_en` | ALL | Verificaciones de una matrícula (historial en la interfaz). |
+| `por-gasista` | `fuente_gasista` | `solicitada_en` | ALL | Verificaciones de un gasista buscado con nombre y localidad (historial en la interfaz). Clave candidata, se confirma el 9/11. |
 
 | Campo | Tipo | Oblig. | Descripción |
 |---|---|---|---|
@@ -418,22 +438,21 @@ Cada **pedido** de un Cliente, o del propio sistema en P1 y P2: agrupa la Consul
 | `origen` | S | ✔ | `DIRECT` (P0) \| `SEARCH` (P1) \| `HIRING` (P2). |
 | `solicitante_id` | S \| NULL | | FK → `Usuarios` (P2). Nulo en el P0, donde la consulta es anónima. |
 | `fuente_id` | S | ✔ | FK → `Fuentes`. |
-| `matricula` | S | ✔ | |
-| `fuente_matricula` | S | ✔ | |
-| `tipo_trabajo_id` | S | ✔ | FK → `TiposTrabajo`. |
-| `tipo_trabajo_version` | N | ✔ | FK → `TiposTrabajo` (versión vigente al pedir). |
-| `provincia_trabajo` | S | ✔ | Código de provincia donde se hará el trabajo. |
+| `gasista_buscado` | M | ✔ | `nombre_apellido` (S) y `localidad` (S \| NULL), normalizados, tal como los buscó el Cliente. |
+| `fuente_gasista` | S \| ausente | | `<fuente_id>#<nombre>#<localidad>`, solo si la búsqueda incluyó la localidad (clave del índice). |
+| `condiciones` | M | ✔ | Las cinco Condiciones decisivas tal como las respondió el Cliente: `comercio_o_industria`, `unica_vivienda`, `consumo_total_hasta_5m3h`, `artefacto_mas_de_50000` y `gas_natural_red_baja_presion`, cada una `SI` \| `NO` \| `NO_SE`. |
+| `tipos_trabajo_posibles` | L\<M\> | ✔ | FK → `TiposTrabajo`: `tipo_trabajo_id` y `version` de cada Tipo de trabajo que dejan abiertos las condiciones (vigentes al pedir). Nunca vacía: si no queda ninguno, el pedido se rechaza con `422 WORK_NOT_COVERED` y no se crea Verificación. |
+| `provincia_trabajo` | S | ✔ | Código de provincia donde se hará el trabajo. Se usa para la Limitación de zona. |
 | `consulta_id` | S | ✔ | FK → `Consultas`. |
-| `resultado_verificacion` | S | ✔ | `FOUND` \| `NOT_FOUND` \| `UNVERIFIABLE`. |
-| `credencial_ref` | M \| NULL | | `fuente_matricula` y `evidencia_id` de la Credencial nueva. Solo si es `FOUND`. |
-| `evaluacion_id` | S \| NULL | | FK → `Evaluaciones`. Solo si hay Credencial. |
-| `resultado_evaluacion` | S \| NULL | | Copia del resultado, para listar sin leer la Evaluación. |
-| `credencial_previa_ref` | M \| NULL | | Si es `UNVERIFIABLE`: la última Credencial anterior, como contexto. |
+| `consulta_reutilizada` | BOOL | ✔ | `true` si la Verificación se apoya en una Consulta anterior, dentro de la Ventana de reutilización. |
+| `resultado_verificacion` | S | ✔ | `FOUND` \| `NOT_FOUND` \| `TOO_MANY_MATCHES` \| `UNVERIFIABLE`. |
+| `coincidencias` | L\<M\> | ✔ | Solo si es `FOUND`: de 1 a 10 elementos con `credencial_ref` (`fuente_gasista` y `evidencia_id`), `evaluacion_id` (FK → `Evaluaciones`) y `resultado_evaluacion` (copia, para listar sin leer la Evaluación). Vacía en los demás casos. MatriculAR no elige entre ellas (INV-17). |
+| `credenciales_previas_ref` | L\<M\> | ✔ | Si es `UNVERIFIABLE`: las últimas Credenciales anteriores del mismo nombre y localidad, como contexto. Vacía si no hay. |
 | `mensaje` | S | ✔ | Texto principal que se mostró al Cliente. |
 
 ### Evaluaciones
 
-Resultado de aplicar un Tipo de trabajo a una Credencial, con **copia de la regla aplicada**. Definición: [`tablas/Evaluaciones.json`](tablas/Evaluaciones.json). Ejemplos: [`seed/ejemplos-ficticios/evaluaciones.json`](seed/ejemplos-ficticios/evaluaciones.json).
+Resultado de aplicar a una Credencial los Tipos de trabajo posibles, con **copia de cada regla aplicada**. Definición: [`tablas/Evaluaciones.json`](tablas/Evaluaciones.json). Ejemplos: [`seed/ejemplos-ficticios/evaluaciones.json`](seed/ejemplos-ficticios/evaluaciones.json).
 
 | Clave | Atributo | Tipo |
 |---|---|---|
@@ -445,16 +464,15 @@ Resultado de aplicar un Tipo de trabajo a una Credencial, con **copia de la regl
 |---|---|---|---|
 | `evaluacion_id` | S | ✔ | ULID. |
 | `verificacion_id` | S | ✔ | FK → `Verificaciones`. |
-| `credencial_ref` | M | ✔ | FK → `Credenciales`: `fuente_matricula` y `evidencia_id`. |
-| `tipo_trabajo_id` | S | ✔ | FK → `TiposTrabajo`. |
-| `tipo_trabajo_version` | N | ✔ | |
+| `credencial_ref` | M | ✔ | FK → `Credenciales`: `fuente_gasista` y `evidencia_id`. Una Evaluación por Credencial. |
+| `condiciones` | M | ✔ | **Copia** de las Condiciones decisivas respondidas. |
 | `fuente_version` | N | ✔ | Versión de la Fuente de la que se tomaron el Área de concesión y las Limitaciones. |
-| `regla_aplicada` | M | ✔ | **Copia**: `categorias_admitidas` (SS), `condiciones` (L\<S\>), `fundamento` (L\<M\>). |
 | `provincia_trabajo` | S | ✔ | |
-| `area_concesion_aplicada` | L\<S\> | ✔ | **Copia** del Área de concesión usada. |
-| `criterios` | M | ✔ | `categoria`: {`resultado`, `categoria_informada`, `fundamento`}; `zona`: {`resultado`, `fundamento`}. Resultado: `MET` \| `NOT_MET` \| `INDETERMINATE`. |
-| `resultado` | S | ✔ | `COMPATIBLE` \| `INCOMPATIBLE` \| `INDETERMINATE`. |
-| `limitaciones` | L\<S\> | ✔ | Textos finales, incluida siempre la de Vigencia. |
+| `area_concesion_aplicada` | L\<S\> | ✔ | **Copia** del Área de concesión usada para el texto de la Limitación de zona. |
+| `resultados_por_tipo` | L\<M\> | ✔ | Uno por Tipo de trabajo posible: `tipo_trabajo_id` (S), `tipo_trabajo_version` (N), `regla_aplicada` (M, **copia**: `categorias_admitidas`, `condiciones`, `fundamento`), `criterio_categoria` (M: `resultado` `MET` \| `NOT_MET` \| `INDETERMINATE`, `categoria_informada`, `fundamento`) y `resultado` (S). No hay Criterio de zona ([ADR-0005](../docs/adr/0005-zona-como-limitacion-en-el-p0.md)). |
+| `condiciones_que_resuelven` | L\<S\> | ✔ | Condiciones decisivas respondidas No sé cuyo valor cambiaría el resultado. Lista vacía si no hay. |
+| `resultado` | S | ✔ | `COMPATIBLE` \| `INCOMPATIBLE` \| `INDETERMINATE`, según la regla del No sé ([modelo § 6.2](../docs/modelo-de-dominio.md#62-resultado-global)). |
+| `limitaciones` | L\<S\> | ✔ | Textos finales, incluidas siempre la de Vigencia y la de zona. |
 | `evaluada_en` | S | ✔ | |
 
 ---
@@ -484,6 +502,8 @@ GSI `por-usuario`: PK `usuario_id` → el perfil de un usuario.
 | `creado_en`, `actualizado_en` | S | ✔ | |
 
 ### Vinculos
+
+> **P1, fuera de la entrega final.** Se conserva el diseño de la segunda entrega. Como Ecogas no publica la matrícula ([ADR-0007](../docs/adr/0007-identificacion-por-nombre-y-localidad.md)), si se implementara, `fuente_matricula` pasaría a ser la clave del **registro** del gasista (`fuente_gasista`), y lo mismo en `TitularesMatricula`.
 
 | Clave | Atributo | Tipo |
 |---|---|---|
@@ -609,17 +629,17 @@ Todas las lecturas del sistema, con la tabla o el índice que las resuelve. **Ni
 | AP-01 | P0 | Versión vigente de una Fuente | `Fuentes` | `Query` PK=`fuente_id`, descendente, `Limit 1` |
 | AP-02 | P0 | Listar Fuentes activas | `Fuentes` | `Scan` (tabla de configuración) y filtrar la última versión |
 | AP-03 | P0 | Listar Categorías | `Categorias` | `Scan` (3 ítems) |
-| AP-04 | P0 | Versión vigente de un Tipo de trabajo | `TiposTrabajo` | `Query` PK=`tipo_trabajo_id`, descendente, `Limit 1` |
+| AP-04 | P0 | Versión vigente de cada Tipo de trabajo (para deducir los Tipos posibles) | `TiposTrabajo` | `Query` PK=`tipo_trabajo_id`, descendente, `Limit 1`, por cada tipo (son tres) |
 | AP-05 | P0 | Listar Tipos de trabajo activos | `TiposTrabajo` | `Scan` (tabla de configuración) y filtrar |
 | AP-06 | P0 | Registrar una Consulta `IN_PROGRESS` | `Consultas` | `PutItem` condicional |
 | AP-07 | P0 | Última Consulta exitosa de una Fuente (V5) | GSI `exitosas-por-fuente` | `Query` PK=`exito_fuente_id`, descendente, `Limit 1` |
-| AP-08 | P0 | Finalizar una Consulta y guardar resultados, Credencial, Evaluación y Verificación | varias | `TransactWriteItems` ([§ 10](#10-integridad-referencial-y-escrituras-atómicas)) |
-| AP-09 | P0 | Última Credencial de una matrícula | `Credenciales` | `Query` PK=`fuente_matricula`, descendente, `Limit 1` |
-| AP-10 | P0 | Historial de Credenciales de una matrícula | `Credenciales` | `Query` PK=`fuente_matricula` |
-| AP-11 | P0 | Historial de resultados de una matrícula | GSI `por-matricula` (ResultadosVerificacion) | `Query` PK=`fuente_matricula` |
+| AP-08 | P0 | Finalizar una Consulta y guardar resultados, Credenciales, Evaluaciones y Verificación | varias | `TransactWriteItems` ([§ 10](#10-integridad-referencial-y-escrituras-atómicas)) |
+| AP-09 | P0 | Últimas Credenciales de un gasista (nombre y localidad) | `Credenciales` | `Query` PK=`fuente_gasista`, descendente |
+| AP-10 | P0 | Historial de Credenciales de un gasista | `Credenciales` | `Query` PK=`fuente_gasista` |
+| AP-11 | P0 | Historial de resultados de un gasista | GSI `por-gasista` (ResultadosVerificacion) | `Query` PK=`fuente_gasista` |
 | AP-12 | P0 | Obtener una Verificación | `Verificaciones` | `GetItem` |
-| AP-13 | P0 | Obtener la Evaluación de una Verificación | `Evaluaciones` | `GetItem` por `evaluacion_id` |
-| AP-14 | P0 | Verificaciones de una matrícula | GSI `por-matricula` (Verificaciones) | `Query` |
+| AP-13 | P0 | Obtener las Evaluaciones de una Verificación | `Evaluaciones` | `BatchGetItem` por los `evaluacion_id` de sus Coincidencias |
+| AP-14 | P0 | Verificaciones de un gasista | GSI `por-gasista` (Verificaciones) | `Query` |
 | AP-15 | P0 | Consultas de una Fuente por fecha (monitoreo) | GSI `por-fuente` | `Query` con rango de fechas |
 | AP-16 | P1 | Perfil del usuario autenticado | GSI `por-usuario` (Profesionales) | `Query` |
 | AP-17 | P1 | Vínculos de un Profesional | `Vinculos` | `Query` PK=`profesional_id` |
@@ -630,6 +650,9 @@ Todas las lecturas del sistema, con la tabla o el índice que las resuelve. **Ni
 | AP-22 | P2 | Transición de estado de una Contratación | `Contrataciones` | `UpdateItem` condicional |
 | AP-23 | P2 | Reseñas de un Profesional | GSI `por-profesional` (Resenas) | `Query` |
 | AP-24 | P2 | Usuario por id | `Usuarios` | `GetItem` |
+| AP-25 | P0 | Última Consulta de una Fuente (Ventana de reutilización y Protección de la Fuente) | GSI `por-fuente` | `Query` PK=`fuente_id`, descendente, `Limit` chico, y se toma la última `SUCCEEDED` o `FAILED` |
+
+Los módulos de P1 y P2 (AP-16 a AP-24) quedan fuera del alcance de la entrega final ([módulos](../docs/modulos.md)). Los patrones AP-09 a AP-14 usan la clave candidata `fuente_gasista`, que se confirma el 9/11 ([ADR-0007](../docs/adr/0007-identificacion-por-nombre-y-localidad.md)).
 
 ---
 
@@ -637,18 +660,18 @@ Todas las lecturas del sistema, con la tabla o el índice que las resuelve. **Ni
 
 Como DynamoDB no tiene claves foráneas, la integridad la garantiza la aplicación con tres mecanismos:
 
-1. **Validación previa.** Antes de crear una Verificación se leen la Fuente y el Tipo de trabajo vigentes (AP-01 y AP-04). Si no existen, el pedido se rechaza con `404`; si existen pero no están activos, con `400`. En los dos casos no se escribe nada.
+1. **Validación previa.** Antes de crear una Verificación se leen la Fuente y los Tipos de trabajo vigentes (AP-01 y AP-04). Si la Fuente no existe, el pedido se rechaza con `404`; si existe pero no está activa, con `400`. Si las Condiciones decisivas no dejan ningún Tipo de trabajo posible, con `422 WORK_NOT_COVERED`. En todos los casos no se escribe nada y no se consulta la Fuente.
 2. **Transacción al finalizar.** Una vez leída la Fuente, se escribe todo junto con `TransactWriteItems`, sin que puedan quedar estados intermedios:
    - `UpdateItem` sobre `Consultas`: finalizar, con la condición `estado = IN_PROGRESS`;
-   - `PutItem` sobre `ResultadosVerificacion`, uno por matrícula;
-   - `PutItem` sobre `Credenciales`, si es `FOUND`, con `attribute_not_exists`;
-   - `PutItem` sobre `Evaluaciones`, si hay Credencial, con `attribute_not_exists`;
+   - `PutItem` sobre `ResultadosVerificacion`, uno por Verificación;
+   - `PutItem` sobre `Credenciales`, uno por Coincidencia si es `FOUND` (de 1 a 10), con `attribute_not_exists`;
+   - `PutItem` sobre `Evaluaciones`, una por Credencial, con `attribute_not_exists`;
    - `PutItem` sobre `Verificaciones`, con `attribute_not_exists`.
 
    Si la transacción falla, no queda ninguna de esas escrituras. La Consulta queda `IN_PROGRESS` y, al vencer su plazo, se lee como `FAILED` con motivo `INTERRUPTED`, así el intento sigue registrado.
 3. **Escrituras condicionales.** Las condiciones `attribute_not_exists` hacen que la evidencia sea **inmutable** y que un reintento del mismo paso sea **idempotente**: no pisa lo que ya estaba escrito.
 
-En la revalidación de P3, con muchas matrículas por Consulta, los Resultados se escriben en lotes (`BatchWriteItem`), cada uno idempotente. La Consulta se finaliza al final.
+En la revalidación de P3, con muchos gasistas por Consulta, los Resultados se escriben en lotes (`BatchWriteItem`), cada uno idempotente. La Consulta se finaliza al final.
 
 ---
 
@@ -656,12 +679,15 @@ En la revalidación de P3, con muchas matrículas por Consulta, los Resultados s
 
 | Dato | ¿Se guarda? | Dónde | Por qué |
 |---|---|---|---|
-| Matrícula | Sí | `Credenciales`, `ResultadosVerificacion`, `Verificaciones` | Es el objeto de la verificación. |
-| Nombre y apellido que publica la Fuente | **Sí** | `Credenciales.nombre_informado` | El Cliente confirma que la matrícula pertenece a la persona que tiene enfrente. |
-| Categoría, provincia y localidad informadas | Sí | `Credenciales` | Necesarias para evaluar y explicar. |
+| Número de matrícula | **No** (la Fuente no lo publica) | — | Ecogas no lo publica; el `id` del padrón es un identificador interno ([ADR-0007](../docs/adr/0007-identificacion-por-nombre-y-localidad.md)). |
+| Nombre y apellido buscados por el Cliente | Sí | `Verificaciones.gasista_buscado`, `ResultadosVerificacion.gasista_buscado` | Es el objeto de la verificación: identifica al gasista junto con la localidad. |
+| Nombre y apellido que publica la Fuente | **Sí** | `Credenciales.nombre_informado` y `valores_fuente` | Identifica al gasista, y el Cliente lo confirma con el carné. |
+| Identificador interno de la Fuente (`id`) | Sí | `Credenciales.valores_fuente` | Para reconstruir qué registro leyó el adaptador. Nunca se muestra como matrícula. |
+| Categoría, provincia y localidad informadas | Sí | `Credenciales` (normalizadas y en `valores_fuente`, tal como vinieron) | Necesarias para evaluar, identificar y explicar, y para reconstruir qué leyó el adaptador. |
+| Lectura minimizada (identificador interno, nombre, categoría, provincia y localidad de cada registro) | **Temporalmente** | Asociada a la Consulta exitosa | Responde las Verificaciones de los 15 minutos siguientes sin volver a descargar el padrón. **Se descarta al día siguiente** y nunca tiene datos de contacto ([ADR-0006](../docs/adr/0006-lectura-minimizada-y-proteccion-de-la-fuente.md)). |
 | Email que publica la Fuente | **No** | — | Solo se usa **en memoria** para enviar el código del Vínculo (P1). |
 | Teléfono y barrio que publica la Fuente | **No** | — | No aportan a la verificación. |
-| Padrón completo | **No** | — | Se procesa en memoria. Solo se guardan la huella SHA-256 y los conteos ([ADR-0002](../docs/adr/0002-consulta-bajo-demanda-sin-copia-del-padron.md)). |
+| Padrón completo, con datos de contacto | **No** | — | Se procesa en memoria. De la Consulta se guardan la huella SHA-256, los conteos y la Lectura minimizada temporal ([ADR-0002](../docs/adr/0002-consulta-bajo-demanda-sin-copia-del-padron.md), modificado por el [ADR-0006](../docs/adr/0006-lectura-minimizada-y-proteccion-de-la-fuente.md)). |
 | Cuerpo de las respuestas HTTP | **No** | — | Solo metadatos del pedido. |
 | Cuenta del usuario (nombre, email) | Sí (P2) | `Usuarios` | Dato propio del usuario, necesario para operar su cuenta. |
 | Contraseñas | **No** | — | Las administra Cognito. |
@@ -673,11 +699,12 @@ En la revalidación de P3, con muchas matrículas por Consulta, los Resultados s
 
 | Archivo | Contenido | ¿Se carga en qué entornos? |
 |---|---|---|
-| [`seed/fuentes.json`](seed/fuentes.json) | Configuración real de `ecogas` y `metrogas` (versión 1). | Todos. |
-| [`seed/categorias.json`](seed/categorias.json) | Catálogo de las 3 categorías con su cita de la NAG-200. | Todos. |
-| [`seed/tipos-trabajo.json`](seed/tipos-trabajo.json) | Los 3 Tipos de trabajo (A1, A2, B), versión 1, con fundamento. | Todos. |
+| [`seed/fuentes.json`](seed/fuentes.json) | Configuración real de `ecogas` y `metrogas` (versión 1), con la Protección de la Fuente. | Todos. |
+| [`seed/categorias.json`](seed/categorias.json) | Catálogo de las 3 categorías con su cita de la NAG-200 (sin versión). | Todos. |
+| [`seed/tipos-trabajo.json`](seed/tipos-trabajo.json) | Los 3 Tipos de trabajo (A1, A2, B), con fundamento y Condiciones decisivas. Es la **única fuente de verdad** de las reglas: el dominio lo carga y lo valida con Zod al iniciar. | Todos. |
+| [`seed/condiciones-decisivas.json`](seed/condiciones-decisivas.json) | Las cinco Condiciones decisivas: identificador, orden, pregunta y ayuda para el Cliente, y su cita. Como las provincias, es un catálogo que se empaqueta con las funciones. | Se empaqueta con el código. |
 | [`seed/provincias.json`](seed/provincias.json) | Catálogo de las 24 provincias (incluida la Ciudad Autónoma de Buenos Aires), con código y nombre. Es un catálogo estático que se empaqueta con las funciones, no una tabla. | Se empaqueta con el código. |
-| [`seed/ejemplos-ficticios/`](seed/ejemplos-ficticios/) | Ítems de ejemplo de `Consultas`, `ResultadosVerificacion`, `Credenciales`, `Verificaciones` y `Evaluaciones` para los escenarios S1, S2, S6, S7 y S9 del [modelo de dominio](../docs/modelo-de-dominio.md#9-escenarios). | **Ninguno.** Son documentación y fixtures de tests. **Nunca se cargan en la base de un entorno** (INV-12: el sistema distingue lo que puede conocer de lo que solo simula). |
+| [`seed/ejemplos-ficticios/`](seed/ejemplos-ficticios/) | Ítems de ejemplo de `Consultas`, `ResultadosVerificacion`, `Credenciales`, `Verificaciones` y `Evaluaciones` para los escenarios S1, S2, S6, S7, S9 y S16 del [modelo de dominio](../docs/modelo-de-dominio.md#9-escenarios). | **Ninguno.** Son documentación y fixtures de tests. **Nunca se cargan en la base de un entorno** (INV-12: el sistema distingue lo que puede conocer de lo que solo simula). |
 
 Los archivos de seed son **listas de ítems en JSON plano**. El script de carga (etapa de implementación) los convierte al formato de DynamoDB y los escribe con `BatchWriteItem`. Para cambiar una regla se agrega un archivo o ítem con una **nueva versión**; nunca se edita una versión que ya se cargó.
 
@@ -687,7 +714,7 @@ Los archivos de seed son **listas de ítems en JSON plano**. El script de carga 
 
 - **Modo de facturación:** `PAY_PER_REQUEST` (bajo demanda) en todas las tablas. No hay que estimar capacidad, y con el volumen de un proyecto académico el costo es de centavos (en AWS real lo cubren los créditos del Free plan; ver [arquitectura](../docs/arquitectura.md#7-entornos-y-costos)).
 - **Tamaño de los ítems:** el más grande es la Consulta, con hasta 3 Intentos y unos 20 pedidos cada uno, que queda muy por debajo del límite de 400 KB de DynamoDB.
-- **Volumen esperado:** una Verificación genera de 3 a 5 ítems de unos pocos KB (Consulta, Resultado y Verificación, más Credencial y Evaluación si la matrícula figura). Mil Verificaciones ocupan del orden de 10 MB.
+- **Volumen esperado:** una Verificación genera de 3 a 5 ítems de unos pocos KB (Consulta, Resultado y Verificación, más una Credencial y una Evaluación por Coincidencia). Mil Verificaciones ocupan del orden de 10 MB. La Lectura minimizada (del orden de 1 MB por Consulta exitosa) no cuenta: se descarta al día siguiente.
 - **Retención:** en el P0 se conserva todo, porque la evidencia histórica es parte del valor del sistema. La política de retención (por ejemplo, archivar Consultas de más de un año) se define en la fase 2.
 - **Backups:** la recuperación a un punto en el tiempo (PITR) queda desactivada en el P0 y se evalúa para AWS real en la etapa 4.
 
@@ -718,6 +745,7 @@ database/
     ├── fuentes.json
     ├── categorias.json
     ├── tipos-trabajo.json
+    ├── condiciones-decisivas.json
     ├── provincias.json
     └── ejemplos-ficticios/            solo documentación y tests; nunca se cargan
         ├── README.md

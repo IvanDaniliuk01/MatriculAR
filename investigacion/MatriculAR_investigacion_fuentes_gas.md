@@ -24,6 +24,7 @@
 > | E9 | 4, 5 | URL fija del chunk y patrón de extracción `{"id"…"barrio":"…"}`; padrón de 4.512 registros. | Verificación del 26/09/2026: la URL fija devuelve **404** (con una página HTML), el patrón encuentra **0 registros** porque cambió el orden de las claves, y parsear fragmento por fragmento pierde **342 registros** con tildes o Ñ sin avisar. El script original hoy informaría "0 matriculados", exactamente el error que el tutor advirtió. El padrón actual tiene **5.031 registros**. El adaptador de diseño descubre la URL a partir del HTML y aplica cinco validaciones. | [Fuentes y adaptadores](../docs/fuentes-y-adaptadores.md) |
 > | E10 | 9.1 | D4: padrones simulados detrás de una interfaz, con un mock configurable. | Adaptadores **reales**: Ecogas (consultable automáticamente) y MetroGAS (no automatizable, responde `UNVERIFIABLE` sin hacer pedidos). No hay ninguna Fuente simulada entre los datos del producto; las simulaciones quedan solo en los tests. | [Arquitectura](../docs/arquitectura.md) |
 > | E11 | 3 | El diferencial de MatriculAR es la revalidación continua más el ciclo de contratación. | El diferencial es responder, **con evidencia fechada y cita normativa**, si una matrícula es compatible con un **Tipo de trabajo concreto**, y decir explícitamente lo que no se puede afirmar. La revalidación y la contratación se apoyan sobre ese núcleo. | [README](../README.md) |
+> | E12 | 4, 5, 7 | El campo `id` del padrón de Ecogas se presentó como número de matrícula ("ID 91", "`id` (matrícula)"). | **El campo `id` es un identificador interno; Ecogas no publica la matrícula.** Verificación del 02/11/2026: los 4.836 registros tienen `id` 1, 2, 3… 4836, consecutivos y sin huecos; ninguna otra clave contiene la matrícula, y el buscador oficial filtra por provincia, localidad, categoría y nombre, nunca por matrícula. Se había afirmado sin verificarlo. MatriculAR identifica al gasista por **nombre y localidad**, y toda Credencial de Ecogas lo informa como Limitación. | [ADR-0007](../docs/adr/0007-identificacion-por-nombre-y-localidad.md), [Fuentes y adaptadores](../docs/fuentes-y-adaptadores.md) |
 
 ---
 
@@ -100,6 +101,8 @@ Para cada distribuidora, se repitió el mismo procedimiento:
 | Formato de datos | Texto plano dentro del `.js`, con pares `"clave":"valor"` (matrícula, nombre y apellido, categoría, provincia, localidad, correo electrónico, teléfono) |
 | Estabilidad de la fuente | **Baja**: el nombre del archivo (`3182-ad3160686a0b7005.js`) incluye un hash que cambia en cada deploy del sitio. La URL exacta no es estable en el tiempo — habría que volver a ubicar el archivo correcto en cada actualización de Ecogas |
 
+> 📝 **Fe de erratas E12:** el campo `id` no es la matrícula: es un identificador interno de la publicación. Ecogas no publica el número de matrícula.
+
 **Campos que devuelve** (confirmados mediante la prueba técnica de la Sección 5): `id` (matrícula), `nombre_apellido` (nombre completo, sin separar en nombre/apellido), `categoria`, `provincia`, `localidad`, `correo_electronico`, `telefono`, `barrio`.
 
 **Campos que NO devuelve:** vigencia/estado de la matrícula, fecha de última actualización del padrón.
@@ -158,6 +161,8 @@ Veredicto: No corresponde: matriculado en otra jurisdicción
 Este resultado es una instancia **real y ejecutada** del caso "jurisdicción incorrecta" modelado en la Sección 7: un profesional con categoría suficiente (categoría 2) pero matriculado en una provincia distinta a la del trabajo solicitado (Córdoba vs. San Luis). Confirma en código, no solo en la teoría, por qué el modelo de Credencial necesita evaluar jurisdicción y categoría de forma conjunta, y no solo "¿está en algún padrón?".
 
 > 📝 **Fe de erratas E1 y E2:** esta conclusión es incorrecta. La provincia del padrón no es la zona habilitada, y la comparación numérica de categorías estaba invertida.**
+
+> 📝 **Fe de erratas E12:** en este párrafo, `id` (matrícula) es incorrecto: el `id` es un identificador interno y Ecogas no publica la matrícula.
 
 Esto confirma de forma concreta (no solo teórica) que Ecogas es automatizable con un mecanismo simple: sin captcha, sin autenticación, con datos estructurados y parseables directamente como JSON. Los campos confirmados son `id` (matrícula), `nombre_apellido` (nombre completo, sin separar), `categoria`, `provincia`, `localidad`, `correo_electronico`, `telefono` y `barrio` — ningún campo de vigencia, tal como se anticipaba en la Sección 4.
 
