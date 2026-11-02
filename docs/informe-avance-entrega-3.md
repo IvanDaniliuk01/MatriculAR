@@ -20,6 +20,7 @@
 - **Empezó la implementación.** El dominio de la Evaluación, la búsqueda del gasista y el extractor de Ecogas están en TypeScript, con **62 pruebas** en Vitest y CI en GitHub Actions (lint, tipos y pruebas en cada push). Instrucciones en [`backend/README.md`](../backend/README.md).
 - **Aplicamos la regla de la devolución a todas las reglas:** si la evidencia no permite afirmar algo, el software tampoco lo afirma. La zona pasó a ser una Limitación, un "No sé" nunca se toma como "Sí" y `COMPATIBLE` ya no promete habilitación.
 - **Al probar el adaptador contra la Ecogas real apareció un hallazgo que cambia el núcleo:** el padrón **no publica el número de matrícula**. El campo `id`, que tomamos como matrícula en la primera entrega, es una numeración interna. Ahora el gasista se identifica por nombre y localidad ([§ 2](#2-hallazgo-principal-ecogas-no-publica-el-número-de-matrícula)).
+- **La prueba que pidió desde el entorno de nube dio un resultado decisivo:** con el mismo User-Agent identificado, Ecogas responde desde una IP residencial y **rechaza (403) desde una IP de datacenter**. Planteamos cómo seguir en la [pregunta 1](#6-preguntas-para-el-tutor).
 - Corregimos la documentación según cada punto ([§ 3](#3-respuesta-a-la-devolución-punto-por-punto)) y registramos tres decisiones nuevas: ADR-0005, 0006 y 0007.
 
 ---
@@ -42,6 +43,8 @@ Es el mismo aprendizaje de la primera prueba, ahora sobre la identidad: **obtene
 - Toda Credencial de Ecogas lleva la Limitación *"Ecogas no publica el número de matrícula: la identificación es por nombre y localidad. Confirmala con el carné del gasista"*.
 - Sumamos una pregunta a la consulta a Ecogas: si podrían publicar el número de matrícula.
 
+**3. Desde una IP de nube, Ecogas rechaza el pedido.** Con el mismo User-Agent identificado, la página respondió **HTTP 200 desde una IP residencial** y **HTTP 403 desde un runner de GitHub Actions** (Azure): 118 bytes en 0,4 s, la firma típica de un firewall que filtra IPs de datacenter ([workflow](../.github/workflows/probar-ecogas.yml)). Todavía no lo probamos desde AWS, pero lo más probable es que también esté bloqueado. Es el escenario que anticipó la devolución: el sistema sigue siendo coherente, porque responde `UNVERIFIABLE` y nunca "no encontrado", pero desplegado en la nube no podría leer la única Fuente automatizable del P0. **No vamos a eludir el bloqueo** (User-Agent de navegador, proxies residenciales): planteamos las alternativas en la [pregunta 1](#6-preguntas-para-el-tutor).
+
 Otros datos de esa lectura: el padrón bajó de 5.031 a 4.836 registros (−3,9 %, dentro del umbral de la validación V5) y la descarga tardó 13,6 s. El timeout de 6 s que habíamos diseñado la habría hecho fallar siempre, así que lo ajustamos ([fuentes y adaptadores](fuentes-y-adaptadores.md)).
 
 ---
@@ -53,8 +56,8 @@ Otros datos de esa lectura: el padrón bajó de 5.031 a 4.836 registros (−3,9 
 | **Zona:** con I4 abierta, S4 no puede concluir `MET`. | La zona dejó de ser un Criterio y pasó a ser una **Limitación**. Además, el padrón no informa en qué licenciataria (Centro o Cuyana) está registrado cada gasista, así que ninguna provincia puede afirmarse sin inventar una regla. S4 da `COMPATIBLE` por categoría, con la Limitación de zona. | [ADR-0005](adr/0005-zona-como-limitacion-en-el-p0.md) · [reglas § 4](reglas-de-categoria.md) · test *"Zona: es una Limitación"* |
 | **Clasificación del trabajo:** elegir A1 supone condiciones que el Cliente puede no conocer. | El Cliente ya no elige un Tipo de trabajo: responde cinco **Condiciones decisivas** (Sí, No o No sé), cada una con su cita, y el sistema deduce los Tipos posibles. Un No sé abre las dos posibilidades. Si todas dan el mismo resultado, se informa ese resultado. Si no, `INDETERMINATE`, diciendo qué dato lo resolvería. Si ninguna posibilidad está cubierta por una regla, el pedido se rechaza antes de consultar la Fuente. | [reglas § 3.5](reglas-de-categoria.md) · [`condiciones-decisivas.json`](../database/seed/condiciones-decisivas.json) · tests de clasificación y de *"No sé"* |
 | **Texto de COMPATIBLE:** "que puede realizar este trabajo" promete de más. | El texto es ahora: *"La categoría informada (2ª) es compatible con este tipo de trabajo según la regla aplicada (NAG-200, 8.3.1). La vigencia de la matrícula no pudo verificarse."* Un test verifica que ninguna explicación diga "puede realizar", "habilitado", "apto" ni "vigente". | [modelo § 6](modelo-de-dominio.md) · test *"Cómo se expresa el resultado"* |
-| **Enviar la consulta a Ecogas ya.** | Agregamos el pedido concreto de uso automatizado (una descarga cada 15 minutos, desde AWS, con User-Agent identificado) y la pregunta por el número de matrícula. **Estado: se envía el 02/11 por los dos formularios (Centro y Cuyo).** | [consulta a Ecogas](consulta-a-ecogas.md) |
-| **Probar temprano el adaptador, identificándose, desde el entorno de despliegue.** | Desde una conexión residencial, Ecogas respondió **HTTP 200** a un User-Agent honesto (el prototipo de septiembre se hacía pasar por un navegador). **La prueba desde AWS (CloudShell) se corre el 02/11** con el mismo script. | [`scripts/probar-ecogas.sh`](../scripts/probar-ecogas.sh) · [§ 2](#2-hallazgo-principal-ecogas-no-publica-el-número-de-matrícula) |
+| **Enviar la consulta a Ecogas ya.** | Agregamos el pedido concreto de uso automatizado (una descarga cada 15 minutos, desde AWS, con User-Agent identificado) y la pregunta por el número de matrícula. **Estado: texto listo, pendiente de envío por los dos formularios (Centro y Cuyo).** Después del bloqueo desde la nube, la pregunta 5 pasó a ser un pedido de autorización. | [consulta a Ecogas](consulta-a-ecogas.md) |
+| **Probar temprano el adaptador, identificándose, desde el entorno de despliegue.** | Con un User-Agent honesto (el prototipo de septiembre se hacía pasar por un navegador), Ecogas respondió **HTTP 200 desde una IP residencial** y **HTTP 403 desde una IP de nube** (GitHub Actions, Azure). La prueba se repite desde AWS al desplegar. | [`scripts/probar-ecogas.sh`](../scripts/probar-ecogas.sh) · [§ 2](#2-hallazgo-principal-ecogas-no-publica-el-número-de-matrícula) |
 | **Política de consultas:** no amplificar pedidos anónimos contra un tercero. | Una lectura exitosa se reutiliza durante **15 minutos** (Ventana de reutilización), con una **Lectura minimizada** sin datos de contacto que se descarta al día siguiente. Después de una falla se espera un minuto (`SOURCE_RATE_LIMITED`). Cada respuesta informa la fecha real de la lectura. El throttling de la API protege a MatriculAR y es otra cosa. | [ADR-0006](adr/0006-lectura-minimizada-y-proteccion-de-la-fuente.md) |
 | **Huella SHA-256:** no permite reconstruir el recurso. | Corregimos la definición. Cada Credencial guarda los **valores tal como vinieron de la Fuente** (`valores_fuente`), además de la versión normalizada, sin email, teléfono ni barrio. El extractor ya lo hace y un test lo verifica. | [glosario](../CONTEXT.md) · test *"nunca conserva email, teléfono ni barrio"* |
 | **P1:** el código al email prueba control del canal, no identidad. | El Vínculo `VERIFIED` se define como "vínculo verificado mediante el email publicado por la Fuente". P1 queda fuera del alcance de la entrega final. | [glosario](../CONTEXT.md) |
@@ -94,9 +97,13 @@ Los casos que pidió el tutor:
 
 ## 6. Preguntas para el tutor
 
-1. **Identificación por nombre (ADR-0007).** ¿Le parece adecuado mostrar todos los homónimos con su Evaluación y que el Cliente elija con el carné? ¿O preferiría que la Verificación no concluya nada cuando hay más de una Coincidencia?
-2. **Trabajo no cubierto.** Si las respuestas no dejan ningún Tipo de trabajo posible (por ejemplo, gas envasado), rechazamos el pedido antes de consultar a Ecogas en lugar de devolver `INDETERMINATE`, para no descargar el padrón sin necesidad. ¿Está de acuerdo?
-3. **Límite del Tipo B.** No preguntamos si algún artefacto supera 150.000 kcal/h, y lo informamos como Limitación. ¿Alcanza, o conviene una sexta Condición decisiva?
+1. **Ecogas bloquea las IPs de nube ([§ 2](#2-hallazgo-principal-ecogas-no-publica-el-número-de-matrícula), punto 3).** Hasta que Ecogas responda el pedido de autorización, ¿cómo prefiere que se demuestre el P0 desplegado?
+   - (a) **Desplegar igual en AWS.** Si el bloqueo se confirma, el servicio responde `UNVERIFIABLE` con el motivo, y el recorrido completo con lectura real se demuestra localmente (LocalStack, desde una IP residencial) y con las pruebas.
+   - (b) **Separar la lectura del despliegue.** La lectura de la Fuente corre en un equipo con IP residencial, identificada y a la frecuencia permitida, y publica la Lectura minimizada en la nube, donde se evalúa. Es más complejo, y además conviene que Ecogas lo autorice.
+   - Descartamos eludir el bloqueo (simular un navegador o usar proxies): contradice la identificación honesta que pidió y la decisión de la propia Fuente.
+2. **Identificación por nombre (ADR-0007).** ¿Le parece adecuado mostrar todos los homónimos con su Evaluación y que el Cliente elija con el carné? ¿O preferiría que la Verificación no concluya nada cuando hay más de una Coincidencia?
+3. **Trabajo no cubierto.** Si las respuestas no dejan ningún Tipo de trabajo posible (por ejemplo, gas envasado), rechazamos el pedido antes de consultar a Ecogas en lugar de devolver `INDETERMINATE`, para no descargar el padrón sin necesidad. ¿Está de acuerdo?
+4. **Límite del Tipo B.** No preguntamos si algún artefacto supera 150.000 kcal/h, y lo informamos como Limitación. ¿Alcanza, o conviene una sexta Condición decisiva?
 
 ---
 
@@ -104,8 +111,8 @@ Los casos que pidió el tutor:
 
 | Fechas | Trabajo |
 |---|---|
-| 02/11 | Enviar la consulta a Ecogas y correr la prueba desde AWS. |
+| 02/11 | Enviar la consulta a Ecogas, que ahora incluye el pedido de autorización para leer desde la nube. |
 | 03 al 08/11 | Acceso HTTP al recurso con reintentos y descubrimiento de la URL, Consulta y Credencial con su huella (repositorios en memoria) y recorrido completo por línea de comandos. |
 | 09 al 13/11 | DynamoDB en LocalStack (con las claves rediseñadas por ADR-0007), Lambda y API. |
-| 14 al 17/11 | Terraform en AWS y una pantalla mínima en React. |
+| 14 al 17/11 | Terraform en AWS (con la prueba de acceso a Ecogas desde AWS) y una pantalla mínima en React. |
 | 18 al 21/11 | Informe final y video. |
