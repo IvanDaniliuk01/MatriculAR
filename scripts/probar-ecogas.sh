@@ -22,17 +22,26 @@ html="$(mktemp)"
 curl -sS -A "$UA" -o "$html" \
   -w "Página:       HTTP %{http_code}, %{size_download} bytes, %{time_total} s\n" "$PAGINA"
 
+encontrado=0
+
+# Formato 2 (desde el 02/11/2026): el padrón viaja dentro de la página, en el payload de React.
+if grep -q 'gasistasMatriculados' "$html"; then
+  registros="$(grep -o '\\"nombre_apellido\\"' "$html" | wc -l)"
+  echo "Formato 2: padrón dentro de la página, huella $(sha256sum "$html" | cut -c1-16)…, ~${registros} registros"
+  encontrado=1
+fi
+
+# Formato 1 (hasta septiembre de 2026): el padrón está en un chunk con JSON.parse('[{"id":"…
 mapfile -t chunks < <(grep -oE '/_next/static/chunks/[^"]+\.js' "$html" | sort -u)
 echo "Chunks en la página: ${#chunks[@]}"
 
-encontrado=0
 for chunk in "${chunks[@]}"; do
   archivo="$(mktemp)"
   respuesta="$(curl -sS -A "$UA" -o "$archivo" -w "%{http_code} %{size_download}" "${BASE}${chunk}")"
   if grep -q "JSON.parse('\[{\"id\":\"" "$archivo" && grep -q '"nombre_apellido"' "$archivo"; then
     registros="$(grep -o '"nombre_apellido"' "$archivo" | wc -l)"
     huella="$(sha256sum "$archivo" | cut -c1-16)"
-    echo "Recurso con datos: ${chunk}"
+    echo "Formato 1: padrón en el chunk ${chunk}"
     echo "  HTTP ${respuesta% *}, ${respuesta#* } bytes, huella ${huella}…, ~${registros} registros"
     encontrado=1
   fi

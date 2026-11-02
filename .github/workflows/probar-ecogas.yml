@@ -18,4 +18,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Leer la página de Ecogas con un User-Agent identificado
-        run: bash scripts/probar-ecogas.sh "https://github.com/${{ github.repository }}"
+        run: |
+          set +e
+          salida="$(bash scripts/probar-ecogas.sh "https://github.com/${{ github.repository }}" 2>&1)"
+          codigo=$?
+          echo "$salida"
+          # El resultado queda también como anotación de la ejecución, visible sin abrir los logs.
+          echo "::notice title=Resultado de la prueba::$(echo "$salida" | paste -sd '|' -)"
+          exit $codigo
