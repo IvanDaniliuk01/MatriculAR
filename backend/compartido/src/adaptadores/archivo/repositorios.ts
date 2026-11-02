@@ -38,11 +38,20 @@ export function repositoriosEnArchivo(directorio: string) {
       estado.consultas.push(consulta);
       persistir();
     },
+    async obtener(id) {
+      return estado.consultas.find((c) => c.id === id) ?? null;
+    },
     async ultima(fuenteId, estadoConsulta) {
       const candidatas = estado.consultas
         .filter((c) => c.fuenteId === fuenteId && c.estado === estadoConsulta)
         .sort((a, b) => a.finalizadaEn.localeCompare(b.finalizadaEn));
       return candidatas.at(-1) ?? null;
+    },
+    async recientes(fuenteId, limite) {
+      return estado.consultas
+        .filter((c) => c.fuenteId === fuenteId)
+        .sort((a, b) => b.iniciadaEn.localeCompare(a.iniciadaEn))
+        .slice(0, limite);
     },
   };
   const lecturas: RepositorioLecturas = {
@@ -58,6 +67,9 @@ export function repositoriosEnArchivo(directorio: string) {
     async guardar(credencial) {
       estado.credenciales[credencial.id] ??= credencial;
       persistir();
+    },
+    async obtener(id) {
+      return estado.credenciales[id] ?? null;
     },
     async delGasista(fuenteId, gasista) {
       const deLaFuente = Object.values(estado.credenciales).filter((c) => c.fuenteId === fuenteId);

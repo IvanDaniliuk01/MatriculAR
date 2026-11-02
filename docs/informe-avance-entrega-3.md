@@ -129,6 +129,6 @@ Los casos que pidió el tutor:
 |---|---|
 | 02/11 | Enviar la consulta a Ecogas, que ahora incluye el pedido de autorización para leer desde la nube. |
 | ~~03 al 08/11~~ | ~~Acceso HTTP con reintentos, Consulta y Credencial con su huella, y recorrido completo por línea de comandos.~~ **Hecho el 02/11.** |
-| 09 al 13/11 | DynamoDB en LocalStack (con las claves rediseñadas por ADR-0007), Lambda y API. |
+| 09 al 13/11 | DynamoDB en LocalStack (con las claves rediseñadas por ADR-0007), Lambda y API. **Adelantado el 02/11:** repositorios de DynamoDB y S3 con pruebas de contrato, handler HTTP con la forma de `docs/api.md`, Terraform validado para local y AWS, y empaquetado de la Lambda. Falta correrlo en LocalStack, que necesita Docker en WSL. |
 | 14 al 17/11 | Terraform en AWS (con la prueba de acceso a Ecogas desde AWS) y una pantalla mínima en React. |
 | 18 al 21/11 | Informe final y video. |

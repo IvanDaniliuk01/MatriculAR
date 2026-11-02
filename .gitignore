@@ -15,6 +15,7 @@ coverage/
 .terraform/
 *.tfstate
 *.tfstate.*
+*.tfplan
 .lstk/
 
 # Secretos y configuración local

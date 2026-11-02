@@ -3,22 +3,40 @@
   "BillingMode": "PAY_PER_REQUEST",
   "AttributeDefinitions": [
     {
-      "AttributeName": "fuente_gasista",
+      "AttributeName": "credencial_id",
       "AttributeType": "S"
     },
     {
-      "AttributeName": "evidencia_id",
+      "AttributeName": "fuente_id",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "obtenida_en",
       "AttributeType": "S"
     }
   ],
   "KeySchema": [
     {
-      "AttributeName": "fuente_gasista",
+      "AttributeName": "credencial_id",
       "KeyType": "HASH"
-    },
+    }
+  ],
+  "GlobalSecondaryIndexes": [
     {
-      "AttributeName": "evidencia_id",
-      "KeyType": "RANGE"
+      "IndexName": "por-fuente",
+      "KeySchema": [
+        {
+          "AttributeName": "fuente_id",
+          "KeyType": "HASH"
+        },
+        {
+          "AttributeName": "obtenida_en",
+          "KeyType": "RANGE"
+        }
+      ],
+      "Projection": {
+        "ProjectionType": "ALL"
+      }
     }
   ]
 }

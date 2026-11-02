@@ -27,10 +27,21 @@ export interface Evaluacion {
   resultado: ResultadoEvaluacion;
   criterios: readonly CriterioCategoria[];
   tiposTrabajoPosibles: readonly { id: string; version: number; codigo: string; nombre: string }[];
+  /** El resultado contra cada Tipo de trabajo posible, con una copia de la regla aplicada. */
+  resultadosPorTipo: readonly ResultadoPorTipo[];
   /** Condiciones en No sé cuya respuesta cambiaría el resultado. */
   condicionesQueResuelven: readonly Pick<CondicionDecisiva, "id" | "pregunta">[];
   limitaciones: readonly Limitacion[];
   explicacion: string;
+}
+
+export interface ResultadoPorTipo {
+  tipoTrabajoId: string;
+  tipoTrabajoVersion: number;
+  resultado: ResultadoEvaluacion;
+  /** La cita para la categoría informada; null si la categoría es desconocida. */
+  fundamento: FundamentoCategoria | null;
+  reglaAplicada: { categoriasAdmitidas: readonly CategoriaId[] };
 }
 
 export interface EntradaEvaluacion {
@@ -88,6 +99,20 @@ export function evaluar(entrada: EntradaEvaluacion, reglas: Reglas): Evaluacion 
       codigo,
       nombre,
     })),
+    resultadosPorTipo: clasificacion.tiposPosibles.map(
+      (tipo): ResultadoPorTipo => ({
+        tipoTrabajoId: tipo.id,
+        tipoTrabajoVersion: tipo.version,
+        resultado:
+          categoria === null
+            ? "INDETERMINATE"
+            : tipo.categoriasAdmitidas.includes(categoria)
+              ? "COMPATIBLE"
+              : "INCOMPATIBLE",
+        fundamento: tipo.fundamento.find((f) => f.categoria === categoria) ?? null,
+        reglaAplicada: { categoriasAdmitidas: tipo.categoriasAdmitidas },
+      }),
+    ),
     condicionesQueResuelven,
     limitaciones: [
       ...fuente.limitaciones.map((texto): Limitacion => ({ origen: "FUENTE", texto })),

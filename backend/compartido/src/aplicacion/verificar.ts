@@ -35,10 +35,43 @@ export interface DependenciasVerificar {
 export interface RespuestaVerificacion {
   verificacion: Verificacion;
   consulta: Consulta;
-  coincidencias: readonly { credencial: Credencial; evaluacion: Evaluacion }[];
+  coincidencias: readonly {
+    credencial: Credencial;
+    evaluacionId: string;
+    evaluacion: Evaluacion;
+  }[];
   /** Solo si el resultado es UNVERIFIABLE: contexto con su fecha, nunca se usa para concluir. */
   evidenciaPrevia: readonly Credencial[];
   mensaje: string;
+}
+
+/** Vuelve a armar la respuesta de una Verificación guardada, sin consultar la Fuente. */
+export async function consultarVerificacion(
+  id: string,
+  deps: Pick<DependenciasVerificar, "consultas" | "credenciales" | "verificaciones">,
+): Promise<RespuestaVerificacion | null> {
+  const verificacion = await deps.verificaciones.obtener(id);
+  if (!verificacion) return null;
+  const consulta = await deps.consultas.obtener(verificacion.consultaId);
+  if (!consulta) throw new Error(`La Verificación ${id} apunta a una Consulta inexistente.`);
+  const credencial = async (credencialId: string) => {
+    const encontrada = await deps.credenciales.obtener(credencialId);
+    if (!encontrada) throw new Error(`La Verificación ${id} apunta a una Credencial inexistente.`);
+    return encontrada;
+  };
+  return {
+    verificacion,
+    consulta,
+    coincidencias: await Promise.all(
+      verificacion.coincidencias.map(async (c) => ({
+        credencial: await credencial(c.credencialId),
+        evaluacionId: c.evaluacionId,
+        evaluacion: c.evaluacion,
+      })),
+    ),
+    evidenciaPrevia: await Promise.all(verificacion.evidenciaPreviaIds.map(credencial)),
+    mensaje: verificacion.mensaje,
+  };
 }
 
 export type ResultadoVerificar =
@@ -111,7 +144,7 @@ export async function verificar(
             },
             reglas,
           );
-          return { credencial, evaluacion };
+          return { credencial, evaluacionId: deps.ids.nuevo(), evaluacion };
         }),
       );
     }
@@ -139,7 +172,18 @@ export async function verificar(
     consultaReutilizada: reutilizada,
     resultado,
     cantidadCoincidencias: cantidad,
-    credencialIds: coincidencias.map((c) => c.credencial.id),
+    tiposTrabajoPosibles: clasificacion.tiposPosibles.map(({ id, version, codigo, nombre }) => ({
+      id,
+      version,
+      codigo,
+      nombre,
+    })),
+    coincidencias: coincidencias.map(({ credencial, evaluacionId, evaluacion }) => ({
+      credencialId: credencial.id,
+      evaluacionId,
+      evaluacion,
+    })),
+    evidenciaPreviaIds: evidenciaPrevia.map((c) => c.id),
     mensaje,
   };
   await deps.verificaciones.guardar(verificacion);

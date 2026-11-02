@@ -5,38 +5,12 @@
     {
       "AttributeName": "verificacion_id",
       "AttributeType": "S"
-    },
-    {
-      "AttributeName": "fuente_gasista",
-      "AttributeType": "S"
-    },
-    {
-      "AttributeName": "solicitada_en",
-      "AttributeType": "S"
     }
   ],
   "KeySchema": [
     {
       "AttributeName": "verificacion_id",
       "KeyType": "HASH"
-    }
-  ],
-  "GlobalSecondaryIndexes": [
-    {
-      "IndexName": "por-gasista",
-      "KeySchema": [
-        {
-          "AttributeName": "fuente_gasista",
-          "KeyType": "HASH"
-        },
-        {
-          "AttributeName": "solicitada_en",
-          "KeyType": "RANGE"
-        }
-      ],
-      "Projection": {
-        "ProjectionType": "ALL"
-      }
     }
   ]
 }

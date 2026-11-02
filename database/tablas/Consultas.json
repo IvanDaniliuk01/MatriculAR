@@ -15,7 +15,7 @@
       "AttributeType": "S"
     },
     {
-      "AttributeName": "exito_fuente_id",
+      "AttributeName": "fuente_estado",
       "AttributeType": "S"
     },
     {
@@ -47,10 +47,10 @@
       }
     },
     {
-      "IndexName": "exitosas-por-fuente",
+      "IndexName": "por-fuente-estado",
       "KeySchema": [
         {
-          "AttributeName": "exito_fuente_id",
+          "AttributeName": "fuente_estado",
           "KeyType": "HASH"
         },
         {
@@ -59,11 +59,7 @@
         }
       ],
       "Projection": {
-        "ProjectionType": "INCLUDE",
-        "NonKeyAttributes": [
-          "registros_extraidos",
-          "huella_recurso"
-        ]
+        "ProjectionType": "ALL"
       }
     }
   ]

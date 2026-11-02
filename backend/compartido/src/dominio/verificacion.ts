@@ -1,6 +1,7 @@
 import type { GasistaBuscado } from "./busqueda";
 import type { Respuestas } from "./condiciones";
 import type { Consulta } from "./consulta";
+import type { Evaluacion } from "./evaluacion";
 import type { Fuente } from "./reglas";
 
 export type ResultadoVerificacion = "FOUND" | "NOT_FOUND" | "TOO_MANY_MATCHES" | "UNVERIFIABLE";
@@ -24,7 +25,12 @@ export interface Verificacion {
   resultado: ResultadoVerificacion;
   /** Coincidencias encontradas (también cuando son demasiadas para mostrarlas). */
   cantidadCoincidencias: number;
-  credencialIds: readonly string[];
+  /** Los Tipos de trabajo que dejaron abiertos las Condiciones decisivas. */
+  tiposTrabajoPosibles: readonly { id: string; version: number; codigo: string; nombre: string }[];
+  /** Una por Coincidencia: la Credencial en la que se apoya y la Evaluación, que nunca se recalcula. */
+  coincidencias: readonly { credencialId: string; evaluacionId: string; evaluacion: Evaluacion }[];
+  /** Solo si es UNVERIFIABLE: Credenciales anteriores mostradas como contexto, sin concluir. */
+  evidenciaPreviaIds: readonly string[];
   mensaje: string;
 }
 

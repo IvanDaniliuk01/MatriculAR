@@ -25,10 +25,21 @@ export function repositoriosEnMemoria(): {
       async guardar(consulta) {
         consultas.push(structuredClone(consulta));
       },
+      async obtener(id) {
+        return structuredClone(consultas.find((c) => c.id === id) ?? null);
+      },
       async ultima(fuenteId, estado) {
         const candidatas = consultas.filter((c) => c.fuenteId === fuenteId && c.estado === estado);
         candidatas.sort((a, b) => a.finalizadaEn.localeCompare(b.finalizadaEn));
         return structuredClone(candidatas.at(-1) ?? null);
+      },
+      async recientes(fuenteId, limite) {
+        return structuredClone(
+          consultas
+            .filter((c) => c.fuenteId === fuenteId)
+            .sort((a, b) => b.iniciadaEn.localeCompare(a.iniciadaEn))
+            .slice(0, limite),
+        );
       },
     },
     lecturas: {
@@ -43,6 +54,9 @@ export function repositoriosEnMemoria(): {
       async guardar(credencial) {
         if (!credenciales.has(credencial.id))
           credenciales.set(credencial.id, structuredClone(credencial));
+      },
+      async obtener(id) {
+        return structuredClone(credenciales.get(id) ?? null);
       },
       async delGasista(fuenteId, gasista) {
         const deLaFuente = [...credenciales.values()].filter((c) => c.fuenteId === fuenteId);

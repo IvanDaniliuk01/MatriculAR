@@ -253,7 +253,7 @@ La lectura U1-A2 de la cátedra propone justificar el stack respondiendo cinco p
 | Email | **Amazon SES** · *fase 2, fuera del alcance de la entrega final* | — | Código de verificación del Vínculo (P1). | — |
 | Programación de tareas | **EventBridge Scheduler** · *fase 2, fuera del alcance de la entrega final* | — | Revalidación diaria (P3). | Cron en un servidor: no hay servidor. |
 | Notificaciones | **SNS** · *fase 2, fuera del alcance de la entrega final* | — | Fan-out de avisos (P3). | — |
-| Infraestructura | **Terraform** | 1.x | Todos los recursos como código (D6). En local se ejecuta con **`lstk terraform`**, que reemplaza al `tflocal` deprecado. | AWS CDK o SAM: Terraform ya estaba declarado y es agnóstico de proveedor. |
+| Infraestructura | **Terraform** | ≥ 1.9 (probado con 1.17), provider AWS 6.x | Todos los recursos como código (D6). En local se ejecuta el mismo `terraform` con los `endpoints` del provider apuntando a LocalStack ([§ 7](#7-entornos-y-costos)). | AWS CDK o SAM: Terraform ya estaba declarado y es agnóstico de proveedor. |
 | Entorno local | **LocalStack** (plan Student, o Hobby si la verificación demora) + **Docker** | calver 2026.x | AWS emulado para desarrollar sin costo. | Desarrollar directo contra AWS: riesgo de facturación y ciclo más lento. |
 | Nube | **AWS** (Free plan) | — | Despliegue de la etapa 4. | PaaS (Render, Railway): no ejercita la arquitectura serverless que es objetivo del proyecto. |
 
@@ -268,7 +268,7 @@ La lectura U1-A2 de la cátedra propone justificar el stack respondiendo cinco p
 | **D3** | Un único pipeline de verificación (SQS + DLQ) con dos disparadores (evento de S3 y scheduler). | **Revisada** → [ADR-0001](adr/0001-sin-colas-reintentos-sincronicos.md) | Se mantiene la idea de **un solo camino con dos disparadores**: el pedido HTTP y el scheduler de P3 usan los mismos componentes del núcleo (lectura de la Fuente, registro de la Consulta y de los Resultados). Se eliminan SQS, la DLQ y el evento de S3. |
 | **D4** | Padrones simulados detrás de una interfaz, con un mock configurable. | **Revisada** | Se mantiene el **puerto de Fuentes**, pero los adaptadores son **reales**: Ecogas (automatizable) y MetroGAS (no automatizable). Las simulaciones quedan solo en los tests (INV-12). |
 | **D5** | DynamoDB como almacenamiento. | **Vigente**, con [ADR-0004](adr/0004-una-tabla-dynamodb-por-entidad.md) | Una tabla por entidad. |
-| **D6** | Infraestructura 100 % como código con Terraform. | **Vigente** | En local se usa `lstk terraform` en lugar de `tflocal`, que está deprecado. |
+| **D6** | Infraestructura 100 % como código con Terraform. | **Vigente** | En local se usa el mismo `terraform`, con los `endpoints` del provider apuntando a LocalStack (sin `lstk` ni `tflocal`). |
 
 Decisiones nuevas de esta entrega: [ADR-0001](adr/0001-sin-colas-reintentos-sincronicos.md) (sin colas), [ADR-0002](adr/0002-consulta-bajo-demanda-sin-copia-del-padron.md) (consulta bajo demanda), [ADR-0003](adr/0003-credencial-separada-de-evaluacion-sin-afirmar-vigencia.md) (Credencial separada de Evaluación y vigencia no afirmada) y [ADR-0004](adr/0004-una-tabla-dynamodb-por-entidad.md) (una tabla por entidad). Por la devolución v3: [ADR-0005](adr/0005-zona-como-limitacion-en-el-p0.md) (la zona es una Limitación) y [ADR-0006](adr/0006-lectura-minimizada-y-proteccion-de-la-fuente.md) (Lectura minimizada y Protección de la Fuente, que modifica el ADR-0002).
 
@@ -279,14 +279,22 @@ Decisiones nuevas de esta entrega: [ADR-0001](adr/0001-sin-colas-reintentos-sinc
 | Entorno | Para qué | Cómo se levanta | Costo |
 |---|---|---|---|
 | **Local sin AWS** | Primer recorrido completo (devolución v3). | `npm run verificar -- …` en `backend/`: el caso de uso con repositorios en memoria y el adaptador real de Ecogas o sus fixtures. | USD 0. |
-| **Local** | Desarrollo y pruebas de integración. | Docker + LocalStack (con `LOCALSTACK_AUTH_TOKEN` en `.env`, que está ignorado por git) → `lstk terraform apply` (tablas, funciones, API) → script de seed → `npm run dev` del frontend apuntando a la URL de la API en LocalStack. **Todo se destruye y se recrea con un comando** (D6). | USD 0. |
-| **Nube** (etapa 4, del 28/09 al 21/11) | Servicio público para la entrega final, el video y la defensa. | Cuenta de AWS con **Free plan**, el **mismo Terraform** con el proveedor apuntando a AWS, y el frontend servido desde S3. | Lambda y DynamoDB entran en el uso gratuito o cuestan centavos con este volumen. API Gateway **no** es gratuito para cuentas nuevas y consume de los créditos (USD 100 a 200). **Alerta de presupuesto de USD 5 desde el primer día.** |
+| **Local** | Desarrollo y pruebas de integración. | [`scripts/levantar-local.sh`](../scripts/levantar-local.sh): LocalStack con `docker compose` (`LOCALSTACK_AUTH_TOKEN` en `.env`, ignorado por git) → `npm run empaquetar` → `terraform apply` en [`infra/entornos/local`](../infra/entornos/local/) (tablas, bucket, función, API y alarma) → imprime la URL de la API. [`scripts/bajar-local.sh`](../scripts/bajar-local.sh) lo destruye: **el entorno se recrea de cero con dos comandos** (D6). | USD 0. |
+| **Nube** (etapa 4, del 28/09 al 21/11) | Servicio público para la entrega final, el video y la defensa. | [`scripts/desplegar-aws.sh`](../scripts/desplegar-aws.sh): empaqueta, muestra el plan del **mismo Terraform** en [`infra/entornos/aws`](../infra/entornos/aws/) y pide confirmación. Suma recuperación a un punto en el tiempo y protección contra borrado de las tablas, y el presupuesto. El frontend se sirve desde S3. | Lambda y DynamoDB entran en el uso gratuito o cuestan centavos con este volumen. API Gateway **no** es gratuito para cuentas nuevas y consume de los créditos (USD 100 a 200). **Alerta de presupuesto de USD 5 desde el primer día**, creada por el mismo Terraform. |
+
+Decisiones de despliegue:
+
+- **`terraform` común, sin `lstk` ni `tflocal`.** El entorno local declara los `endpoints` del provider de AWS apuntando a LocalStack (`http://localhost:4566`). Es una herramienta menos que instalar y el código de los módulos es idéntico en los dos entornos.
+- **Recursos explícitos en API Gateway, no `{proxy+}`.** Cada ruta de [`docs/api.md`](api.md) es un recurso con su método (más `OPTIONS` para CORS), todos hacia la misma función. Así el contrato se ve en el código, las rutas desconocidas responden 403 sin invocar la función, y `POST /verificaciones` tiene su propio throttling.
+- **Las reglas viajan con la función.** `database/seed/` se empaqueta con esbuild y se valida al arrancar: en P0 no hay tablas de Fuentes, Tipos de trabajo ni Condiciones decisivas, ni script de seed.
+- **Estado de Terraform local** (`terraform.tfstate`, ignorado por git): en P0 despliega una sola persona. Si eso cambia, pasa a un backend S3 con bloqueo.
+- **Arquitectura de la función:** arm64 en AWS (más barata) y x86_64 en LocalStack, para no emular en una PC x86. El paquete es JavaScript puro y sirve para las dos.
 
 Cosas a tener en cuenta sobre la cuenta de AWS:
 
 - El Free plan dura **6 meses o hasta agotar los créditos**. Después la cuenta se cierra y hay 90 días para pasarla a Paid. Si la defensa en mesa de examen fuera después de ese plazo, hay que **pasar a Paid plan** (los créditos se mantienen) o volver a desplegar.
 - La cuenta la crea **uno de los integrantes**, con su tarjeta, y comparte el acceso con el otro mediante usuarios de IAM.
-- Riesgo propio de la nube: la detección de bots de Ecogas podría bloquear los pedidos desde IPs de AWS ([fuentes § 9, P-2](fuentes-y-adaptadores.md#9-puntos-pendientes)). **Se prueba el 1–2/11/2026 desde CloudShell**, antes de escribir infraestructura.
+- Riesgo propio de la nube: el 02/11/2026 Ecogas respondió **403 a una IP de datacenter** (GitHub Actions) y 200 a una IP residencial, con el mismo User-Agent identificado ([fuentes § 9, P-2](fuentes-y-adaptadores.md#9-puntos-pendientes)). Desplegada en AWS, la función probablemente responda `UNVERIFIABLE` hasta que Ecogas autorice el acceso. La prueba se repite desde AWS al desplegar. En LocalStack la función sale a internet por la conexión de la PC, así que el recorrido local sí lee la Fuente real.
 
 ---
 

@@ -347,23 +347,21 @@ Devuelve la misma forma que `POST /verificaciones`. Es **de solo lectura**: no v
 
 ### GET /credenciales/{fuente_id}?nombre_apellido=&localidad=
 
-Historial de todo lo que MatriculAR supo de un gasista, del más reciente al más antiguo. Se identifica por **nombre y localidad normalizados**, no por matrícula ([ADR-0007](adr/0007-identificacion-por-nombre-y-localidad.md)):
+Historial de la evidencia de un gasista: las Credenciales que MatriculAR obtuvo, de la más reciente a la más antigua. Se identifica por **nombre y localidad**, no por matrícula ([ADR-0007](adr/0007-identificacion-por-nombre-y-localidad.md)). Las Credenciales tienen la misma forma que en `POST /verificaciones`:
 
 ```json
 {
   "fuente_id": "ecogas",
-  "nombre_apellido": "PERSONA FICTICIA UNO",
-  "localidad": "RIO CUARTO",
-  "resultados": [
-    { "determinado_en": "2026-09-26T18:40:24.345Z", "resultado": "FOUND", "consulta_id": "…", "categoria_informada": "2" },
-    { "determinado_en": "2026-09-26T18:30:06.950Z", "resultado": "UNVERIFIABLE", "consulta_id": "…", "motivo": "EXTRACTION_FAILED" },
-    { "determinado_en": "2026-09-20T13:05:02.140Z", "resultado": "FOUND", "consulta_id": "…", "categoria_informada": "2" }
+  "nombre_apellido": "Persona Ficticia Uno",
+  "localidad": "Río Cuarto",
+  "credenciales": [
+    { "fuente": { "fuente_id": "ecogas", "nombre": "Ecogas" }, "nombre_informado": "PERSONA FICTICIA UNO", "categoria_informada": "2", "provincia_informada": "CORDOBA", "localidad_informada": "RIO CUARTO", "valores_fuente": { "…": "…" }, "consultada_en": "2026-11-02T18:40:14.000Z" }
   ]
 }
 ```
 
-- `nombre_apellido` es obligatorio; `localidad` también, para no mezclar homónimos.
-- Paginado con `?limite=` (por defecto 20) y `?cursor=`.
+- `nombre_apellido` y `localidad` son obligatorios, para no mezclar homónimos (`400 VALIDATION_ERROR` si falta alguno).
+- **Implementado el 02/11:** devuelve solo Credenciales. Los resultados `UNVERIFIABLE` no generan Credencial y no aparecen; para ver las fallas está `GET /fuentes/{fuente_id}/consultas`. Sin paginado en el P0.
 - Un gasista que nunca se consultó devuelve la lista vacía, no un `404`. "No hay historial" es un dato válido.
 
 ### GET /fuentes
@@ -398,7 +396,9 @@ La configuración interna (tiempos, umbrales) no se expone.
 
 ### GET /tipos-trabajo · GET /categorias · GET /provincias
 
-Devuelven la versión vigente de cada ítem, tal como están en [`database/seed/`](../database/seed/), sin los campos internos. `GET /tipos-trabajo` incluye además las cinco Condiciones decisivas (`condicion_id` y pregunta para el Cliente), que el frontend usa para armar el formulario.
+Devuelven la versión vigente de cada ítem, tal como están en [`database/seed/`](../database/seed/), sin los campos internos. `GET /tipos-trabajo` responde `{ "tipos_trabajo": [...], "condiciones_decisivas": [...] }`: cada Condición decisiva lleva `condicion_id`, `pregunta`, `ayuda` y `fundamento`, y el frontend arma el formulario con ellas.
+
+`GET /fuentes/{fuente_id}/consultas` acepta `?limite=` (de 1 a 100, por defecto 20).
 
 ---
 

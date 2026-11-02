@@ -1,0 +1,19 @@
+# Entorno local: LocalStack emula los servicios de AWS que usa MatriculAR.
+# Se levanta con scripts/levantar-local.sh (que además aplica Terraform en infra/entornos/local).
+# El token va en .env (ignorado por git): copiá .env.example.
+services:
+  localstack:
+    image: localstack/localstack:2026.10.4
+    container_name: matricular-localstack
+    ports:
+      - "127.0.0.1:4566:4566"
+    environment:
+      - LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_AUTH_TOKEN:?Definí LOCALSTACK_AUTH_TOKEN en .env}
+      - SERVICES=lambda,dynamodb,s3,apigateway,logs,cloudwatch,iam,sts
+    volumes:
+      # Las Lambdas corren en contenedores propios: LocalStack los crea con el Docker del host.
+      - /var/run/docker.sock:/var/run/docker.sock
+      - localstack-datos:/var/lib/localstack
+
+volumes:
+  localstack-datos:
