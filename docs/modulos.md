@@ -19,12 +19,12 @@
 
 | Prioridad | Significado | Compromiso |
 |---|---|---|
-| **P0** | **Núcleo de verificación.** Es el recorrido vertical que pidió el tutor, y el diferencial de MatriculAR. | **Se entrega completo.** Es el **único alcance de la entrega final** (21/11/2026). |
+| **P0** | **Núcleo de verificación.** Es el recorrido vertical que pidió el tutor, y el diferencial de MatriculAR. | **Se entrega completo.** Es el **único alcance de la entrega final** (14/11/2026, adelantada desde el 21/11). |
 | **P1** | Profesionales y búsqueda: el marketplace se apoya sobre el núcleo. | **Fuera del alcance de la entrega final.** Queda diseñado para la fase 2. |
 | **P2** | Cuentas, contratación y reseñas: el ciclo completo de contratación. | **Fuera del alcance de la entrega final.** Queda diseñado para la fase 2. |
 | **P3** | Revalidación programada y notificaciones. | **Fuera del alcance de la entrega final.** Queda diseñado para la fase 2. |
 
-Regla de recorte: si el plan se atrasa, **se recorta de abajo hacia arriba**, nunca el P0. Esto sigue el principio de la primera entrega: *pocas cosas completas en lugar de muchas a medias*. Con el código empezando el 02/11 y la entrega final el 21/11, el recorte se aplica desde ahora: **P1, P2 y P3 quedan declarados fuera del alcance de la entrega final**, como pidió la devolución v3 ("no implementaría todavía marketplace, contrataciones, Cognito, SES, revalidación ni notificaciones").
+Regla de recorte: si el plan se atrasa, **se recorta de abajo hacia arriba**, nunca el P0. Esto sigue el principio de la primera entrega: *pocas cosas completas en lugar de muchas a medias*. Con el código empezando el 02/11 y la entrega final el 14/11 (adelantada desde el 21/11), el recorte se aplica desde ahora: **P1, P2 y P3 quedan declarados fuera del alcance de la entrega final**, como pidió la devolución v3 ("no implementaría todavía marketplace, contrataciones, Cognito, SES, revalidación ni notificaciones").
 
 ---
 
@@ -37,8 +37,8 @@ Regla de recorte: si el plan se atrasa, **se recorta de abajo hacia arriba**, nu
 | **M03** | Reglas y evaluación | **P0** | Mantiene el catálogo de Categorías y los Tipos de trabajo versionados. Deduce los Tipos de trabajo posibles a partir de las Condiciones decisivas y calcula la Evaluación (Criterio de categoría, resultado global y Limitaciones, incluida la de zona). | `λ verificacion` · [`backend/compartido/`](../backend/compartido/) |
 | **M04** | Verificación y API | **P0** | Caso de uso *Verificar* de punta a punta, primero desde un CLI y después con los endpoints públicos del P0 (verificación, historial, salud de la Fuente y catálogos). | `λ verificacion` |
 | **M05** | Interfaz de verificación | **P0** | Pantalla web mínima: formulario con las Condiciones decisivas y resultado con evidencia, Criterio, Limitaciones e historial. | [`frontend/`](../frontend/) |
-| **M06** | Infraestructura y entorno | **P0** | Terraform para los recursos del P0, entorno LocalStack reproducible, carga de datos semilla y scripts de desarrollo. **Ya no va primero**: se hace después del recorrido local. | [`infra/`](../infra/) · [`database/`](../database/) |
-| **M07** | Despliegue en la nube y observabilidad | **P0** (requisito de la etapa 4) | El mismo Terraform aplicado en AWS real, el frontend servido desde S3, alerta de presupuesto, logs y alarmas. | [`infra/`](../infra/) |
+| **M06** | Infraestructura y entorno | **P0** | Terraform para los recursos del P0 y scripts de desarrollo. El entorno LocalStack quedó configurado pero **no se ejecutó**. **Ya no va primero**: se hizo después del recorrido local. | [`infra/`](../infra/) · [`database/`](../database/) |
+| **M07** | Despliegue en la nube y observabilidad | **P0** (requisito de la etapa 4) | El mismo Terraform aplicado en AWS real (`us-east-2`), el frontend servido por la misma API con HTTPS, alerta de presupuesto, logs y alarmas. **Desplegado el 10/11/2026.** | [`infra/`](../infra/) |
 | **M08** | Profesionales | **P1** · fase 2 | Perfil del gasista: nombre visible, presentación y tipos de trabajo ofrecidos. | `λ profesionales` · [`backend/profesionales/`](../backend/profesionales/) |
 | **M09** | Vínculos | **P1** · fase 2 | Relación Profesional–Matrícula, verificada con un código que se envía al email que publica la propia Fuente: prueba control de ese email, no la identidad legal del titular. | `λ profesionales` |
 | **M10** | Búsqueda | **P1** · fase 2 | Zonas de trabajo y búsqueda de Profesionales por tipo de trabajo y provincia, con una Verificación del momento. | `λ profesionales` |
@@ -118,7 +118,7 @@ Para cada módulo: qué hace, con qué datos trabaja, qué expone y cómo se dem
 | **Datos** | Lee `Fuentes` (configuración versionada) y la última Consulta exitosa (para V5). No escribe. |
 | **Expone** | `PuertoFuente.leer` (P0) y `PuertoFuente.obtenerContactoParaVinculo` (P1). |
 | **Diseño** | [`fuentes-y-adaptadores.md`](fuentes-y-adaptadores.md) |
-| **Prueba temprana** | **1–2/11/2026:** el mismo pedido del adaptador, identificado con un `User-Agent` propio y un contacto, desde una IP de AWS (CloudShell), antes de escribir infraestructura. El resultado se registra en [fuentes § 9, P-2](fuentes-y-adaptadores.md#9-puntos-pendientes). |
+| **Prueba temprana** | **1–2/11/2026:** el mismo pedido del adaptador, identificado con un `User-Agent` propio y un contacto, desde una IP de nube, antes de escribir infraestructura. **Resultado:** desde GitHub Actions (Azure), 403 (02/11); desde AWS (`us-east-2`), 200 con el padrón completo (10/11). Ver [fuentes § 9, P-2](fuentes-y-adaptadores.md#9-puntos-pendientes). |
 | **Responsable** | Nicolás (adaptador y fixtures), hasta el 08/11. |
 | **Terminado cuando** | Pasan las 14 fixtures (F1 a F14), sintéticas y sin datos reales. Ninguna salida contiene email, teléfono ni barrio. Una prueba de humo manual (`npm run test:fuente-real`) lee el padrón real de Ecogas. |
 
@@ -127,9 +127,9 @@ Para cada módulo: qué hace, con qué datos trabaja, qué expone y cómo se dem
 | | |
 |---|---|
 | **Responsabilidades** | Registrar la Consulta `IN_PROGRESS` antes del primer pedido. Finalizarla con estado, motivo, detalle, Intentos, huella y resumen. Guardar la Lectura minimizada de una Consulta exitosa y descartarla al día siguiente. Reutilizar una Consulta exitosa durante la Ventana de reutilización (15 minutos) y aplicar la Protección de la Fuente (1 minuto después de una falla, `SOURCE_RATE_LIMITED`). Crear un Resultado de verificación por Verificación y una Credencial inmutable por Coincidencia si es `FOUND`, con sus `valores_fuente` (incluido el Identificador interno de la Fuente, que nunca se presenta como matrícula). Interpretar como interrumpida una Consulta que sigue `IN_PROGRESS` después de su plazo. |
-| **Datos** | `Consultas` (con la Lectura minimizada), `ResultadosVerificacion` y `Credenciales`. |
+| **Datos** | `Consultas` (la Lectura minimizada va a S3) y `Credenciales`. En el P0, `ResultadosVerificacion` quedó absorbida por `Verificaciones` ([database § 6](../database/README.md#6-tablas-del-p0)). |
 | **Invariantes** | INV-1, INV-3, INV-4, INV-9, INV-10 e INV-15 ([modelo § 8](modelo-de-dominio.md#8-invariantes)). |
-| **Terminado cuando** | Primero con repositorios en memoria: la Ventana de reutilización y la Protección de la Fuente funcionan con un reloj falso, y una falla no toca la evidencia anterior. Después, contra DynamoDB en LocalStack: las escrituras condicionales impiden modificar una Credencial y el historial de un gasista (nombre y localidad) se lee en orden. La clave definitiva de `Credenciales` se decide acá ([ADR-0007](adr/0007-identificacion-por-nombre-y-localidad.md)). |
+| **Terminado cuando** | Primero con repositorios en memoria: la Ventana de reutilización y la Protección de la Fuente funcionan con un reloj falso, y una falla no toca la evidencia anterior. Después, contra DynamoDB: las escrituras condicionales impiden modificar una Credencial y el historial de un gasista (nombre y localidad) se lee en orden. **Estado:** las pruebas de contrato pasan para memoria y archivo; contra DynamoDB y S3 existen (`npm run test:aws`, pensadas para LocalStack) pero no se ejecutaron, y la persistencia se comprobó con el recorrido real en AWS. La clave definitiva de `Credenciales` se decide acá ([ADR-0007](adr/0007-identificacion-por-nombre-y-localidad.md)). |
 
 ### M03 · Reglas y evaluación · P0
 
@@ -148,7 +148,7 @@ Para cada módulo: qué hace, con qué datos trabaja, qué expone y cómo se dem
 | **Responsabilidades** | Caso de uso *Verificar*: validar el pedido, orquestar M01, M02 y M03 y persistir todo en una transacción. Armar el mensaje: qué sabemos, de dónde, cuándo, qué concluimos y qué no. Endpoints de consulta: Verificación, historial, salud de la Fuente y catálogos. |
 | **Datos** | `Verificaciones`, más todas las tablas del núcleo. |
 | **Expone** | [`api.md`](api.md) § 2 a 5. |
-| **Terminado cuando** | **Hasta el 08/11:** los escenarios S1, S5, S6, S7, S9, S11, S13, S14 y S15 se recorren de punta a punta **desde el CLI**, con repositorios en memoria. **Hasta el 13/11:** los mismos escenarios por HTTP contra LocalStack, con las respuestas del contrato. Una Fuente que falla responde `201 UNVERIFIABLE`, nunca un `5xx`. |
+| **Terminado cuando** | **Hasta el 08/11:** los escenarios S1, S5, S6, S7, S9, S11, S13, S14 y S15 se recorren de punta a punta **desde el CLI**, con repositorios en memoria. Después, los mismos escenarios por HTTP, con las respuestas del contrato. **Estado:** las rutas se prueban con Vitest (repositorios en memoria) y el recorrido se comprobó en AWS el 10/11/2026. Una Fuente que falla responde `201 UNVERIFIABLE`, nunca un `5xx`. |
 
 ### M05 · Interfaz de verificación · P0
 
@@ -162,17 +162,17 @@ Para cada módulo: qué hace, con qué datos trabaja, qué expone y cómo se dem
 
 | | |
 |---|---|
-| **Cuándo** | **Después** del recorrido local (devolución v3): DynamoDB en LocalStack del 09/11 al 13/11, Terraform completo después. |
-| **Responsabilidades** | Terraform para las 8 tablas del núcleo, la función, API Gateway con límites de uso, IAM de mínimo privilegio (sin `DeleteItem` sobre la evidencia y sin `UpdateItem` salvo para finalizar la Consulta) y logs. Script de carga de datos semilla. Levantar y destruir el entorno con un comando. |
+| **Cuándo** | **Después** del recorrido local (devolución v3). Hecho el 02/11 (Terraform validado) y aplicado en AWS el 10/11. |
+| **Responsabilidades** | Terraform para las 4 tablas del P0, el bucket de Lecturas minimizadas, la función, API Gateway con límites de uso, IAM de mínimo privilegio (sin `DeleteItem` ni `UpdateItem` sobre la evidencia) y logs. Las reglas viajan con la función: no hace falta script de carga de datos semilla. Levantar y destruir el entorno con un comando. |
 | **Diseño** | [`infra/README.md`](../infra/README.md) · [`database/`](../database/) |
-| **Terminado cuando** | `lstk terraform apply` más el seed dejan el sistema funcionando desde cero, y `destroy` lo elimina sin residuos. |
+| **Terminado cuando** | `terraform apply` deja el sistema funcionando desde cero, y `destroy` lo elimina sin residuos. **Estado:** cumplido en AWS con `scripts/desplegar-aws.sh`; en LocalStack, no ejecutado. |
 
 ### M07 · Despliegue en la nube y observabilidad · P0 (etapa 4)
 
 | | |
 |---|---|
-| **Responsabilidades** | Aplicar el mismo Terraform en AWS real (Free plan). Servir el frontend desde S3. Alerta de presupuesto de USD 5. Logs estructurados y alarma por proporción de Consultas fallidas. La prueba de pedidos a Ecogas desde IPs de AWS se adelantó al 1–2/11 (ver M01). |
-| **Terminado cuando** | El servicio responde en una URL pública y el recorrido completo funciona en la nube. |
+| **Responsabilidades** | Aplicar el mismo Terraform en AWS real (plan gratuito, región `us-east-2`). Servir el frontend con HTTPS desde la misma API (el sitio web de S3 solo sirve HTTP). Alerta de presupuesto de USD 5. Logs estructurados y alarma de Consultas fallidas. La prueba de pedidos a Ecogas desde la nube se adelantó (ver M01). |
+| **Terminado cuando** | El servicio responde en una URL pública y el recorrido completo funciona en la nube. **Cumplido el 10/11/2026:** <https://b2u5pup2gd.execute-api.us-east-2.amazonaws.com/v1/>, con una verificación real contra Ecogas. |
 
 ### M08 · Profesionales · P1
 
@@ -247,7 +247,7 @@ Documentado para la **fase 2**, fuera del proyecto final:
 
 | Excluido | Por qué |
 |---|---|
-| **Módulos P1, P2 y P3** (M08 a M15): marketplace, Vínculos, búsqueda, cuentas con Cognito, contratación, reseñas, revalidación y notificaciones | Devolución v3: primero el recorrido del P0. Con el tiempo que queda hasta el 21/11, se declaran fuera de la entrega final. Su diseño queda en este documento, en el [modelo](modelo-de-dominio.md) y en la [API](api.md#7-endpoints-de-p1-y-p2-resumen). |
+| **Módulos P1, P2 y P3** (M08 a M15): marketplace, Vínculos, búsqueda, cuentas con Cognito, contratación, reseñas, revalidación y notificaciones | Devolución v3: primero el recorrido del P0. Con el tiempo que queda hasta la entrega final (14/11), se declaran fuera de la entrega final. Su diseño queda en este documento, en el [modelo](modelo-de-dominio.md) y en la [API](api.md#7-endpoints-de-p1-y-p2-resumen). |
 | **Electricistas** (COPIME, ERSeP, APSE) | Toda la evidencia investigada es de gas. Otro oficio implica otra investigación de Fuentes y de reglas. |
 | **Otras distribuidoras de gas** (Naturgy BAN, Camuzzi, Litoral Gas, …) | Cada una requiere investigación y, si es automatizable, un adaptador. La arquitectura ya lo permite (M01). |
 | Pagos y facturación | No hacen al problema central. |
@@ -264,7 +264,7 @@ Documentado para la **fase 2**, fuera del proyecto final:
 
 ## 6. Plan
 
-El diseño fue aprobado con correcciones (devolución v3). Este plan reemplaza al de la segunda entrega: la infraestructura ya no va primero, y el alcance de la entrega final es solo el P0. La etapa 4 de la hoja de ruta termina el 21/11/2026.
+El diseño fue aprobado con correcciones (devolución v3). Este plan reemplaza al de la segunda entrega: la infraestructura ya no va primero, y el alcance de la entrega final es solo el P0. La etapa 4 de la hoja de ruta terminaba el 21/11/2026; **el checklist institucional adelantó la entrega final al 14/11/2026**. El diagrama es el plan del 02/11; la tabla de hitos indica qué se cumplió.
 
 ```mermaid
 gantt
@@ -297,8 +297,8 @@ gantt
 |---|---|---|
 | Arranque | **02/11** | Documentación corregida según la devolución v3. Proyecto TypeScript con las primeras pruebas del dominio en verde (categoría desconocida, No sé, Limitación de zona, trabajo no cubierto, texto de `COMPATIBLE`). CI en GitHub Actions. Consulta enviada a Ecogas y resultado de la prueba desde AWS. |
 | **Recorrido local** | **08/11** | *Fuente actual de Ecogas → extracción válida → gasista (por nombre y localidad, porque la Fuente no publica la matrícula) → evidencia → trabajo → evaluación → respuesta explicable*, desde un CLI y con repositorios en memoria. Incluye cambio de URL o estructura, extracción incompleta, categoría desconocida e incertidumbre de zona. |
-| Persistencia | 13/11 | El mismo recorrido con DynamoDB en LocalStack y un handler de Lambda. |
-| **P0 en la nube** | 17/11 | El mismo recorrido en AWS real, con una URL pública y una página React mínima. |
-| Entrega final | 21/11 | Repositorio, servicio en la nube, informe y video. |
+| Persistencia | 13/11 → **hecho** | Repositorios de DynamoDB y S3 y handler de Lambda. LocalStack no se ejecutó: la integración se probó directo en AWS. |
+| **P0 en la nube** | 17/11 → **hecho el 10/11** | El mismo recorrido en AWS real, con una URL pública y una página React mínima: <https://b2u5pup2gd.execute-api.us-east-2.amazonaws.com/v1/> |
+| Entrega final | ~~21/11~~ **14/11** | Repositorio, servicio en la nube, informe y video. |
 
 **Cómo se trabaja.** Nicolás toma el adaptador de Ecogas y sus fixtures, e Iván el dominio y la evaluación; se encuentran en el puerto de Fuentes. Se desarrolla con TDD. Cada cambio entra por un PR chico (menos de un día de trabajo) que revisa el otro integrante; si la revisión no llega en 12 horas, se integra igual. GitHub Actions corre el lint, el chequeo de tipos y las pruebas en cada push.

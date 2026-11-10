@@ -35,7 +35,7 @@ variable "contacto" {
 }
 
 variable "origen_cors" {
-  description = "Origen del frontend. Hasta publicarlo, cualquiera: la API del P0 es pública y de solo consulta."
+  description = "Origen admitido por CORS. El frontend se sirve desde la misma API (mismo origen); la API del P0 es pública y de solo consulta."
   type        = string
   default     = "*"
 }

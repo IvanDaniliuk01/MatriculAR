@@ -1,6 +1,6 @@
 # Arquitectura
 
-> Documento de diseño · Segunda entrega, corregido según la devolución v3 · Última revisión: 01/11/2026
+> Documento de diseño · Segunda entrega, corregido según la devolución v3 · Última revisión: 10/11/2026 (despliegue en AWS)
 > Cumple el ítem "Arquitectura del proyecto" de la consigna: descripción de la arquitectura elegida, tecnologías definitivas y justificación de las decisiones técnicas. Incorpora de la devolución v3 el nuevo orden de trabajo ([§ 1.1](#11-orden-de-implementación)), el recorte del stack a lo que necesita el P0 y la Protección de la Fuente.
 > Relacionados: [módulos](modulos.md) · [API](api.md) · [base de datos](../database/README.md) · [fuentes y adaptadores](fuentes-y-adaptadores.md) · [ADRs](adr/)
 
@@ -31,7 +31,7 @@
 | **Comunicación** | **Sincrónica** (pedido → respuesta) a través de API Gateway. **Sin colas ni DLQ** hasta que haya una necesidad concreta ([ADR-0001](adr/0001-sin-colas-reintentos-sincronicos.md)). |
 | **Persistencia** | **DynamoDB**, con una tabla por entidad ([ADR-0004](adr/0004-una-tabla-dynamodb-por-entidad.md)). |
 | **Lenguaje** | **TypeScript 7.0** (la versión `latest` en npm) en backend y frontend. En runtime corre **Node.js 24** (`nodejs24.x` en Lambda). |
-| **Entornos** | **Local:** primero un CLI con repositorios en memoria; después LocalStack (AWS emulado) con Docker. **Nube (etapa 4):** AWS real, con el mismo código de infraestructura. |
+| **Entornos** | **Local:** un CLI y un servidor HTTP (`npm run servir`) con repositorios en archivo. LocalStack (AWS emulado) quedó configurado pero **no se ejecutó** (§ 7). **Nube (etapa 4):** AWS real, región `us-east-2`, desplegado el 10/11/2026 con el mismo código de infraestructura. |
 | **Infraestructura** | **100 % como código** con Terraform (D6). |
 | **Alcance de la entrega final** | **Solo el P0.** Cognito, SES, EventBridge Scheduler y SNS quedan para la fase 2, fuera del alcance de la entrega final ([módulos](modulos.md)). |
 
@@ -46,11 +46,11 @@
 
 La devolución v3 no pidió cambiar el stack, pero sí el orden del trabajo: *el desafío de MatriculAR es leer correctamente una Fuente inestable, conservar evidencia, aplicar una regla válida y expresar incertidumbre correctamente, no demostrar que se pudieron desplegar muchas piezas de AWS.* Por eso la infraestructura ya no va primero:
 
-1. **Recorrido ejecutable local, sin AWS** (hasta el 08/11): dominio y adaptador de Ecogas, con repositorios en memoria, ejecutados desde un CLI (`npm run verificar -- …`). Recorre *adaptador Ecogas → Consulta → Credencial → Evaluación → respuesta*.
-2. **DynamoDB en LocalStack y un handler de Lambda fino** (del 09/11 al 13/11). Los casos de uso no cambian: solo se agregan adaptadores.
-3. **Terraform en AWS real y una página React mínima** (del 14/11 al 17/11).
+1. **Recorrido ejecutable local, sin AWS**: dominio y adaptador de Ecogas, con repositorios en memoria y en archivo, ejecutados desde un CLI (`npm run verificar -- …`). Recorre *adaptador Ecogas → Consulta → Credencial → Evaluación → respuesta*. **Hecho.**
+2. **Repositorios de DynamoDB y S3 y un handler de Lambda fino.** Los casos de uso no cambiaron: solo se agregaron adaptadores. **Hecho**; LocalStack no se llegó a ejecutar y la integración se probó directamente en AWS.
+3. **Terraform en AWS real y una página React mínima.** **Hecho el 10/11/2026**, adelantado porque la entrega final pasó al 14/11.
 
-Antes de escribir infraestructura se prueba el adaptador **desde una IP de AWS** (CloudShell), identificado con su `User-Agent` ([fuentes § 9, P-2](fuentes-y-adaptadores.md#9-puntos-pendientes)). Si Ecogas bloqueara esos pedidos, el núcleo funcional del P0 cambia, y eso tiene que saberse ahora y no al final.
+Antes de escribir infraestructura se probó el adaptador **desde una IP de nube** ([fuentes § 9, P-2](fuentes-y-adaptadores.md#9-puntos-pendientes)): desde GitHub Actions (Azure) Ecogas respondió **403**. Al desplegar se comprobó que **desde AWS sí responde**: la Lambda en `us-east-2` leyó el padrón completo (4.836 registros) en unos 1,5 s, identificada con su `User-Agent`.
 
 La arquitectura hexagonal es lo que permite este orden: el mismo caso de uso corre con repositorios en memoria y con DynamoDB.
 
@@ -102,7 +102,7 @@ flowchart TB
         spa[Frontend React + Vite<br/>TypeScript]
     end
 
-    subgraph aws [AWS · LocalStack en local]
+    subgraph aws [AWS · us-east-2]
         apigw[API Gateway REST<br/>límite de uso por método]
 
         subgraph lambdas [Funciones Lambda · Node.js 24]
@@ -114,7 +114,7 @@ flowchart TB
         end
 
         ddb[(DynamoDB<br/>15 tablas)]
-        s3[S3 · etapa 4<br/>hosting del frontend]
+        s3[S3<br/>Lecturas minimizadas, 1 día]
         sched[EventBridge Scheduler · P3<br/>diario]
         sns[SNS · P3]
         cognito[Cognito · P1 y P2]
@@ -124,7 +124,8 @@ flowchart TB
     ecogas[(Ecogas)]
 
     spa -->|HTTPS JSON| apigw
-    s3 -.->|sirve| spa
+    lv -.->|sirve la página<br/>por la misma API| spa
+    lv --> s3
     apigw --> lv
     apigw --> lp
     apigw --> lc
@@ -147,16 +148,16 @@ flowchart TB
 
 | Contenedor | Responsabilidad | Módulo | Detalle |
 |---|---|---|---|
-| **Frontend** | Pantalla de verificación (P0), perfil del Profesional y búsqueda (P1), contratación (P2). | P0 a P2 | [`frontend/README.md`](../frontend/README.md) |
+| **Frontend** | Pantalla de verificación (P0), perfil del Profesional y búsqueda (P1), contratación (P2). En el P0, su build viaja dentro del paquete de **λ verificacion**, que lo sirve en la raíz de la API: un único enlace con HTTPS (§ 7). | P0 a P2 | [`frontend/README.md`](../frontend/README.md) |
 | **API Gateway (REST)** | Único punto de entrada. Enruta por prefijo a cada función, aplica límites de uso y, desde P1, autoriza con Cognito. Se usa REST (v1) porque está disponible en todos los planes de LocalStack y permite ampliar el timeout de 29 s. | P0 | [`api.md`](api.md) |
-| **λ verificacion** | Casos de uso *Verificar*, *Consultar historial*, *Listar Fuentes, Tipos de trabajo y Categorías*. Contiene los adaptadores de Fuentes. | P0 | [`backend/verificacion/`](../backend/verificacion/) |
+| **λ verificacion** | Casos de uso *Verificar*, *Consultar historial*, *Listar Fuentes, Tipos de trabajo y Categorías*. Contiene los adaptadores de Fuentes. En el P0 también sirve los archivos del frontend. | P0 | [`backend/verificacion/`](../backend/verificacion/) |
 | **λ profesionales** | Perfil, Vínculos (código por email), zonas de trabajo y búsqueda. | P1 | [`backend/profesionales/`](../backend/profesionales/) |
 | **λ contrataciones** | Contrataciones, transiciones de estado y Reseñas. | P2 | [`backend/contrataciones/`](../backend/contrataciones/) |
 | **λ revalidacion** | Todos los días, una Consulta por Fuente para todos los registros vinculados. Caso de uso *Revalidar*, armado con **los mismos componentes del núcleo** que *Verificar* (el espíritu de la D3). | P3 | [`backend/revalidacion/`](../backend/revalidacion/) |
 | **λ notificaciones** | Avisa cuando una revalidación cambia el Resultado de verificación de un Profesional. | P3 | [`backend/notificaciones/`](../backend/notificaciones/) |
 | **DynamoDB** | 15 tablas. | P0 a P2 | [`database/README.md`](../database/README.md) |
 
-**Alcance de la entrega final.** Del diagrama, se implementan solo el frontend, API Gateway, **λ verificacion**, DynamoDB, S3 y CloudWatch Logs. Las funciones de P1, P2 y P3, Cognito, EventBridge Scheduler y SNS quedan en el diseño como **fase 2, fuera del alcance de la entrega final** ([módulos](modulos.md)).
+**Alcance de la entrega final.** Del diagrama, se implementan solo el frontend, API Gateway, **λ verificacion**, DynamoDB (4 tablas del P0), S3 (Lecturas minimizadas) y CloudWatch Logs. Las funciones de P1, P2 y P3, Cognito, EventBridge Scheduler y SNS quedan en el diseño como **fase 2, fuera del alcance de la entrega final** ([módulos](modulos.md)).
 
 **Cómo se comunican las funciones entre sí.** Las funciones de P1 y P2 **no llaman por HTTP** a la de verificación: el caso de uso *Verificar* vive en un paquete compartido del backend ([`backend/compartido/`](../backend/compartido/)) y cada función lo incluye al empaquetarse. Así hay una sola implementación de las reglas, sin llamadas de red internas. Las flechas del diagrama muestran la dependencia lógica.
 
@@ -233,7 +234,7 @@ La lectura U1-A2 de la cátedra propone justificar el stack respondiendo cinco p
 | ¿Por qué este lenguaje y framework para el **frontend**? | **React + Vite + TypeScript.** El frontend del P0 es una pantalla con un formulario y un resultado rico (Criterios, evidencia y Limitaciones). React ya estaba declarado en la primera entrega, tiene el ecosistema más amplio de componentes y documentación, y Vite da un entorno de desarrollo rápido con transpilación incluida. |
 | ¿Por qué este lenguaje y framework para el **backend**? | **TypeScript sobre Node.js 24, sin framework web** (los handlers de Lambda son funciones). Usamos el **mismo lenguaje en frontend y backend**, que es el escenario que la lectura asigna a JavaScript/TypeScript ("cuando se requiere unificación de lenguaje"). Esto permite **compartir los tipos del dominio y los esquemas Zod** entre la API y la interfaz. El dominio es una colección de estados enumerados y reglas, donde un error de tipos es un error de interpretación: el tipado estático los detecta al compilar. |
 | ¿Por qué este **gestor de base de datos**? ¿SQL o NoSQL? | **DynamoDB (NoSQL, clave-valor y documentos).** Los patrones de acceso son pocos y conocidos, la evidencia es inmutable y se lee por clave y fecha, sin *joins*, y es la base nativa del modelo serverless. Ver [database § 2](../database/README.md#2-por-qué-dynamodb-y-por-qué-una-tabla-por-entidad). |
-| ¿Por qué esta **plataforma de despliegue**? ¿Qué restricciones influyeron? | **AWS serverless (Lambda + API Gateway + DynamoDB), desarrollado sobre LocalStack.** Restricciones: aprender arquitectura cloud sin riesgo de facturación durante el desarrollo, uso intermitente y la etapa 4 de la hoja de ruta, que exige un servicio en la nube. |
+| ¿Por qué esta **plataforma de despliegue**? ¿Qué restricciones influyeron? | **AWS serverless (Lambda + API Gateway + DynamoDB).** Restricciones: aprender arquitectura cloud sin riesgo de facturación, uso intermitente y la etapa 4 de la hoja de ruta, que exige un servicio en la nube. Se planificó desarrollar sobre LocalStack; al final se desarrolló con repositorios en archivo y se desplegó directo en AWS (plan gratuito, alerta de USD 5). |
 | ¿El equipo tiene **experiencia previa** con estas tecnologías? | **Sí.** Iván tiene experiencia en todas las partes del stack: TypeScript, React, AWS serverless (Lambda, API Gateway, DynamoDB) y Terraform. Esto cumple una de las condiciones que la lectura plantea para adoptar tecnologías: *"se cuenta con algún integrante del equipo que ya domina la tecnología y puede guiar al resto"*. La novedad real es el compilador de TypeScript 7; el riesgo se acota porque el lenguaje no cambia y se mitiga con las herramientas elegidas ([§ 12](#12-riesgos)). |
 
 ### 5.1 Tabla de tecnologías
@@ -254,8 +255,8 @@ La lectura U1-A2 de la cátedra propone justificar el stack respondiendo cinco p
 | Programación de tareas | **EventBridge Scheduler** · *fase 2, fuera del alcance de la entrega final* | — | Revalidación diaria (P3). | Cron en un servidor: no hay servidor. |
 | Notificaciones | **SNS** · *fase 2, fuera del alcance de la entrega final* | — | Fan-out de avisos (P3). | — |
 | Infraestructura | **Terraform** | ≥ 1.9 (probado con 1.17), provider AWS 6.x | Todos los recursos como código (D6). En local se ejecuta el mismo `terraform` con los `endpoints` del provider apuntando a LocalStack ([§ 7](#7-entornos-y-costos)). | AWS CDK o SAM: Terraform ya estaba declarado y es agnóstico de proveedor. |
-| Entorno local | **LocalStack** (plan Student, o Hobby si la verificación demora) + **Docker** | calver 2026.x | AWS emulado para desarrollar sin costo. | Desarrollar directo contra AWS: riesgo de facturación y ciclo más lento. |
-| Nube | **AWS** (Free plan) | — | Despliegue de la etapa 4. | PaaS (Render, Railway): no ejercita la arquitectura serverless que es objetivo del proyecto. |
+| Entorno local | `npm run servir` y CLI con repositorios en archivo. **LocalStack** + Docker: configurado (`docker-compose.yml`, `infra/entornos/local`), **no ejecutado** | calver 2026.x | AWS emulado para desarrollar sin costo. | Desarrollar directo contra AWS: riesgo de facturación y ciclo más lento. |
+| Nube | **AWS** (plan gratuito con Projects), región **`us-east-2`** | — | Despliegue de la etapa 4: API, función, tablas y frontend. | PaaS (Render, Railway): no ejercita la arquitectura serverless que es objetivo del proyecto. |
 
 ---
 
@@ -278,14 +279,16 @@ Decisiones nuevas de esta entrega: [ADR-0001](adr/0001-sin-colas-reintentos-sinc
 
 | Entorno | Para qué | Cómo se levanta | Costo |
 |---|---|---|---|
-| **Local sin AWS** | Primer recorrido completo (devolución v3). | `npm run verificar -- …` en `backend/`: el caso de uso con repositorios en memoria y el adaptador real de Ecogas o sus fixtures. | USD 0. |
-| **Local** | Desarrollo y pruebas de integración. | [`scripts/levantar-local.sh`](../scripts/levantar-local.sh): LocalStack con `docker compose` (`LOCALSTACK_AUTH_TOKEN` en `.env`, ignorado por git) → `npm run empaquetar` → `terraform apply` en [`infra/entornos/local`](../infra/entornos/local/) (tablas, bucket, función, API y alarma) → imprime la URL de la API. [`scripts/bajar-local.sh`](../scripts/bajar-local.sh) lo destruye: **el entorno se recrea de cero con dos comandos** (D6). | USD 0. |
-| **Nube** (etapa 4, del 28/09 al 21/11) | Servicio público para la entrega final, el video y la defensa. | [`scripts/desplegar-aws.sh`](../scripts/desplegar-aws.sh): empaqueta, muestra el plan del **mismo Terraform** en [`infra/entornos/aws`](../infra/entornos/aws/) y pide confirmación. Suma recuperación a un punto en el tiempo y protección contra borrado de las tablas, y el presupuesto. El frontend se sirve desde S3. | Lambda y DynamoDB entran en el uso gratuito o cuestan centavos con este volumen. API Gateway **no** es gratuito para cuentas nuevas y consume de los créditos (USD 100 a 200). **Alerta de presupuesto de USD 5 desde el primer día**, creada por el mismo Terraform. |
+| **Local sin AWS** | Recorrido completo y desarrollo del frontend. | `npm run verificar -- …` (CLI) o `npm run servir` (la misma API en `localhost:3000`) en `backend/`, con repositorios en archivo (`backend/.datos-locales/`) y el adaptador real de Ecogas. El frontend, con `npm run dev` en `frontend/`. | USD 0. |
+| **Local con LocalStack** · *configurado, no ejecutado* | Pruebas de integración contra AWS emulado. | [`scripts/levantar-local.sh`](../scripts/levantar-local.sh): LocalStack con `docker compose` (`LOCALSTACK_AUTH_TOKEN` en `.env`, ignorado por git) → `npm run empaquetar` → `terraform apply` en [`infra/entornos/local`](../infra/entornos/local/) → imprime la URL de la API. [`scripts/bajar-local.sh`](../scripts/bajar-local.sh) lo destruye. **No se llegó a correr**: Docker no estaba disponible en el entorno de desarrollo y la entrega se adelantó; la integración se probó directo en AWS. | USD 0. |
+| **Nube** (etapa 4) · **desplegado el 10/11/2026** | Servicio público para la entrega final, el video y la defensa: **<https://b2u5pup2gd.execute-api.us-east-2.amazonaws.com/v1/>** | [`scripts/desplegar-aws.sh`](../scripts/desplegar-aws.sh): construye el frontend, empaqueta la función (con el frontend adentro), muestra el plan del **mismo Terraform** en [`infra/entornos/aws`](../infra/entornos/aws/) y pide confirmación. Suma recuperación a un punto en el tiempo y protección contra borrado de las tablas, y el presupuesto. | Lambda y DynamoDB entran en el uso gratuito o cuestan centavos con este volumen. API Gateway **no** es gratuito para cuentas nuevas y consume de los créditos (USD 100). **Alerta de presupuesto de USD 5**, creada por el mismo Terraform. |
 
 Decisiones de despliegue:
 
 - **`terraform` común, sin `lstk` ni `tflocal`.** El entorno local declara los `endpoints` del provider de AWS apuntando a LocalStack (`http://localhost:4566`). Es una herramienta menos que instalar y el código de los módulos es idéntico en los dos entornos.
-- **Recursos explícitos en API Gateway, no `{proxy+}`.** Cada ruta de [`docs/api.md`](api.md) es un recurso con su método (más `OPTIONS` para CORS), todos hacia la misma función. Así el contrato se ve en el código, las rutas desconocidas responden 403 sin invocar la función, y `POST /verificaciones` tiene su propio throttling.
+- **Recursos explícitos en API Gateway para la API.** Cada ruta de [`docs/api.md`](api.md) es un recurso con su método (más `OPTIONS` para CORS), todos hacia la misma función. Así el contrato se ve en el código y `POST /verificaciones` tiene su propio throttling. El único comodín es `GET /{archivo+}` (más `GET /`) para los archivos del frontend; los recursos explícitos tienen prioridad sobre él.
+- **El frontend lo sirve la misma API, con HTTPS.** El sitio web de S3 solo sirve HTTP y los navegadores actuales lo bloquean o advierten; CloudFront suma una pieza más. El build de Vite viaja dentro del paquete de la función (`sitio/`), que lo sirve en `/v1/` y arma `config.json` con la URL del mismo origen. Resultado: **un único enlace con HTTPS**, sin CORS entre la página y la API (resuelve A-4).
+- **Región `us-east-2`.** La cuenta del plan gratuito con *Projects* solo permite crear recursos en la región elegida para el proyecto; en `us-east-1` la política de la organización deniega DynamoDB, S3, API Gateway y las alarmas.
 - **Las reglas viajan con la función.** `database/seed/` se empaqueta con esbuild y se valida al arrancar: en P0 no hay tablas de Fuentes, Tipos de trabajo ni Condiciones decisivas, ni script de seed.
 - **Estado de Terraform local** (`terraform.tfstate`, ignorado por git): en P0 despliega una sola persona. Si eso cambia, pasa a un backend S3 con bloqueo.
 - **Arquitectura de la función:** arm64 en AWS (más barata) y x86_64 en LocalStack, para no emular en una PC x86. El paquete es JavaScript puro y sirve para las dos.
@@ -293,8 +296,8 @@ Decisiones de despliegue:
 Cosas a tener en cuenta sobre la cuenta de AWS:
 
 - El Free plan dura **6 meses o hasta agotar los créditos**. Después la cuenta se cierra y hay 90 días para pasarla a Paid. Si la defensa en mesa de examen fuera después de ese plazo, hay que **pasar a Paid plan** (los créditos se mantienen) o volver a desplegar.
-- La cuenta la crea **uno de los integrantes**, con su tarjeta, y comparte el acceso con el otro mediante usuarios de IAM.
-- Riesgo propio de la nube: el 02/11/2026 Ecogas respondió **403 a una IP de datacenter** (GitHub Actions) y 200 a una IP residencial, con el mismo User-Agent identificado ([fuentes § 9, P-2](fuentes-y-adaptadores.md#9-puntos-pendientes)). Desplegada en AWS, la función probablemente responda `UNVERIFIABLE` hasta que Ecogas autorice el acceso. La prueba se repite desde AWS al desplegar. En LocalStack la función sale a internet por la conexión de la PC, así que el recorrido local sí lee la Fuente real.
+- La cuenta la creó **Iván**, con su tarjeta, en el plan gratuito con *Projects*. Desde WSL se accede con `aws login` (credenciales temporales, nunca en el repositorio).
+- Acceso a la Fuente desde la nube: el 02/11/2026 Ecogas respondió **403 a una IP de GitHub Actions (Azure)** y 200 a una IP residencial, con el mismo User-Agent identificado. **Desde AWS (`us-east-2`) responde**: el 10/11/2026 la función leyó el padrón completo ([fuentes § 9, P-2](fuentes-y-adaptadores.md#9-puntos-pendientes)). Si Ecogas empezara a bloquear a AWS, la función responde `UNVERIFIABLE` (`SOURCE_UNAVAILABLE`), que es el comportamiento diseñado.
 
 ---
 
@@ -302,15 +305,15 @@ Cosas a tener en cuenta sobre la cuenta de AWS:
 
 | Tema | Medida |
 |---|---|
-| **Permisos (IAM)** | Mínimo privilegio **por función**. Ninguna función tiene `DeleteItem` sobre las tablas de evidencia (`Consultas`, `ResultadosVerificacion`, `Credenciales`, `Evaluaciones`, `Verificaciones`), ni `UpdateItem` sobre ninguna de ellas **salvo `Consultas`**, que se actualiza una sola vez para finalizarla. Esto **refuerza** la inmutabilidad (INV-1) impidiendo actualizaciones y borrados. La garantía principal la dan las escrituras condicionales `attribute_not_exists`, porque IAM no puede exigir la condición de un `PutItem`. |
+| **Permisos (IAM)** | Mínimo privilegio **por función**. En el P0, la función solo tiene `PutItem`, `GetItem`, `Query`, `BatchGetItem` y `ConditionCheckItem` sobre las tablas de evidencia (`Consultas`, `Credenciales`, `Evaluaciones`, `Verificaciones`): **ni `UpdateItem` ni `DeleteItem`**, y en S3 solo `PutObject` y `GetObject`. Esto **refuerza** la inmutabilidad (INV-1). La garantía principal la dan las escrituras condicionales `attribute_not_exists`, porque IAM no puede exigir la condición de un `PutItem`. |
 | **Validación de entradas** | Todo pedido se valida con Zod en el handler antes de llegar al caso de uso. El nombre buscado se normaliza, se exigen al menos dos palabras y se limita su largo. |
 | **Límite de uso** | Throttling de API Gateway en `POST /verificaciones` (configurable). **Protege a MatriculAR**, no a la Fuente. |
 | **Protección de la Fuente** | Independiente del límite de uso ([ADR-0006](adr/0006-lectura-minimizada-y-proteccion-de-la-fuente.md)). Una Consulta exitosa responde las Verificaciones de los 15 minutos siguientes con su Lectura minimizada, y después de una falla se espera un minuto (`SOURCE_RATE_LIMITED`). Así MatriculAR no amplifica consultas anónimas contra Ecogas: como máximo una descarga cada 15 minutos mientras funcione. |
-| **CORS** | Solo se admite el origen del frontend. |
+| **CORS** | En AWS el frontend se sirve desde el mismo origen que la API, así que no necesita CORS. La API admite cualquier origen (`MATRICULAR_ORIGEN_CORS="*"`) porque en el P0 es pública y de solo consulta; se restringe con esa variable. |
 | **Datos personales** | Minimización: nunca se persisten el email, el teléfono ni el barrio de la Fuente, ni una copia permanente del padrón, ni el cuerpo de las respuestas HTTP. La Lectura minimizada no tiene datos de contacto y se descarta al día siguiente. Ver [database § 11](../database/README.md#11-datos-personales-qué-se-guarda-y-qué-no). |
 | **Autenticación (P1 y P2)** | Cognito: MatriculAR no guarda contraseñas. API Gateway valida el token antes de invocar las funciones de P1 y P2. |
 | **Vínculo (P1, fase 2)** | El código se guarda **solo como hash**, vence y tiene un límite de intentos. El email de la Fuente se usa en memoria. Un Vínculo `VERIFIED` prueba control del email publicado por la Fuente, no la identidad legal del titular. |
-| **Secretos** | El P0 no tiene secretos de aplicación. El token de LocalStack y las credenciales de AWS viven en `.env` o en el perfil local, nunca en el repositorio. |
+| **Secretos** | El P0 no tiene secretos de aplicación. El token de LocalStack, las credenciales temporales de AWS (`aws login`) y el email de la alerta de presupuesto viven en `.env`, en el perfil local o se pasan al aplicar, nunca en el repositorio. |
 | **Fuentes** | No se evita ninguna protección (captcha, bloqueo por 403). El adaptador se identifica ante Ecogas con un `User-Agent` propio y un contacto desde las primeras pruebas; las condiciones de uso se preguntaron a Ecogas ([P-1](fuentes-y-adaptadores.md#9-puntos-pendientes)). |
 | **Repositorio público** | Los archivos actuales no tienen datos personales reales: los ejemplos son ficticios y la investigación fue anonimizada. **El historial de git conserva la versión anterior** de la investigación (commit `5afe305`). **El historial se va a reescribir después de la aprobación del tutor**, coordinado entre los dos integrantes, para no alterar antes de la revisión commits que el tutor ya vio. |
 
@@ -322,14 +325,14 @@ Estas garantías reemplazan a las de la primera entrega, que suponían un pipeli
 
 | Garantía | Cómo se cumple |
 |---|---|
-| **Cada intento queda registrado** | La Consulta se crea en `IN_PROGRESS` **antes** del primer pedido, y cada Intento guarda sus pedidos HTTP. Si la función se corta, la Consulta queda como evidencia de un intento interrumpido. |
+| **Cada intento queda registrado** | Cada Intento guarda sus pedidos HTTP, y la Consulta se escribe **una sola vez, al terminar**, con todos sus Intentos (`SUCCEEDED` o `FAILED`). **Limitación del P0:** si la función se corta antes de terminar (por ejemplo, por el límite de 60 s), esa lectura no queda registrada. El diseño original creaba la Consulta en `IN_PROGRESS` antes del primer pedido; se simplificó para no necesitar `UpdateItem`. |
 | **Detección del error** | Las cinco validaciones del adaptador y la clasificación de fallas ([fuentes § 4.4 y § 4.7](fuentes-y-adaptadores.md#44-las-cinco-validaciones)). |
 | **Reintento** | Hasta 3 Intentos, solo ante fallas transitorias, dentro de un presupuesto de 45 s (20 s por pedido). Se subió desde 24 s porque el 02/11/2026 la página de Ecogas tardó 13,6 s. El timeout de la función pasa a 60 s, y el límite de 29 s de API Gateway queda como punto pendiente ([P-4](fuentes-y-adaptadores.md#9-puntos-pendientes)). |
 | **Se conserva el estado del fallo** | Consulta `FAILED` con motivo y detalle. La evidencia anterior no se toca. |
 | **Se informa** | Resultado `UNVERIFIABLE` en la respuesta, con el motivo, y endpoint de salud de la Fuente (`GET /fuentes/{fuente_id}/consultas`). |
-| **Evidencia inmutable** | Escrituras condicionales `attribute_not_exists` (la garantía), reforzadas por permisos de IAM sin `DeleteItem` y sin `UpdateItem` sobre la evidencia, salvo la finalización de la Consulta. |
+| **Evidencia inmutable** | Escrituras condicionales `attribute_not_exists` (la garantía), reforzadas por permisos de IAM sin `DeleteItem` ni `UpdateItem` sobre la evidencia. |
 | **Idempotencia** | Las escrituras condicionales hacen que repetir un paso no pise datos. Un reintento del Cliente crea una Verificación nueva, lo cual es correcto: es otra pregunta en otro momento. |
-| **Sin estados intermedios** | La finalización de una Verificación es una única transacción `TransactWriteItems`. |
+| **Sin estados intermedios** | Una Verificación y sus Evaluaciones se guardan en una única transacción `TransactWriteItems`. |
 | **Máquinas de estado explícitas** | La Consulta y la Contratación tienen estados y transiciones definidos ([modelo § 7](modelo-de-dominio.md#7-estados)). Las transiciones de la Contratación se escriben de forma condicional. |
 
 ---
@@ -338,7 +341,7 @@ Estas garantías reemplazan a las de la primera entrega, que suponían un pipeli
 
 - **Logs estructurados** en JSON hacia CloudWatch Logs, con `verificacion_id` y `consulta_id` en cada línea, para seguir un pedido de punta a punta.
 - **Salud de la Fuente:** la tabla `Consultas` (índice `por-fuente`) ya registra cada lectura con su resultado. El endpoint `GET /fuentes/{fuente_id}/consultas` muestra las últimas, con estado, motivo, cantidad de registros y huella del recurso. Un cambio de huella indica que Ecogas actualizó el padrón, y una racha de `EXTRACTION_FAILED` indica que cambió la estructura.
-- **Alertas** (etapa 4): una alarma de CloudWatch si la proporción de Consultas `FAILED` supera un umbral en una hora.
+- **Alertas** (desplegado): filtro de logs sobre `{"evento":"consulta_finalizada","estado":"FAILED"}` → métrica `ConsultasFallidas` → alarma de CloudWatch con 3 o más en 15 minutos. En el P0 la alarma no notifica a nadie (el destino SNS queda como variable opcional).
 
 ---
 
@@ -349,11 +352,15 @@ Estas garantías reemplazan a las de la primera entrega, que suponían un pipeli
 | **Unitarias de dominio** | Condiciones decisivas, Criterio de categoría, resultado global y Limitaciones. Los escenarios S1 a S15 del [modelo](modelo-de-dominio.md#9-escenarios) se convierten en casos de prueba. | Vitest | Nada |
 | **Caso de uso con repositorios en memoria** | El recorrido completo, la Ventana de reutilización y la Protección de la Fuente, con un reloj falso. | Vitest | Nada |
 | **Adaptadores de Fuentes** | Las 14 fixtures (F1 a F14) de [fuentes § 6](fuentes-y-adaptadores.md#6-cómo-se-prueba): descubrimiento, validaciones, reintentos y que no se filtren datos de contacto. | Vitest con servidor HTTP falso | Nada |
-| **Repositorios** | Escrituras condicionales, transacción de finalización e índices. | Vitest + DynamoDB en LocalStack | LocalStack |
-| **API (integración)** | Contrato de cada endpoint: formas de respuesta validadas con los mismos esquemas Zod que usa el frontend. | Vitest + API Gateway en LocalStack | LocalStack |
+| **Repositorios (contrato)** | Las mismas pruebas de contrato para memoria y archivo (en CI) y para DynamoDB y S3 (`npm run test:aws`, manual). | Vitest | Nada; AWS para la variante manual |
+| **Rutas de la API** | Códigos y formas de respuesta de cada endpoint (201, 400, 404, 500, CORS) con repositorios en memoria, y el servido del frontend (redirección, tipos, caché, rutas fuera del build). | Vitest | Nada |
+| **Frontend** | El flujo de la pantalla con `fetch` simulado: formulario, envío, errores, `UNVERIFIABLE` y la resolución de la URL de la API. | Vitest + Testing Library | Nada |
 | **Humo contra la Fuente real** | Que el adaptador siga funcionando contra Ecogas. **Manual y opcional** (`npm run test:fuente-real`), nunca en CI. | Vitest | Ecogas |
+| **Recorrido desplegado** | Verificación real desde el navegador contra la API en AWS, con lectura de Ecogas desde la Lambda (10/11/2026). | Manual | AWS y Ecogas |
 
-Se desarrolla con TDD (primero la prueba y después el código), empezando por el dominio. Desde el 02/11/2026, **GitHub Actions** corre `biome check`, `tsc --noEmit` y las pruebas que no dependen de nada externo en cada push.
+**No ejecutadas:** las pruebas de contrato contra DynamoDB y S3 (`npm run test:aws`). Están pensadas para LocalStack, que no se llegó a correr, y crean y borran sus propias tablas y bucket. La persistencia en DynamoDB y S3 quedó probada por el recorrido desplegado.
+
+Se desarrolla con TDD (primero la prueba y después el código), empezando por el dominio. **GitHub Actions** corre en cada push, para backend y frontend, `biome check`, `tsc --noEmit` y las pruebas que no dependen de nada externo.
 
 ---
 
@@ -362,14 +369,14 @@ Se desarrolla con TDD (primero la prueba y después el código), empezando por e
 | Riesgo | Prob. | Impacto | Mitigación |
 |---|---|---|---|
 | Ecogas cambia la estructura o la URL del recurso | **Alta** (ya pasó entre el 04/09 y el 26/09) | Medio | Descubrimiento de la URL, cinco validaciones y resultado `UNVERIFIABLE` en lugar de un falso negativo. Salud de la Fuente visible. |
-| Ecogas restringe el acceso automatizado o bloquea las IPs de AWS | Media | Alto | Consulta sobre condiciones de uso, con la frecuencia y el origen concretos. Prueba desde CloudShell el 1–2/11, antes de escribir infraestructura. Protección de la Fuente (una descarga cada 15 minutos como máximo). Si pasa, la Consulta da `SOURCE_UNAVAILABLE` y el sistema sigue siendo coherente. El puerto permite reemplazar la Fuente. |
+| Ecogas restringe el acceso automatizado o bloquea las IPs de AWS | Media (bloquea a Azure; a AWS no, al 10/11/2026) | Alto | Consulta sobre condiciones de uso, con la frecuencia y el origen concretos (pendiente de envío). Protección de la Fuente (una descarga cada 15 minutos como máximo). Si pasa, la Consulta da `SOURCE_UNAVAILABLE` y el sistema sigue siendo coherente. El puerto permite reemplazar la Fuente. |
 | Cambios normativos (NAG-200 y NAG-225 en revisión) | Media | Medio | Reglas versionadas como datos y Evaluaciones con copia de la regla aplicada. |
 | Interpretación incorrecta de una regla | Media | Alto | Toda regla con cita, revisión cruzada entre los integrantes y resultado `INDETERMINATE` cuando no hay respaldo. |
-| Licencia de LocalStack (ahora requiere cuenta) | Baja (ya mitigado) | Medio | Diseño compatible con el plan Hobby. Se tramita el plan Student. |
+| Licencia de LocalStack (ahora requiere cuenta) | Baja | Bajo | Diseño compatible con el plan Hobby. Al final no se usó: se desplegó directo en AWS. |
 | Ecosistema de TypeScript 7 todavía inmaduro (herramientas que dependen de su API) | Media | Bajo | Biome en lugar de typescript-eslint. Si una herramienta crítica falla, se puede usar TS 6 como alias para esa herramienta. |
 | Costos en AWS real | Baja | Medio | Free plan, alerta de presupuesto de USD 5 y DynamoDB bajo demanda. |
 | Vencimiento del Free plan antes de la defensa | Media | Medio | Pasar a Paid plan (se conservan los créditos) o redesplegar con Terraform. |
-| Alcance: el código empezó el 02/11 y la entrega final es el 21/11 | **Alta** | Alto | **Solo el P0.** P1, P2 y P3 quedan declarados fuera del alcance de la entrega final. Recorrido local primero; la infraestructura, después ([§ 1.1](#11-orden-de-implementación) y [módulos](modulos.md)). |
+| Alcance: el código empezó el 02/11 y la entrega final se adelantó al **14/11** | **Alta** | Alto | **Solo el P0.** P1, P2 y P3 quedan declarados fuera del alcance de la entrega final. Recorrido local primero; la infraestructura, después ([§ 1.1](#11-orden-de-implementación) y [módulos](modulos.md)). |
 | Datos personales expuestos en el repositorio público | Media (mitigado en los archivos actuales, no en el historial) | Alto | Anonimización, ejemplos ficticios y `.gitignore` para las muestras. Reescritura del historial de git después de la aprobación del tutor. |
 
 ---
@@ -380,7 +387,7 @@ Se desarrolla con TDD (primero la prueba y después el código), empezando por e
 |---|---|---|
 | A-1 | Identificación del adaptador ante Ecogas (`User-Agent`). | **Resuelto:** `User-Agent` propio de MatriculAR con un contacto desde las primeras pruebas. Se ajusta si Ecogas responde otra cosa ([P-1](fuentes-y-adaptadores.md#9-puntos-pendientes)). |
 | A-2 | Versiones exactas de Zod, Biome, esbuild y React. | Al iniciar la implementación: se fijan en `package.json`. |
-| A-3 | Integración continua con GitHub Actions: lint, chequeo de tipos y pruebas unitarias. Las pruebas con LocalStack requieren guardar el token como secreto. | **02/11/2026**, sin LocalStack. LocalStack se suma al CI cuando lleguen los repositorios DynamoDB. |
-| A-4 | HTTPS para el frontend en la nube: S3 solo sirve HTTP, así que haría falta CloudFront o una alternativa. | Del 14/11 al 17/11. |
+| A-3 | Integración continua con GitHub Actions: lint, chequeo de tipos y pruebas unitarias. Las pruebas con LocalStack requieren guardar el token como secreto. | **Resuelto** para backend (02/11) y frontend (10/11), sin LocalStack. LocalStack en CI queda como trabajo futuro. |
+| A-4 | HTTPS para el frontend en la nube: S3 solo sirve HTTP. | **Resuelto el 10/11/2026:** la misma API (HTTPS) sirve el frontend, sin CloudFront ([§ 7](#7-entornos-y-costos)). |
 | A-5 | Disponibilidad de SES en el plan de LocalStack que se use. | Fase 2 (P1 fuera del alcance de la entrega final). |
-| A-6 | Pedidos a Ecogas desde una IP de AWS ([P-2](fuentes-y-adaptadores.md#9-puntos-pendientes)). | **1–2/11/2026**, desde CloudShell, antes de escribir infraestructura. |
+| A-6 | Pedidos a Ecogas desde una IP de AWS ([P-2](fuentes-y-adaptadores.md#9-puntos-pendientes)). | **Resuelto el 10/11/2026:** desde AWS (`us-east-2`) Ecogas responde. Desde GitHub Actions (Azure) responde 403. |

@@ -6,7 +6,7 @@
 
 | Campo | Valor |
 |---|---|
-| Estado | **Pendiente de envío** (se envía el 01/11/2026) |
+| Estado | **Pendiente de envío** (al 10/11/2026) |
 | Fecha de envío | _(completar al enviar)_ |
 | Canal | Formulario de **Consultas Administrativas** del área de matriculados de Ecogas ([ecogas.com.ar/matriculados/consultas](https://ecogas.com.ar/matriculados/consultas)). Se envía el mismo texto por **los dos formularios**: [zona Centro](https://ecogas.com.ar/formulario-de-contacto?section=tramites-centro) y [zona Cuyo](https://ecogas.com.ar/formulario-de-contacto?section=tramites-cuyo). No requiere ser cliente. |
 | Enviada por | _(completar)_ |

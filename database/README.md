@@ -41,7 +41,7 @@
 - es la base administrada nativa del modelo serverless elegido: no hay servidor que mantener y escala a cero costo cuando no se usa;
 - los **patrones de acceso son pocos y conocidos de antemano** ([§ 9](#9-patrones-de-acceso)), que es la condición para que una base clave-valor funcione bien;
 - la mayoría de los datos son **documentos inmutables con historial** (Consultas, Credenciales, Evaluaciones), que se leen por clave y por fecha, sin *joins*;
-- funciona igual en LocalStack y en AWS real.
+- el mismo código corre en AWS real (desplegado en `us-east-2`) y en LocalStack (configurado, no ejecutado).
 
 **Una tabla por entidad** en vez de *single-table design* ([ADR-0004](../docs/adr/0004-una-tabla-dynamodb-por-entidad.md)): AWS recomienda una sola tabla con claves sobrecargadas para minimizar lecturas, pero eso hace que el esquema sea difícil de leer y revisar. Para este proyecto, que es académico, tiene volumen bajo y una consigna que pide mostrar tablas, campos, claves y relaciones, **priorizamos la legibilidad del modelo**. El costo es hacer, a veces, dos lecturas donde una tabla única haría una, lo cual es irrelevante con este volumen.
 
@@ -230,7 +230,7 @@ erDiagram
 
 ## 6. Tablas del P0
 
-> **Implementado el 02/11/2026** ([`backend/compartido/src/adaptadores/dynamodb/`](../backend/compartido/src/adaptadores/dynamodb/)). Qué se crea en AWS y en LocalStack para el P0:
+> **Implementado el 02/11/2026 y desplegado en AWS (`us-east-2`) el 10/11/2026** ([`backend/compartido/src/adaptadores/dynamodb/`](../backend/compartido/src/adaptadores/dynamodb/)). Qué crea Terraform para el P0:
 >
 > | Almacenamiento | Qué guarda | Definición |
 > |---|---|---|

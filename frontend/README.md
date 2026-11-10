@@ -1,6 +1,6 @@
 # Frontend
 
-SPA en **React 19 + Vite 8 + TypeScript 7**, con una sola pantalla: **Verificar a un gasista** (P0). Consume la [API](../docs/api.md). En AWS se sirve desde S3.
+SPA en **React 19 + Vite 8 + TypeScript 7**, con una sola pantalla: **Verificar a un gasista** (P0). Consume la [API](../docs/api.md). En AWS la sirve la misma API, con HTTPS: **<https://b2u5pup2gd.execute-api.us-east-2.amazonaws.com/v1/>**.
 
 ## Cómo correrlo
 
@@ -17,14 +17,14 @@ Para que funcione hace falta la API: en local, `npm run servir` en `backend/` (p
 | Script | Qué hace |
 |---|---|
 | `npm run dev` | Servidor de desarrollo de Vite. |
-| `npm run build` | Sitio estático en `dist/`, con rutas relativas (`base: "./"`) para servirlo desde la raíz de un bucket. |
+| `npm run build` | Sitio estático en `dist/`, con rutas relativas (`base: "./"`), para servirlo desde la raíz de la etapa de la API (`/v1/`). `npm run empaquetar` en `backend/` lo copia dentro del paquete de la Lambda. |
 | `npm run check` | Biome, `tsc` y las pruebas (Vitest + Testing Library, `fetch` simulado). |
 
 ### URL de la API
 
 Al arrancar, el frontend busca la URL de la API en este orden:
 
-1. `config.json` en la raíz del sitio, con la forma `{"api_url": "https://…/v1"}`. En AWS lo escribe Terraform al desplegar.
+1. `config.json` junto a la página, con la forma `{"api_url": "https://…/v1"}`. En AWS lo arma la función en cada pedido, con el host y la etapa de la propia API ([`sitio.ts`](../backend/verificacion/src/handlers/sitio.ts)).
 2. La variable de compilación `VITE_API_URL` (ver [`.env.example`](.env.example)).
 3. `http://localhost:3000`.
 
@@ -37,7 +37,7 @@ frontend/
 │   ├── pantallas/     Verificar (P0)
 │   ├── componentes/   Resultado, Coincidencia, CondicionesDecisivas, DetalleConsulta
 │   └── api/           cliente HTTP y tipos de la API
-└── test/              pruebas del flujo de la pantalla y de la URL de la API
+└── test/              pruebas del flujo de la pantalla y de la URL de la API (8 al 10/11/2026)
 ```
 
 Los tipos de `src/api/tipos.ts` copian la forma de las respuestas de `backend/verificacion/src/handlers/dto.ts`. La validación del formulario es mínima (nombre con dos palabras, todas las condiciones respondidas): la API valida con los esquemas Zod. En el diseño, el frontend importaba esos esquemas del backend; se postergó para no acoplar los dos paquetes en el P0.
