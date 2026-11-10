@@ -17,11 +17,11 @@ if [ -z "${TF_VAR_email_alertas:-}" ]; then
   export TF_VAR_email_alertas
 fi
 
-echo "==> Empaquetado de la función"
-(cd backend && npm run --silent empaquetar)
-
-echo "==> Build del frontend (la URL de la API la escribe Terraform en config.json)"
+echo "==> Build del frontend (lo sirve la misma función, en la raíz de la API)"
 (cd frontend && npm ci --silent && npm run --silent build)
+
+echo "==> Empaquetado de la función (incluye el build del frontend)"
+(cd backend && npm run --silent empaquetar)
 
 echo "==> Plan de Terraform (infra/entornos/aws)"
 cd infra/entornos/aws
@@ -41,4 +41,3 @@ rm -f plan.tfplan
 echo
 echo "API en AWS: $(terraform output -raw url_api)"
 echo "Frontend:   $(terraform output -raw url_frontend)"
-echo "Recordá repetir la prueba de acceso a Ecogas desde AWS (scripts/probar-ecogas.sh en CloudShell)."

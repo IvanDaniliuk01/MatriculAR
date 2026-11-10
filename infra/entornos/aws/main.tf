@@ -90,13 +90,6 @@ module "api" {
   funcion_invoke_arn = module.funcion.invoke_arn
 }
 
-module "sitio" {
-  source           = "../../modulos/sitio"
-  prefijo          = local.prefijo
-  directorio_build = "${path.module}/../../../frontend/dist"
-  url_api          = module.api.url
-}
-
 module "observabilidad" {
   source     = "../../modulos/observabilidad"
   prefijo    = local.prefijo
@@ -133,8 +126,8 @@ output "url_api" {
 }
 
 output "url_frontend" {
-  description = "URL del frontend publicado en S3 (HTTP)."
-  value       = module.sitio.url
+  description = "URL del frontend: la misma API lo sirve en la raíz de la etapa, con HTTPS."
+  value       = "${module.api.url}/"
 }
 
 output "tablas" {

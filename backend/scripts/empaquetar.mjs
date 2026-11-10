@@ -2,8 +2,17 @@
 // (AWS SDK v3 incluido) y las reglas del seed, más un .zip listo para Terraform.
 //
 // Uso: node scripts/empaquetar.mjs [entrada]   (por defecto, verificacion/src/handlers/api.ts)
-import { mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
-import { basename, dirname, join, resolve } from "node:path";
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
+import { dirname, join, resolve, sep } from "node:path";
 import { crc32, deflateRawSync } from "node:zlib";
 import { build } from "esbuild";
 
@@ -32,16 +41,31 @@ const resultado = await build({
   },
 });
 
-const archivos = ["index.mjs", "index.mjs.map"].map((nombre) => join(salida, nombre));
+// La función también sirve el frontend (un único enlace con HTTPS): su build va en sitio/.
+const buildFrontend = join(raiz, "../frontend/dist");
+if (existsSync(join(buildFrontend, "index.html"))) {
+  cpSync(buildFrontend, join(salida, "sitio"), { recursive: true });
+} else {
+  console.warn("Aviso: no hay build del frontend (npm run build en frontend/); la API no servirá la página.");
+}
+
+const archivos = readdirSync(salida, { recursive: true })
+  .map((nombre) => nombre.split(sep).join("/"))
+  .filter((nombre) => statSync(join(salida, nombre)).isFile())
+  .sort();
 writeFileSync(zip, comprimir(archivos));
 
 const kb = (ruta) => `${Math.round(statSync(ruta).size / 1024)} KB`;
 console.log(`Entrada: ${entrada}`);
-console.log(`Bundle:  ${join(salida, "index.mjs")} (${kb(archivos[0])})`);
+console.log(`Bundle:  ${join(salida, "index.mjs")} (${kb(join(salida, "index.mjs"))})`);
+console.log(`Sitio:   ${archivos.filter((a) => a.startsWith("sitio/")).length} archivos`);
 console.log(`Zip:     ${zip} (${kb(zip)})`);
 console.log(`Módulos: ${Object.keys(resultado.metafile.inputs).length}`);
 
-/** Un .zip mínimo (deflate, sin carpetas), para no depender del comando `zip` del sistema. */
+/**
+ * Un .zip mínimo (deflate), para no depender del comando `zip` del sistema. Recibe rutas
+ * relativas a `salida`, con "/" como separador; las carpetas van implícitas en los nombres.
+ */
 function comprimir(rutas) {
   const locales = [];
   const centrales = [];
@@ -51,9 +75,9 @@ function comprimir(rutas) {
   const fecha = ((2026 - 1980) << 9) | (1 << 5) | 1;
 
   for (const ruta of rutas) {
-    const contenido = readFileSync(ruta);
+    const contenido = readFileSync(join(salida, ruta));
     const comprimido = deflateRawSync(contenido, { level: 9 });
-    const nombre = Buffer.from(basename(ruta));
+    const nombre = Buffer.from(ruta);
     const crc = crc32(contenido);
 
     const local = Buffer.alloc(30);

@@ -1,6 +1,7 @@
-# API Gateway REST con recursos explícitos (no {proxy+}): así se ve el contrato de docs/api.md en
-# el código y se puede limitar POST /verificaciones por separado. Todas las rutas, incluido el
-# OPTIONS de CORS, van a la misma función, que resuelve la ruta.
+# API Gateway REST con recursos explícitos para la API: así se ve el contrato de docs/api.md en
+# el código y se puede limitar POST /verificaciones por separado. El único comodín es el de los
+# archivos del frontend. Todas las rutas, incluido el OPTIONS de CORS, van a la misma función,
+# que resuelve la ruta.
 
 terraform {
   required_providers {
@@ -116,6 +117,15 @@ resource "aws_api_gateway_resource" "provincias" {
   path_part   = "provincias"
 }
 
+# El frontend se sirve desde la misma API (GET / y sus archivos) para tener un único enlace con
+# HTTPS: el sitio web de S3 solo sirve HTTP y los navegadores actuales lo advierten. Los recursos
+# explícitos de arriba tienen prioridad sobre este comodín.
+resource "aws_api_gateway_resource" "sitio_archivos" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  parent_id   = local.raiz
+  path_part   = "{archivo+}"
+}
+
 locals {
   # Recurso → método del endpoint. Cada recurso tiene además OPTIONS para CORS.
   rutas = {
@@ -127,6 +137,8 @@ locals {
     tipos_trabajo          = { recurso = aws_api_gateway_resource.tipos_trabajo.id, metodo = "GET" }
     categorias             = { recurso = aws_api_gateway_resource.categorias.id, metodo = "GET" }
     provincias             = { recurso = aws_api_gateway_resource.provincias.id, metodo = "GET" }
+    sitio_raiz             = { recurso = local.raiz, metodo = "GET" }
+    sitio_archivos         = { recurso = aws_api_gateway_resource.sitio_archivos.id, metodo = "GET" }
   }
   metodos = merge([
     for clave, ruta in local.rutas : {
