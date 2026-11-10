@@ -1,0 +1,175 @@
+/* Estilos de impresión del Informe Final (scripts/generar-informe.sh). */
+@page {
+  size: A4;
+  margin: 2cm 1.8cm 2.2cm;
+  @bottom-center {
+    content: "MatriculAR · Informe Final · página " counter(page) " de " counter(pages);
+    font: 8pt "Segoe UI", Arial, sans-serif;
+    color: #666;
+  }
+}
+@page :first {
+  @bottom-center {
+    content: none;
+  }
+}
+
+body {
+  font: 10.5pt/1.5 "Segoe UI", Arial, sans-serif;
+  color: #1a1a1a;
+}
+
+h1, h2, h3 {
+  color: #14365d;
+  line-height: 1.25;
+  break-after: avoid;
+}
+h2 {
+  break-before: page;
+  font-size: 17pt;
+  border-bottom: 2px solid #14365d;
+  padding-bottom: 4px;
+  margin-top: 0;
+}
+/* Las dos secciones cortas del final comparten página con la anterior. */
+h2[id^="9-"],
+h2[id^="10-"] {
+  break-before: auto;
+  margin-top: 1.6em;
+}
+h3 {
+  font-size: 12.5pt;
+  margin-top: 1.4em;
+}
+hr {
+  display: none;
+}
+
+a {
+  color: #1d5ea8;
+  text-decoration: none;
+  word-break: break-word;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8em 0;
+  font-size: 9pt;
+  break-inside: auto;
+}
+tr {
+  break-inside: avoid;
+}
+th, td {
+  border: 1px solid #c8d0da;
+  padding: 4px 6px;
+  vertical-align: top;
+  text-align: left;
+}
+th {
+  background: #e9eff6;
+}
+
+code {
+  font: 9pt Consolas, "Courier New", monospace;
+  background: #f2f4f7;
+  padding: 0 2px;
+}
+pre {
+  background: #f6f8fa;
+  border: 1px solid #dde3ea;
+  padding: 8px 10px;
+  font-size: 8.5pt;
+  overflow: hidden;
+  white-space: pre-wrap;
+  break-inside: avoid;
+}
+pre code {
+  background: none;
+  padding: 0;
+}
+pre.mermaid {
+  background: none;
+  border: none;
+  text-align: center;
+}
+pre.mermaid svg {
+  max-width: 100% !important;
+  max-height: 15cm;
+}
+
+blockquote {
+  margin: 1em 0;
+  padding: 0.6em 1em;
+  border-left: 4px solid #14365d;
+  background: #f2f6fb;
+}
+
+img {
+  display: block;
+  max-width: 82%;
+  max-height: 11.5cm;
+  margin: 1em auto 0.3em;
+  border: 1px solid #c8d0da;
+}
+.pie {
+  text-align: center;
+  font-size: 8.5pt;
+  color: #555;
+  margin-top: 0.2em;
+  break-before: avoid;
+}
+.captura-pendiente {
+  border: 2px dashed #b0b8c4;
+  padding: 3em 1em;
+  text-align: center;
+  color: #777;
+  margin: 1em 0;
+}
+
+/* Portada */
+.portada {
+  height: 24cm;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  break-after: page;
+}
+.portada h1 {
+  font-size: 40pt;
+  margin: 0.2em 0;
+  border: none;
+}
+.portada .institucion {
+  font-size: 13pt;
+  font-weight: 600;
+}
+.portada .materia {
+  font-size: 12pt;
+  color: #444;
+  margin-bottom: 2.5em;
+}
+.portada .subtitulo {
+  font-size: 13pt;
+  color: #333;
+}
+.portada .informe {
+  font-size: 16pt;
+  font-weight: 600;
+  color: #14365d;
+  margin: 1.2em 0 2em;
+}
+.portada table {
+  width: 80%;
+  margin: 0 auto;
+  font-size: 10.5pt;
+}
+.portada thead {
+  display: none;
+}
+.portada td:first-child {
+  width: 30%;
+  background: #e9eff6;
+}

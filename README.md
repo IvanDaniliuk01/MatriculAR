@@ -242,7 +242,7 @@ cd frontend && npm run check   # Biome + tsc + Vitest + Testing Library
 | Backend | **140 pasan**, 1 omitida | Dominio (categorías, Condiciones decisivas, "No sé", zona, trabajo no cubierto), extracción y lectura de Ecogas (cambios de formato, 403, 5xx, reintentos), caso de uso (homónimos, `NOT_FOUND`, Ventana de reutilización, `UNVERIFIABLE` con evidencia previa), contrato de repositorios, rutas de la API y servido del frontend. [Detalle](backend/README.md) |
 | Frontend | **8 pasan** | Formulario, envío exitoso, validación, `UNVERIFIABLE`, errores de la API y resolución de la URL de la API. |
 
-La CI de GitHub Actions corre lo mismo en cada push. La prueba omitida es la de contrato contra DynamoDB y S3, pensada para LocalStack. Además se comprobó el **recorrido real desplegado**: una verificación desde el navegador contra la API en AWS, con lectura en vivo del padrón de Ecogas.
+La CI de GitHub Actions corre lo mismo en cada push. La prueba omitida es la de contrato contra DynamoDB y S3, que necesita credenciales de AWS y se corre a mano: el 10/11/2026 sus **9 pruebas pasaron contra AWS real** (us-east-2, con tablas y bucket temporales que se borran al terminar). Además se comprobó el **recorrido real desplegado**: una verificación desde el navegador contra la API en AWS, con lectura en vivo del padrón de Ecogas.
 
 ---
 
@@ -258,7 +258,7 @@ La CI de GitHub Actions corre lo mismo en cada push. La prueba omitida es la de 
 | **MetroGAS no se consulta automáticamente** | Su buscador tiene captcha y no se evade. | `UNVERIFIABLE` con el link al buscador oficial. |
 | **Límite de 29 s de API Gateway** | Una lectura muy lenta de Ecogas recibe un `504`. | La lectura queda guardada y el pedido siguiente la reutiliza (P-4). En AWS hoy tarda ~1,5 s. |
 | **Una lectura interrumpida no queda registrada** | La Consulta se escribe al terminar, no antes del primer pedido. | Simplificación del P0 ([arquitectura § 9](docs/arquitectura.md#9-garantías-operativas)). |
-| **LocalStack y la prueba de contrato contra DynamoDB no se ejecutaron** | Docker no estaba disponible y la entrega se adelantó al 14/11. | La persistencia se comprobó con el recorrido real en AWS. |
+| **LocalStack no se ejecutó** | Docker no estaba disponible y la entrega se adelantó al 14/11. | Las pruebas de contrato de DynamoDB y S3 se corrieron contra AWS real, y el recorrido completo se comprobó en línea. |
 | **La alarma de Consultas fallidas no notifica** | El destino SNS es una variable opcional. | La salud de la Fuente se ve en `GET /fuentes/ecogas/consultas`. |
 
 ---

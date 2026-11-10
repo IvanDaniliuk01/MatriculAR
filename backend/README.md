@@ -55,7 +55,7 @@ El CLI y el servidor local guardan las Consultas, Lecturas minimizadas, Credenci
 | [`verificacion/test/sitio.test.ts`](verificacion/test/sitio.test.ts) | El frontend servido por la API: redirección a `/v1/`, tipos, caché, `config.json` del mismo origen y que no se sirvan archivos fuera del build. |
 | [`compartido/test/fuente-real/`](compartido/test/fuente-real/) | Lectura de la Ecogas real. Solo corre a mano (`npm run test:fuente-real`) y nunca en CI: el padrón tiene datos personales y no hay que cargar a la Fuente. |
 
-**Resultado al 10/11/2026:** 140 pruebas pasan y 1 se omite: la de integración con DynamoDB y S3, pensada para LocalStack (`AWS_ENDPOINT_URL`), que crea y borra tablas y un bucket temporales. No se llegó a ejecutar; la persistencia en AWS se comprobó con el recorrido real desplegado.
+**Resultado al 10/11/2026:** 140 pruebas pasan y 1 se omite en `npm run check`: la de integración con DynamoDB y S3, que crea y borra tablas y un bucket temporales y necesita credenciales de AWS (o `AWS_ENDPOINT_URL` apuntando a LocalStack). Corrida a mano contra AWS real (`AWS_REGION=us-east-2 npm run test:aws`), sus **9 pruebas pasaron** el 10/11/2026.
 
 Backend **serverless** en **TypeScript 7** sobre **Node.js 24** (`nodejs24.x` en AWS Lambda), con arquitectura **hexagonal**: el dominio en el centro, sin dependencias de AWS ni de las Fuentes. Ver [`docs/arquitectura.md`](../docs/arquitectura.md).
 

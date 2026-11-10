@@ -26,7 +26,7 @@ pruebas, limitaciones documentadas y lo implementado separado de lo proyectado.
     se permite una **precarga manual** desde la PC del operador, documentada como tal, con fecha.
   - Video armado por Iván solo; Nicolás sigue figurando como integrante formal; se avisa a Oscar.
   - Grupo **209**.
-  - Validación del problema: evidencia pública real con citas + mini encuesta real; lo que no se valide, se declara.
+  - Validación del problema: evidencia pública real con citas; sin encuesta ni prueba con usuarios, declarado como limitación.
 
 ## Decisions so far
 
@@ -40,11 +40,16 @@ pruebas, limitaciones documentadas y lo implementado separado de lo proyectado.
 
 - [Desplegar en AWS y probar Ecogas desde AWS](issues/04-desplegar-en-aws.md): en línea con HTTPS en un único enlace (la API sirve la página), región us-east-2; Ecogas sí responde desde AWS.
 
+- [Mini encuesta real sobre contratar gasistas](issues/07-mini-encuesta.md): no se hace; el problema se valida con evidencia pública y la falta de validación con usuarios se declara como limitación.
+
+- [Apoyo para el video: bullets, demo y plan B](issues/11-apoyo-del-video.md): bullets por bloque (10–12 min), demo en línea en 5 pasos y plan B.
+
+- [README final y barrido de coherencia](issues/10-readme-y-coherencia.md): README según el checklist con el sistema en línea arriba; docs coherentes con lo desplegado; falta decidir la atribución de tareas por integrante.
+
 ## Not yet specified
 
 - Qué cambia si Oscar responde que el grupo de un integrante afecta la condición de la entrega.
 - Qué hacer con la respuesta de Ecogas a la consulta de Gonzalo, si llega antes del 14.
-- Capturas y diagramas exactos del informe: dependen de cómo quede el despliegue.
 
 ## Out of scope
 

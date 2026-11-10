@@ -1,7 +1,7 @@
 # Informe final en PDF
 
 Type: task
-Status: open
+Status: claimed
 Blocked by: 04, 06, 07
 
 ## Question
