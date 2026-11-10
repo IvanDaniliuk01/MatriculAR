@@ -12,8 +12,9 @@ terraform {
 }
 
 variable "region" {
-  type    = string
-  default = "us-east-1"
+  description = "Región del proyecto de AWS. La cuenta (plan gratuito con Projects) solo permite crear recursos en la región elegida para el proyecto: us-east-2."
+  type        = string
+  default     = "us-east-2"
 }
 
 variable "email_alertas" {
