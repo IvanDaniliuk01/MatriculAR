@@ -1,0 +1,249 @@
+:root {
+  --texto: #1d2329;
+  --suave: #5b6670;
+  --borde: #d5dbe0;
+  --fondo: #f6f7f9;
+  --acento: #1f5fa8;
+  --verde: #1e7b3c;
+  --rojo: #b3261e;
+  --ambar: #8a5a00;
+  --gris: #4a545e;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--texto);
+  background: var(--fondo);
+  line-height: 1.5;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.cabecera,
+main,
+.pie {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.cabecera h1 {
+  margin: 0;
+  color: var(--acento);
+}
+
+.cabecera p,
+.pie,
+.ayuda {
+  color: var(--suave);
+}
+
+.ayuda {
+  font-size: 0.875rem;
+  margin: 0.25rem 0 0;
+}
+
+.formulario,
+.resultado,
+.aviso {
+  background: #fff;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.formulario > label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+}
+
+.formulario > label .ayuda {
+  font-weight: 400;
+}
+
+input,
+select,
+button {
+  font: inherit;
+}
+
+input,
+select {
+  padding: 0.5rem;
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+  font-weight: 400;
+}
+
+fieldset {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.condiciones > legend {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.condicion {
+  border-top: 1px solid var(--borde);
+  padding: 0.75rem 0;
+}
+
+.condicion legend {
+  float: left;
+  width: 100%;
+  font-weight: 500;
+}
+
+.opciones {
+  clear: both;
+  display: flex;
+  gap: 1.25rem;
+}
+
+.opciones label {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 2rem;
+}
+
+button {
+  background: var(--acento);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.6rem 1.5rem;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.error {
+  border-color: var(--rojo);
+  color: var(--rojo);
+}
+
+.resultado h2 {
+  margin-top: 0;
+  font-size: 1.2rem;
+}
+
+.mensaje {
+  font-size: 1.05rem;
+}
+
+.tarjeta {
+  border: 1px solid var(--borde);
+  border-left: 6px solid var(--gris);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  margin: 1rem 0;
+}
+
+.tarjeta h3 {
+  margin-top: 0;
+}
+
+.tarjeta h4 {
+  margin: 1rem 0 0.25rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--suave);
+}
+
+.tarjeta.verde,
+h2.verde {
+  border-left-color: var(--verde);
+  color: inherit;
+}
+
+.tarjeta.verde h3 {
+  color: var(--verde);
+}
+
+.tarjeta.rojo {
+  border-left-color: var(--rojo);
+}
+
+.tarjeta.rojo h3 {
+  color: var(--rojo);
+}
+
+.tarjeta.ambar {
+  border-left-color: var(--ambar);
+}
+
+.tarjeta.ambar h3,
+h2.ambar {
+  color: var(--ambar);
+}
+
+h2.gris {
+  color: var(--gris);
+}
+
+.evidencia,
+.detalle dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.25rem 1rem;
+  margin: 0;
+}
+
+.detalle dl > div {
+  display: contents;
+}
+
+dt {
+  color: var(--suave);
+}
+
+dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.previas {
+  border-top: 1px dashed var(--borde);
+  margin-top: 1rem;
+  color: var(--suave);
+}
+
+.detalle {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.detalle summary {
+  cursor: pointer;
+  color: var(--acento);
+}
+
+a {
+  color: var(--acento);
+}
+
+@media (max-width: 30rem) {
+  .evidencia,
+  .detalle dl {
+    grid-template-columns: 1fr;
+  }
+
+  dd {
+    margin-bottom: 0.5rem;
+  }
+}

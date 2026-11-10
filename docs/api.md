@@ -161,7 +161,7 @@ La forma es **siempre la misma**. Los campos que no aplican al resultado vienen 
             "tipo_trabajo_version": 1,
             "resultado": "COMPATIBLE",
             "criterio_categoria": { "resultado": "MET", "categoria_informada": "2", "fundamento": "La categoría 2ª está admitida para este tipo de trabajo (NAG-200, 8.3.1)." },
-            "regla_aplicada": { "categorias_admitidas": ["1", "2", "3"], "fundamento": ["…"] }
+            "regla_aplicada": { "categorias_admitidas": ["1", "2", "3"] }
           }
         ],
         "condiciones_que_resuelven": [],
@@ -228,7 +228,7 @@ La forma es **siempre la misma**. Los campos que no aplican al resultado vienen 
   "consulta": {
     "estado": "FAILED",
     "motivo_falla": "EXTRACTION_FAILED",
-    "detalle_falla": { "validacion": "V2", "descripcion": "La página no contiene el bloque gasistasMatriculados y ningún archivo referenciado tiene la lista de registros (formato desconocido)." },
+    "detalle_falla": "La página no contiene el bloque gasistasMatriculados y ningún archivo referenciado tiene la lista de registros (formato desconocido).",
     "cantidad_intentos": 1,
     "registros_extraidos": null
   },

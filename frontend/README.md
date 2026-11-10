@@ -1,19 +1,48 @@
 # Frontend
 
-> **Todavía no hay código.** Esta carpeta tiene la estructura acordada en el diseño (segunda entrega).
+SPA en **React 19 + Vite 8 + TypeScript 7**, con una sola pantalla: **Verificar a un gasista** (P0). Consume la [API](../docs/api.md). En AWS se sirve desde S3.
 
-SPA en **React + Vite + TypeScript 7**. Consume la [API](../docs/api.md) y comparte con el backend los esquemas Zod de [`backend/compartido/src/esquemas/`](../backend/compartido/). En local apunta a la API de LocalStack; en la nube (etapa 4) se sirve desde S3.
+## Cómo correrlo
+
+Requiere Node 24 (`.nvmrc`).
+
+```bash
+cd frontend
+npm install
+npm run dev        # http://localhost:5173
+```
+
+Para que funcione hace falta la API: en local, `npm run servir` en `backend/` (puerto 3000).
+
+| Script | Qué hace |
+|---|---|
+| `npm run dev` | Servidor de desarrollo de Vite. |
+| `npm run build` | Sitio estático en `dist/`, con rutas relativas (`base: "./"`) para servirlo desde la raíz de un bucket. |
+| `npm run check` | Biome, `tsc` y las pruebas (Vitest + Testing Library, `fetch` simulado). |
+
+### URL de la API
+
+Al arrancar, el frontend busca la URL de la API en este orden:
+
+1. `config.json` en la raíz del sitio, con la forma `{"api_url": "https://…/v1"}`. En AWS lo escribe Terraform al desplegar.
+2. La variable de compilación `VITE_API_URL` (ver [`.env.example`](.env.example)).
+3. `http://localhost:3000`.
 
 ## Estructura
 
 ```
 frontend/
-├── public/
-└── src/
-    ├── pantallas/     Verificar (P0), Verificación compartida (P0), Historial (P0), Perfil y Búsqueda (P1), Contrataciones (P2)
-    ├── componentes/   Resultado, Coincidencia, Criterio, Evidencia, Limitaciones, CondicionesDecisivas, DetalleConsulta
-    └── api/           cliente HTTP tipado con los esquemas compartidos
+├── index.html
+├── src/
+│   ├── pantallas/     Verificar (P0)
+│   ├── componentes/   Resultado, Coincidencia, CondicionesDecisivas, DetalleConsulta
+│   └── api/           cliente HTTP y tipos de la API
+└── test/              pruebas del flujo de la pantalla y de la URL de la API
 ```
+
+Los tipos de `src/api/tipos.ts` copian la forma de las respuestas de `backend/verificacion/src/handlers/dto.ts`. La validación del formulario es mínima (nombre con dos palabras, todas las condiciones respondidas): la API valida con los esquemas Zod. En el diseño, el frontend importaba esos esquemas del backend; se postergó para no acoplar los dos paquetes en el P0.
+
+Las pantallas *Verificación compartida* e *Historial* del diseño de la segunda entrega **no están implementadas**: la API ya tiene `GET /verificaciones/{id}` y `GET /credenciales/{fuente_id}`.
 
 ## Pantalla del P0: Verificar a un gasista (M05)
 
@@ -74,7 +103,6 @@ Es la "interfaz mínima" que pidió el tutor para recorrer el flujo completo. Ec
 │     trabajar en Córdoba.                                        │
 │                                                                 │
 │  ▸ Detalle técnico (Consulta, intentos, huella del recurso)     │
-│  [ Copiar enlace ]                                              │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
