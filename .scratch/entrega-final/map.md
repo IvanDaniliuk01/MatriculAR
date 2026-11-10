@@ -36,6 +36,10 @@ pruebas, limitaciones documentadas y lo implementado separado de lo proyectado.
 
 - [Crear la cuenta de AWS y dar acceso desde WSL](issues/02-cuenta-aws-y-acceso.md): cuenta en plan gratuito con Projects; WSL conectado con `aws login` como rol de la cuenta del proyecto, sin usuario raíz ni claves.
 
+- [Subir el frontend y probar el recorrido completo en local](issues/01-commit-frontend-y-prueba-local.md): página React subida; recorrido local contra la Ecogas real funciona de punta a punta.
+
+- [Desplegar en AWS y probar Ecogas desde AWS](issues/04-desplegar-en-aws.md): en línea con HTTPS en un único enlace (la API sirve la página), región us-east-2; Ecogas sí responde desde AWS.
+
 ## Not yet specified
 
 - Qué cambia si Oscar responde que el grupo de un integrante afecta la condición de la entrega.
@@ -48,3 +52,5 @@ pruebas, limitaciones documentadas y lo implementado separado de lo proyectado.
 - Precarga diaria automatizada desde la PC del operador: saltearía el bloqueo deliberado de Ecogas; evolución futura sujeta a autorización de Ecogas.
 - Otras profesiones, P1–P3, HTTPS con CloudFront y la ejecución sobre LocalStack: trabajo futuro.
 - Preparación de la defensa en mesa de examen: instancia posterior a este destino.
+- [Plan B: página en Netlify y API en Render](issues/05-plan-b-netlify-render.md): AWS quedó desplegado antes del plazo.
+- [Precarga manual documentada del padrón en AWS](issues/08-precarga-manual.md): Ecogas responde desde AWS; no hace falta.
