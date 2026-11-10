@@ -20,6 +20,9 @@ fi
 echo "==> Empaquetado de la función"
 (cd backend && npm run --silent empaquetar)
 
+echo "==> Build del frontend (la URL de la API la escribe Terraform en config.json)"
+(cd frontend && npm ci --silent && npm run --silent build)
+
 echo "==> Plan de Terraform (infra/entornos/aws)"
 cd infra/entornos/aws
 terraform init -input=false
@@ -37,4 +40,5 @@ rm -f plan.tfplan
 
 echo
 echo "API en AWS: $(terraform output -raw url_api)"
+echo "Frontend:   $(terraform output -raw url_frontend)"
 echo "Recordá repetir la prueba de acceso a Ecogas desde AWS (scripts/probar-ecogas.sh en CloudShell)."

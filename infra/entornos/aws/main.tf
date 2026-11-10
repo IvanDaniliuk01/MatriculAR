@@ -89,6 +89,13 @@ module "api" {
   funcion_invoke_arn = module.funcion.invoke_arn
 }
 
+module "sitio" {
+  source           = "../../modulos/sitio"
+  prefijo          = local.prefijo
+  directorio_build = "${path.module}/../../../frontend/dist"
+  url_api          = module.api.url
+}
+
 module "observabilidad" {
   source     = "../../modulos/observabilidad"
   prefijo    = local.prefijo
@@ -122,6 +129,11 @@ resource "aws_budgets_budget" "mensual" {
 output "url_api" {
   description = "URL base de la API en AWS (incluye la etapa v1)."
   value       = module.api.url
+}
+
+output "url_frontend" {
+  description = "URL del frontend publicado en S3 (HTTP)."
+  value       = module.sitio.url
 }
 
 output "tablas" {

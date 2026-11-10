@@ -15,6 +15,7 @@
     "format": "biome check --write .",
     "check": "npm run lint && npm run typecheck && npm test",
     "verificar": "tsx verificacion/src/cli.ts",
+    "servir": "tsx verificacion/src/servidor-local.ts",
     "empaquetar": "node scripts/empaquetar.mjs"
   },
   "devDependencies": {

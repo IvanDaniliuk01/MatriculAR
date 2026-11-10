@@ -3,14 +3,13 @@ name: Probar Ecogas desde la nube
 # Prueba pedida por el tutor: ¿Ecogas responde a un cliente que se identifica honestamente desde
 # una IP de datacenter? Los runners de GitHub corren en Azure: no es AWS, pero responde si la Fuente
 # bloquea IPs de nube. La prueba desde AWS real se repite al desplegar.
-# Hace una sola lectura por ejecución; no se programa con cron para no cargar a la Fuente.
+# Hace una sola lectura por ejecución y solo se ejecuta a mano: no se programa con cron ni corre en
+# cada push, para no cargar a la Fuente.
+# Un rechazo de Ecogas es un resultado de la prueba, no un error del repositorio: se publica como
+# advertencia y la ejecución termina bien. Resultado registrado: HTTP 403 desde Azure
+# (docs/fuentes-y-adaptadores.md, § 4.1).
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - scripts/probar-ecogas.sh
-      - .github/workflows/probar-ecogas.yml
 
 jobs:
   probar:
@@ -24,5 +23,9 @@ jobs:
           codigo=$?
           echo "$salida"
           # El resultado queda también como anotación de la ejecución, visible sin abrir los logs.
-          echo "::notice title=Resultado de la prueba::$(echo "$salida" | paste -sd '|' -)"
-          exit $codigo
+          resumen="$(echo "$salida" | paste -sd '|' -)"
+          if [ "$codigo" -eq 0 ]; then
+            echo "::notice title=Ecogas respondió::$resumen"
+          else
+            echo "::warning title=Ecogas no entregó el padrón::$resumen"
+          fi
