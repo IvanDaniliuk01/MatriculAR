@@ -18,7 +18,7 @@
 | **Año** | 2026 |
 | **Sistema en línea** | [https://b2u5pup2gd.execute-api.us-east-2.amazonaws.com/v1/](https://b2u5pup2gd.execute-api.us-east-2.amazonaws.com/v1/) |
 | **Repositorio** | [https://github.com/IvanDaniliuk01/MatriculAR](https://github.com/IvanDaniliuk01/MatriculAR) |
-| **Video de presentación** | VIDEO_PENDIENTE |
+| **Video de presentación** | [https://youtu.be/TYZmj-MVu3k](https://youtu.be/TYZmj-MVu3k) |
 
 </div>
 

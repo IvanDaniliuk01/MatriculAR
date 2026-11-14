@@ -18,7 +18,7 @@ Plataforma que responde, **con evidencia fechada y citable**, si la categoría d
 |---|---|
 | **Sistema desplegado** | <https://b2u5pup2gd.execute-api.us-east-2.amazonaws.com/v1/> |
 | **Informe Final (PDF)** | [`docs/informe-final.pdf`](docs/informe-final.pdf) (fuente: [`docs/informe-final.md`](docs/informe-final.md)) |
-| **Video de presentación** | *próximamente* · diapositivas de apoyo: [`docs/presentacion-video.pptx`](docs/presentacion-video.pptx) |
+| **Video de presentación** | <https://youtu.be/TYZmj-MVu3k> · diapositivas de apoyo: [`docs/presentacion-video.pptx`](docs/presentacion-video.pptx) |
 | **Repositorio** | <https://github.com/IvanDaniliuk01/MatriculAR> |
 | **Integrantes** | Iván Daniliuk · Nicolás Gabriel Demiryi ([equipo](#equipo)) |
 
