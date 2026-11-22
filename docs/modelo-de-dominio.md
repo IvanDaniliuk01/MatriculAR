@@ -191,8 +191,7 @@ flowchart TD
     V -- sí --> R[Reutilizar su Lectura minimizada<br/>con la fecha real de esa Consulta]
     V -- no --> W{¿Falló una lectura<br/>hace menos de 1 min?}
     W -- sí --> E2[Consulta NOT_ATTEMPTED<br/>SOURCE_RATE_LIMITED]
-    W -- no --> C[Registrar Consulta IN_PROGRESS]
-    C --> F[Adaptador: descubrir recurso,<br/>descargar, extraer, validar]
+    W -- no --> F[Adaptador: descubrir recurso,<br/>descargar, extraer, validar]
     F --> G{¿Falla transitoria<br/>y quedan Intentos?}
     G -- sí --> F
     G -- no, falló --> H[Consulta FAILED<br/>SOURCE_UNAVAILABLE o<br/>EXTRACTION_FAILED]
@@ -315,9 +314,8 @@ La Evaluación guarda una **copia completa** de lo que usó, para seguir siendo 
 
 ```mermaid
 stateDiagram-v2
-    [*] --> IN_PROGRESS : se registra antes de leer la Fuente
-    IN_PROGRESS --> SUCCEEDED : las 5 validaciones pasan
-    IN_PROGRESS --> FAILED : falla no transitoria o se agotan Intentos o tiempo
+    [*] --> SUCCEEDED : se lee la Fuente y las 5 validaciones pasan
+    [*] --> FAILED : falla no transitoria o se agotan Intentos o tiempo
     [*] --> NOT_ATTEMPTED : la Fuente no es automatizable o rige la Protección de la Fuente
     SUCCEEDED --> [*]
     FAILED --> [*]
@@ -325,7 +323,7 @@ stateDiagram-v2
 ```
 
 - `FAILED` siempre lleva un **motivo**: `SOURCE_UNAVAILABLE` (red, tiempo agotado, HTTP 5xx, 429 o 403) o `EXTRACTION_FAILED` (recurso no encontrado, marcador ausente, parseo fallido, registros vacíos o inválidos, caída brusca de la cantidad de registros).
-- Una Consulta que queda en `IN_PROGRESS` después de su plazo máximo (por ejemplo, porque la función se cortó o no se pudo escribir en la base) se lee como `FAILED` con motivo **`INTERRUPTED`**. Es una falla de MatriculAR, no de la Fuente, así que **no cuenta en la salud de la Fuente**. El intento queda registrado igual.
+- La Consulta se escribe **una sola vez, al terminar la lectura**: no hay un estado intermedio `IN_PROGRESS`. Si un error propio de MatriculAR llega al caso de uso durante la lectura, la Consulta se guarda como `FAILED` con motivo **`INTERRUPTED`**: es una falla de MatriculAR, no de la Fuente. **Limitación del P0:** si la función se corta antes de terminar, esa lectura no queda registrada.
 - `NOT_ATTEMPTED` lleva el motivo `SOURCE_NOT_AUTOMATABLE` (la Fuente exige captcha) o `SOURCE_RATE_LIMITED` (una lectura falló hace menos de un minuto y MatriculAR no vuelve a pedir, para proteger a la Fuente).
 - Una Consulta `SUCCEEDED` guarda una **Lectura minimizada** que responde nuevas Verificaciones durante la Ventana de reutilización (15 minutos) y se descarta al día siguiente.
 - Los estados finales no cambian nunca.
@@ -392,7 +390,7 @@ Regla de creación (ver [módulos](modulos.md)): si la Verificación da `INCOMPA
 | INV-12 | En los datos del producto **no hay Fuentes simuladas**. Los datos ficticios se usan solo en la documentación y en los tests. | Distinguir lo que el sistema puede conocer de lo que solo puede simular. |
 | INV-13 | Una Condición decisiva respondida **No sé nunca se toma como Sí**. | Devolución v3: una condición necesaria desconocida no se convierte silenciosamente en verdadera. |
 | INV-14 | Una Verificación de un trabajo no cubierto **no consulta la Fuente**. | Sin regla no hay Evaluación posible, y cada lectura es un pedido a un tercero. |
-| INV-15 | MatriculAR lee una Fuente **como máximo una vez por Ventana de reutilización** si la lectura fue exitosa, y espera un minuto después de una falla. | Devolución v3: no amplificar consultas anónimas contra un tercero ([ADR-0006](adr/0006-lectura-minimizada-y-proteccion-de-la-fuente.md)). |
+| INV-15 | MatriculAR lee una Fuente **como máximo una vez por Ventana de reutilización** si la lectura fue exitosa, y espera un minuto después de una falla, **para pedidos sucesivos**. Bajo concurrencia no está garantizado (limitación del P0: dos pedidos casi simultáneos pueden leer ambos). | Devolución v3: no amplificar consultas anónimas contra un tercero ([ADR-0006](adr/0006-lectura-minimizada-y-proteccion-de-la-fuente.md)). |
 | INV-16 | El **Identificador interno de la Fuente** nunca se presenta como número de matrícula ni identifica a un gasista. | La Fuente no publica la matrícula y su `id` puede cambiar entre publicaciones ([ADR-0007](adr/0007-identificacion-por-nombre-y-localidad.md)). |
 | INV-17 | Si hay varias Coincidencias, **MatriculAR nunca elige** una: muestra todas, cada una con su Evaluación. | Con homónimos, elegir sería afirmar una identidad que la evidencia no prueba. |
 

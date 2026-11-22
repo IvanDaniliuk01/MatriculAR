@@ -26,7 +26,7 @@
 | Identificadores | ULID (26 caracteres). |
 | Autenticación | **P0: ninguna.** La consulta de un gasista en un padrón público es pública. P1 y P2 usan un token de Cognito en `Authorization: Bearer …`. |
 | Límite de uso | Throttling de API Gateway en `POST /verificaciones` (configurable). Si se excede, responde `429`. **Protege a MatriculAR, no a la Fuente.** |
-| Protección de la Fuente | Independiente del límite de uso: una Consulta exitosa responde todas las Verificaciones de los 15 minutos siguientes (Ventana de reutilización), y después de una falla se espera un minuto antes de volver a leer la Fuente. Así, por muchos pedidos que lleguen, MatriculAR descarga el padrón de Ecogas como máximo una vez cada 15 minutos mientras funcione ([ADR-0006](adr/0006-lectura-minimizada-y-proteccion-de-la-fuente.md)). |
+| Protección de la Fuente | Independiente del límite de uso: una Consulta exitosa responde todas las Verificaciones de los 15 minutos siguientes (Ventana de reutilización), y después de una falla se espera un minuto antes de volver a leer la Fuente. Así, por muchos pedidos que lleguen, MatriculAR descarga el padrón de Ecogas como máximo una vez cada 15 minutos para pedidos sucesivos ([ADR-0006](adr/0006-lectura-minimizada-y-proteccion-de-la-fuente.md)). **Limitación del P0 (concurrencia):** la comprobación de la Ventana y la descarga no son atómicas. Dos pedidos que comienzan casi al mismo tiempo, cuando todavía no hay una Consulta reciente, pueden descargar ambos el padrón. La frecuencia máxima rige para pedidos sucesivos, no como garantía absoluta bajo concurrencia. Una mejora posible es un lease por Fuente con escritura condicional, no implementada. |
 | Tiempo de respuesta | Una lectura de Ecogas tardó unos 14 s el 02/11/2026. Una Verificación que reutiliza una Consulta responde en menos de un segundo. El límite de 29 s de API Gateway es un punto pendiente ([P-4](fuentes-y-adaptadores.md#9-puntos-pendientes)). |
 | CORS | Solo el origen del frontend. |
 | Validación | Zod, con esquemas compartidos con el frontend. |
@@ -417,7 +417,7 @@ Formato único:
 | 404 | `SOURCE_NOT_FOUND` / `VERIFICATION_NOT_FOUND` | El identificador no existe. |
 | 422 | `WORK_NOT_COVERED` | Las Condiciones decisivas no dejan ningún Tipo de trabajo posible. **No se consulta la Fuente** y no se crea Verificación. |
 | 429 | (API Gateway) | Se excedió el límite de uso de la API. No tiene relación con la Protección de la Fuente, que se informa como `201` con `SOURCE_RATE_LIMITED`. |
-| 500 | `INTERNAL_ERROR` | Falla de MatriculAR: por ejemplo, no se pudo escribir en la base. **La Consulta queda registrada** como `IN_PROGRESS` y, al vencer su plazo, se lee como `FAILED` con motivo `INTERRUPTED` (no se le atribuye a la Fuente). |
+| 500 | `INTERNAL_ERROR` | Falla de MatriculAR: por ejemplo, no se pudo escribir en la base. La Consulta se escribe **una sola vez, al terminar la lectura**: si el error ocurre al guardar, no queda registrada. Si el error ocurre durante la lectura y llega al caso de uso, la Consulta se guarda como `FAILED` con motivo `INTERRUPTED` (no se le atribuye a la Fuente). |
 
 **Nunca** se responde `5xx` porque la Fuente falló. Eso es `201` con `UNVERIFIABLE`. Lo mismo vale cuando rige la Protección de la Fuente. Y **demasiadas coincidencias no es un error**: es `201` con `TOO_MANY_MATCHES`.
 
@@ -445,14 +445,15 @@ sequenceDiagram
     L->>L: deduce los Tipos de trabajo posibles (si no hay ninguno, 422)
     L->>D: busca una Consulta SUCCEEDED de menos de 15 min o una falla de menos de 1 min
     Note over L,D: En este caso no hay ninguna: hay que leer la Fuente
-    L->>D: registra la Consulta IN_PROGRESS
     L->>D: lee la última Consulta exitosa (para V5)
     L->>E: GET página del listado
     E-->>L: 200 HTML con el padrón embebido (formato v2, unos 1,5 MB)
     L->>L: V1 a V5 OK, normaliza y busca las Coincidencias por nombre y localidad
     L->>L: una Evaluación por Coincidencia (Criterio de categoría por Tipo posible) y Limitaciones
-    L->>D: guarda la Lectura minimizada de la Consulta (sin contacto, se descarta al día siguiente)
-    L->>D: TransactWriteItems (Consulta SUCCEEDED, Resultado, Credenciales, Evaluaciones, Verificación)
+    L->>D: guarda la Consulta SUCCEEDED (escritura condicional, ya finalizada)
+    L->>D: guarda la Lectura minimizada (S3, sin contacto, se descarta al día siguiente)
+    L->>D: guarda una Credencial por Coincidencia (escritura condicional)
+    L->>D: TransactWriteItems (Verificación y sus Evaluaciones)
     L-->>A: 201 Verificación FOUND con sus Coincidencias
     A-->>F: 201
     F-->>C: Resultado con evidencia, fecha, Criterio y Limitaciones
@@ -469,7 +470,6 @@ sequenceDiagram
     participant D as DynamoDB
     participant E as Ecogas
 
-    L->>D: registra la Consulta IN_PROGRESS
     L->>E: GET página del listado
     E-->>L: 200 HTML sin el bloque gasistasMatriculados
     loop por cada archivo candidato (formato v1)
@@ -477,9 +477,10 @@ sequenceDiagram
         E-->>L: 200 JavaScript sin la lista
     end
     Note over L: Formato desconocido: EXTRACTION_FAILED,<br/>sin reintento (un cambio estructural falla igual)
+    L->>D: guarda la Consulta FAILED con detalle V2 (una sola escritura, ya finalizada)
     L->>D: lee las últimas Credenciales del mismo nombre y localidad (del 20/09)
     Note over D: Las Credenciales del 20/09 NO se modifican
-    L->>D: TransactWriteItems (Consulta FAILED con detalle V2, Resultado UNVERIFIABLE, Verificación con credenciales_previas_ref)
+    L->>D: guarda la Verificación UNVERIFIABLE con referencia a la evidencia previa
     L-->>L: 201 UNVERIFIABLE, sin Evaluación, con la evidencia previa como contexto
 ```
 
@@ -492,7 +493,6 @@ sequenceDiagram
     participant D as DynamoDB
     participant E as Ecogas
 
-    L->>D: registra la Consulta IN_PROGRESS
     L->>E: Intento 1 · GET página
     E-->>L: 503
     Note over L: Falla transitoria, quedan Intentos y tiempo
@@ -500,7 +500,7 @@ sequenceDiagram
     L->>E: Intento 2 · GET página
     E-->>L: 200 HTML con el padrón embebido
     L->>L: V1 a V5 OK
-    L->>D: Consulta SUCCEEDED con 2 Intentos registrados (el primero con status 503)
+    L->>D: guarda la Consulta SUCCEEDED con 2 Intentos registrados (el primero con status 503)
 ```
 
 ### 6.4 Fuente no automatizable (S9)
@@ -514,7 +514,7 @@ sequenceDiagram
 
     L->>D: lee la Fuente metrogas (NOT_AUTOMATABLE)
     Note over L,M: No se hace ningún pedido a MetroGAS
-    L->>D: TransactWriteItems (Consulta NOT_ATTEMPTED sin Intentos, Resultado UNVERIFIABLE, Verificación)
+    L->>D: guarda la Consulta NOT_ATTEMPTED (sin Intentos) y la Verificación UNVERIFIABLE
     L-->>L: 201 UNVERIFIABLE con el link al buscador oficial
 ```
 

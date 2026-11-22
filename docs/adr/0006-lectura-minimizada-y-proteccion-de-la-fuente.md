@@ -22,3 +22,4 @@ No se guardan datos de contacto ni una copia permanente del padrón. Toda respue
 - Una Consulta deja de hacerse "para una o más Matrículas": lee la Fuente, y varias Verificaciones se apoyan en ella.
 - El límite de la API propia (throttling) deja de ser la protección de la Fuente.
 - Los valores (15 minutos, 1 minuto) son configuración de la Fuente y se ajustan cuando Ecogas responda la consulta.
+- **Limitación del P0 (concurrencia):** la comprobación de la Ventana y la descarga no son atómicas. Dos pedidos que comienzan casi al mismo tiempo, sin una Consulta reciente, pueden descargar ambos el padrón. La frecuencia máxima rige para pedidos sucesivos, no como garantía absoluta bajo concurrencia. Una mejora posible es un lease por Fuente con escritura condicional y una prueba de dos verificaciones simultáneas con una sola lectura; no está implementada.
