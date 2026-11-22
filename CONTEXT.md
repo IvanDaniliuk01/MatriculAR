@@ -146,7 +146,7 @@ Los términos del dominio se escriben en español; los **códigos de estado**, e
 
 | Concepto | Código | Significado |
 |---|---|---|
-| Consulta | `IN_PROGRESS` · `SUCCEEDED` · `FAILED` · `NOT_ATTEMPTED` | En curso · exitosa · fallida · no realizada |
+| Consulta | `SUCCEEDED` · `FAILED` · `NOT_ATTEMPTED` | Exitosa · fallida · no realizada |
 | Motivo de falla | `SOURCE_UNAVAILABLE` · `EXTRACTION_FAILED` · `INTERRUPTED` · `SOURCE_NOT_AUTOMATABLE` · `SOURCE_RATE_LIMITED` | Fuente no disponible · extracción fallida · interrumpida (falla propia) · Fuente no automatizable · Fuente protegida por MatriculAR |
 | Resultado de verificación | `FOUND` · `NOT_FOUND` · `TOO_MANY_MATCHES` · `UNVERIFIABLE` | Encontrado · no encontrado · demasiadas coincidencias · no verificable |
 | Evaluación | `COMPATIBLE` · `INCOMPATIBLE` · `INDETERMINATE` | Compatible · no compatible · indeterminada |

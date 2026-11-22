@@ -98,7 +98,7 @@ El diseño original tenía cuatro módulos priorizados (P0 a P3). Tras la devolu
 | Condiciones decisivas | Cinco preguntas Sí / No / No sé que deducen el Tipo de trabajo, con su cita. |
 | Adaptador real de Ecogas | Lectura del formato actual y del anterior, cinco validaciones, reintentos, clasificación de fallas. |
 | MetroGAS como Fuente no automatizable | No se consulta; se informa `NOT_ATTEMPTED` y el enlace al buscador oficial. |
-| Ventana de reutilización y Protección de la Fuente | Una lectura cada 15 minutos como máximo; espera de 1 minuto después de una falla. |
+| Ventana de reutilización y Protección de la Fuente | Una lectura cada 15 minutos como máximo para pedidos sucesivos (sin garantía bajo concurrencia, ver § 8); espera de 1 minuto después de una falla. |
 | Evidencia persistente | Consultas, Credenciales, Verificaciones y Evaluaciones en DynamoDB; Lecturas minimizadas en S3, que se borran al día siguiente. |
 | API REST | Diez rutas (verificaciones, catálogos, salud de la Fuente, historial de un gasista). |
 | Frontend | Una pantalla React: formulario y resultado con evidencia, criterio y limitaciones. |
@@ -250,7 +250,7 @@ Dentro de la función, las capas respetan una regla: **las dependencias apuntan 
 | **Inmutabilidad y concurrencia** | Todas las escrituras son condicionales (`attribute_not_exists`): dos pedidos simultáneos no pueden pisar la misma evidencia, y repetir un paso es idempotente. |
 | **Validación de entradas** | Todo pedido se valida con Zod antes de llegar al caso de uso; el nombre se normaliza y se exige nombre y apellido. |
 | **Límite de uso** | Throttling de API Gateway: protege a MatriculAR de abusos. |
-| **Protección de la Fuente** | Independiente del límite de uso: como máximo una descarga del padrón cada 15 minutos y una espera de 1 minuto después de una falla. MatriculAR no amplifica pedidos contra Ecogas. |
+| **Protección de la Fuente** | Independiente del límite de uso: para pedidos sucesivos, como máximo una descarga del padrón cada 15 minutos y una espera de 1 minuto después de una falla. MatriculAR no amplifica pedidos contra Ecogas. **Limitación del P0 (concurrencia):** la comprobación de la Ventana y la descarga no son atómicas. Dos pedidos que comienzan casi al mismo tiempo, cuando todavía no hay una Consulta reciente, pueden descargar ambos el padrón. La frecuencia máxima rige para pedidos sucesivos, no como garantía absoluta bajo concurrencia. Una mejora posible es un lease por Fuente con escritura condicional, no implementada. |
 | **Identificación honesta** | El adaptador se identifica con un `User-Agent` propio (`MatriculAR/0.1 (proyecto final UTN; contacto: …)`). No se eluden bloqueos ni captchas: nada de `User-Agent` de navegador ni proxies. |
 | **Datos personales** | Nunca se guardan el email, el teléfono ni el barrio que publica la Fuente, ni una copia permanente del padrón. La Lectura minimizada se borra al día siguiente. El repositorio no contiene datos reales del padrón: las pruebas usan fixtures con personas ficticias. |
 | **Secretos** | El P0 no tiene secretos de aplicación. Las credenciales de AWS son temporales (`aws login`) y viven en la máquina del operador, nunca en el repositorio. |
@@ -304,11 +304,10 @@ sequenceDiagram
     alt reutilizable
         R-->>A: Consulta + Lectura minimizada
     else no hay
-        A->>R: Consulta IN_PROGRESS
         A->>E: GET página del listado (User-Agent identificado)
         E-->>A: HTML con el padrón embebido
         A->>A: valida V1–V5, huella SHA-256, minimiza
-        A->>R: Consulta SUCCEEDED + Lectura minimizada
+        A->>R: Consulta SUCCEEDED (una sola escritura, ya finalizada) + Lectura minimizada
     end
     A->>A: busca Coincidencias y evalúa cada una
     A->>R: Credenciales, Evaluaciones y Verificación
@@ -377,7 +376,7 @@ El desarrollo se hizo con **TDD**, empezando por el dominio. Las pruebas no depe
 | `verificacion/sitio` | 6 | La API sirve el frontend: redirección, tipos, caché, rutas fuera del build. |
 | **Backend** | **140** | Más el archivo de integración con DynamoDB y S3, que se omite por defecto porque necesita credenciales de AWS. Corrido a mano contra AWS real (us-east-2) el 10/11/2026: sus **9 pruebas pasaron**. |
 | `frontend/verificar` | 8 | Formulario, envío, validaciones, Fuente caída, error 422, resolución de la URL de la API. |
-| **Total** | **148** | Todas pasan. |
+| **Total** | **148** | Todas pasan en la integración continua. Las 9 pruebas contra AWS se ejecutan aparte y a mano. |
 
 ### 6.2 Cómo se comprueban las reglas críticas
 
@@ -444,6 +443,7 @@ MatriculAR responde en segundos una pregunta que hoy requiere encontrar el busca
 | **Ninguna Fuente informa la vigencia.** | Un resultado `COMPATIBLE` no afirma que la matrícula esté renovada. |
 | **La zona no se puede verificar.** | Ecogas publica un único listado; la provincia que informa es el domicilio del gasista, no dónde puede trabajar. |
 | **Solo Ecogas se consulta automáticamente.** | MetroGAS tiene captcha y no se elude: se muestra el enlace a su buscador. Las demás distribuidoras no están integradas. |
+| **Sin exclusión bajo concurrencia.** | La Ventana de reutilización funciona para pedidos sucesivos. Dos pedidos que comienzan casi al mismo tiempo, sin Consulta reciente, pueden descargar ambos el padrón de Ecogas: la frecuencia máxima no es una garantía absoluta. Mejora posible: un lease por Fuente con escritura condicional y una prueba de dos verificaciones simultáneas con una sola lectura. |
 | **Dependencia de una fuente externa sin acuerdo formal.** | Si Ecogas cambia la página o bloquea a AWS, el sistema responde `UNVERIFIABLE` (diseñado así). La consulta sobre las condiciones de uso no tuvo respuesta todavía. |
 | **Solo tres Tipos de trabajo documentados (A1, A2, B).** | Otros trabajos (gas envasado, comercio sin artefactos de alto consumo) se rechazan como `WORK_NOT_COVERED`. |
 | **Límite de 29 s de API Gateway.** | Si la lectura tardara más, el Cliente recibe un error de tiempo, aunque la Consulta queda registrada y el pedido siguiente la reutiliza. |

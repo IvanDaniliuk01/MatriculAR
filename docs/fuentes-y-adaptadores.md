@@ -246,7 +246,7 @@ Todo queda en la **Consulta** (ver [`database/README.md`](../database/README.md#
 
 La **huella del recurso** (el hash SHA-256 del contenido descargado) permite **reconocer** si dos Consultas leyeron el mismo contenido o si el recurso cambió. **No permite reconstruir el recurso** si desapareció: un hash no se puede revertir. Por eso cada Credencial conserva además sus `valores_fuente`, tal como los publicó la Fuente.
 
-**La Consulta se registra en estado `IN_PROGRESS` antes del primer pedido**, así el intento queda asentado aunque la función se interrumpa. Una Consulta que sigue `IN_PROGRESS` después de su plazo máximo se interpreta como `FAILED` con motivo `INTERRUPTED`: es una falla de MatriculAR (por ejemplo, la base no respondió), no de la Fuente, y no cuenta en la salud de la Fuente.
+**La Consulta se escribe una sola vez, ya finalizada** (`SUCCEEDED`, `FAILED` o `NOT_ATTEMPTED`), con todos sus Intentos. No existe un estado `IN_PROGRESS`: se descartó para no necesitar actualizaciones de la Consulta (ver [arquitectura § 9](arquitectura.md#9-garantías-operativas)). **Limitación del P0:** si la función se corta antes de terminar, esa lectura no queda registrada. El motivo `INTERRUPTED` se usa solo cuando un error propio de MatriculAR llega al caso de uso durante la lectura: queda como `FAILED`, y es una falla de MatriculAR, no de la Fuente.
 
 ### 4.9 Qué pasa con la evidencia anterior cuando falla una lectura
 
